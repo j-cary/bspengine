@@ -1,6 +1,6 @@
 #include "bsp.h"
 #include "file.h"
-
+//test
 void ReadBSPFile(const char file[], bsp_t* bsp)
 {
 	FILE* f;
