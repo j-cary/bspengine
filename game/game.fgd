@@ -1,0 +1,27 @@
+@SolidClass = worldspawn : "World"
+[
+	message(string) : "Opening Text"
+	skyname(string) : "Sky Name"
+	sounds(integer) : "Music Track" : 0
+]
+
+//BASECLASSES
+
+@BaseClass = target
+[
+	target(string) : "Target"
+	name(string) : "Name"
+]
+
+@BaseClass = baselight
+[
+	_light(color255) : "Brightness" : "255 255 255 200"
+]
+
+//POINTCLASSES
+
+@PointClass size(-16 -16 0, 16 16 64) base(target) = playerspawn : "Level start point"[]
+@PointClass size(-8 -8 -8, 8 8 8) base(target, baselight) = light : "Point Light"[]
+
+//SOLIDCLASSES
+@SolidClass base(Trigger) = solid : "Trigger teleport" []
