@@ -25,6 +25,7 @@ typedef byte color_t[3];
 typedef unsigned int glid;
 typedef unsigned int alid;
 
+//copied from HL
 class vec3_c
 {
 public:

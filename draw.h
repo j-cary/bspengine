@@ -10,13 +10,18 @@
 #include "file.h" //bsp stuff, change later
 
 //temporary structure for giving GL vertexinfo
-#define DRAWVERTEXSIZE 9
+
+enum VI_ARRAY_MEMBERS
+{//VI_SIZE is ALWAYS at the end!
+	VI_X = 0, VI_Y, VI_Z, VI_S, VI_T, VI_TI /*int*/, VI_LS, VI_LT, VI_LI /*int*/, VI_SIZE /*non member*/
+};
+
 class vertexinfo_c
 {
 public:
 	int edgecount;
 	//float(*verts)[5];
-	float verts[65536][DRAWVERTEXSIZE];
+	float verts[65536][VI_SIZE];
 	//vec3(x,y,z), vec2(s,t), vec(tex), vec2(ls, lt), vec(lmap)
 
 	vertexinfo_c()
@@ -50,7 +55,7 @@ void SetupView(GLFWwindow* win);
 void BuildTextureList();
 void InitLmapList();
 void BuildVertexList(vertexinfo_c* vi);
-//this is called very frame and is based on the PVS
+//this is called every frame and is based on the PVS
 void BuildFanArrays();
 
 void DrawView(GLFWwindow* win);

@@ -40,9 +40,7 @@ void SetupView(GLFWwindow* win)
 	shader_c tmp("shaders/nvbsp.glsl", "shaders/nfbsp.glsl");
 
 	tmp.Use();
-	ReadBSPFile("maps/test.bsp", &bsp);
-
-	
+	ReadBSPFile("maps/tris.bsp", &bsp);
 
 	BuildTextureList();
 	InitLmapList();
@@ -57,20 +55,20 @@ void SetupView(GLFWwindow* win)
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vi.edgecount * DRAWVERTEXSIZE * sizeof(float), vi.verts, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vi.edgecount * VI_SIZE * sizeof(float), vi.verts, GL_STATIC_DRAW);
 
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vi), vi, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, DRAWVERTEXSIZE * sizeof(float), NULL); //vertices
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), NULL); //vertices
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, DRAWVERTEXSIZE * sizeof(float), (void*)(3 * sizeof(float))); //texcoords
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), (void*)(3 * sizeof(float))); //texcoords
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, DRAWVERTEXSIZE * sizeof(float), (void*)(5 * sizeof(float))); //texture index
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), (void*)(5 * sizeof(float))); //texture index
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, DRAWVERTEXSIZE * sizeof(float), (void*)(6 * sizeof(float))); //light coords
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), (void*)(6 * sizeof(float))); //light coords
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, DRAWVERTEXSIZE * sizeof(float), (void*)(8 * sizeof(float))); //light ofs
+	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), (void*)(8 * sizeof(float))); //light ofs
 	glEnableVertexAttribArray(4);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -144,18 +142,11 @@ void DrawView(GLFWwindow* win)
 	proj = glm::scale(proj, glm::vec3(-1.0, 1.0, 1.0));
 	bspshader.SetM4F("projection", glm::value_ptr(proj));
 	
-#if 1
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
-#else
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, tex2);
-#endif
 	bspshader.Use();
 	glBindVertexArray(VAO);
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
@@ -233,7 +224,6 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 						vi->verts[vi->edgecount][5] = i; //texid
 				}
 
-				//is this supposed to be floor(maxs)?
 				if (fs > maxs)
 					maxs = fs;
 				if (fs < mins)
@@ -258,73 +248,47 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 			vec3_t texofs = {};
 			float sofs, tofs;
 
-			//TODO: see if this actually works in all cases
+			
 			lw = ceil(maxs * 8) - floor(mins * 8) + 1;
-			lh = ceil(maxt * 8) - floor(mint * 8) + 1; //should be / 16...
-			//lw * lh should be number of luxels
-#if 1
-			int pushedvc = vertexcnt;
+			lh = ceil(maxt * 8) - floor(mint * 8) + 1;
+			
+			float block_s = 0, block_t = 0;
+			atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
+
 			for (; vertexcnt > 0; vertexcnt--)
 			{
 				int idx = vi->edgecount - vertexcnt;
 
-				vi->verts[idx][6] = vi->verts[idx][3] - mins; //what are mins & maxs?
+				vi->verts[idx][6] = vi->verts[idx][3] - mins;
 				vi->verts[idx][6] /= (maxs - mins);
+
+				//half pixel offset
+				
+				if (vi->verts[idx][6] == 0)
+					vi->verts[idx][6] = 0.5 / lw;
+				else if (vi->verts[idx][6] == 1)
+					vi->verts[idx][6] = 1 -(0.5 / lw);
+				
+
+				vi->verts[idx][6] = (vi->verts[idx][6] * lw) / (float)ATLAS_SIZE + block_s;
+
 
 				vi->verts[idx][7] = vi->verts[idx][4] - mint;
 				vi->verts[idx][7] /= (maxt - mint);
-				//printf("%i is %f, %f\n", idx, vi->verts[idx][6], vi->verts[idx][7]);
-			}
 
-			float block_s = 0, block_t = 0;
-			atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
+				//half pixel offset
+				
+				if (vi->verts[idx][7] == 0)
+					vi->verts[idx][7] = 0.5 / lh;
+				else if (vi->verts[idx][7] == 1)
+					vi->verts[idx][7] = 1 - (0.5 / lh);
+				
 
-			for (; pushedvc > 0; pushedvc--)
-			{
-				int idx = vi->edgecount - pushedvc;
-
-				vi->verts[idx][6] = (vi->verts[idx][6] * lw) / (float)ATLAS_SIZE + block_s;
 				vi->verts[idx][7] = (vi->verts[idx][7] * lh) / (float)ATLAS_SIZE + block_t;
-				printf("%i is now %.3f, %.3f, %.3f | %.3f, %.3f, %.3f\n", 
-					idx, 
-					vi->verts[idx][6], vi->verts[idx][7], vi->verts[idx][8],
-					vi->verts[idx][3], vi->verts[idx][4], vi->verts[idx][5]);
-			}
-#else
-			//need closest to zero
-			if (czs > 0)
-				sofs = -czs;
-			else
-				sofs = abs(czs);
-			if (czt > 0)
-				tofs = -czt;
-			else
-				tofs = abs(czt);
 
-			for (;vertexcnt > 0; vertexcnt--)
-			{
-				int idx = vi->edgecount - vertexcnt;
-				float scale;
-				//finding lightmap coords here. 
-				//scale = (mins + vi->verts[idx][3]) / (maxs + mins);
-				vi->verts[idx][6] = vi->verts[idx][3] + sofs;
-				vi->verts[idx][7] = vi->verts[idx][4] + tofs; //relative to this lightmap
-				//if !zero, divide by self then multiply by lw / lh
-				/*
-				if (vi->verts[idx][6])
-				{//hack here i think
-					vi->verts[idx][6] = lw;
 
-				}
-				if (vi->verts[idx][7])
-				{
-					vi->verts[idx][7] = lh;
-				}
-				*/
-				vi->verts[idx][8] = 0; //z value
+				//printf("%i - %f, %f\n", idx, vi->verts[idx][6], vi->verts[idx][7]);
 			}
-			atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs]);
-#endif
 
 		}
 		return;
@@ -352,18 +316,11 @@ void BuildTextureList()
 
 	num_textures = bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t);
 
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, 128, 128, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, 128, 128, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	/*
-	buf = ReadBMPFile("textures/test.bmp", true);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, buf);
-	buf = ReadBMPFile("textures/lighttest.bmp", true);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, buf);
-	*/
 
 	//FIXME: texture 0 is somehow swallowing surrounding textures in some cases
 	for (int i = 0; i < num_textures; i++)
@@ -452,7 +409,7 @@ void BuildTextureList()
 void InitLmapList()
 {
 	int arraysize, texsize;
-	int arraydepth = 1; //tmp
+	int arraydepth = 2; //tmp
 	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &arraysize);
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
 
@@ -462,109 +419,33 @@ void InitLmapList()
 
 	printf("can hold a lightmap of size %i\n", arraysize * texsize);
 
-#if 1
 	glGenTextures(1, &lmaparray);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
 
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, texsize, texsize, arraydepth, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	//glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	//glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//SHOULD do this when building the vertex list
-	//right now just make a huge array with a depth of 1
-	//loop through all the faces, add a new array to keep track of mins and stuff
-	//then, in the vertex list, assign this info to the vertexinfo array
-	//the new array should be as big as the face array, and should parallel it
-	//this way, there's no need to go in the right order here
-	for (int faceidx = 0; faceidx < bsp.header.lump[LMP_FACES].len / sizeof(bspface_t); faceidx++) //face loop
-	{
-		vec3_t s, t;
-		float sshift, tshift;
-		float maxs, mins, maxt, mint;
-		VecCopy(s, bsp.texinfo[bsp.faces[faceidx].texinfo_index].s);
-		sshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].s_shift;
-
-		VecCopy(t, bsp.texinfo[bsp.faces[faceidx].texinfo_index].t);
-		tshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].t_shift;
-
-
-		maxs = maxt = -999999;
-		mins = mint = 999999;
-
-		for (int edgeiter = 0; edgeiter < bsp.faces[faceidx].num_edges; edgeiter++) //edge loop
-		{
-			int edgeidx, vidxidx;
-			vec3_t vert;
-			float fs, ft;
-
-			edgeidx = bsp.surfedges[bsp.faces[faceidx].firstedge_index + edgeiter];
-
-			if (edgeidx < 0)
-			{
-				edgeidx = abs(edgeidx);
-				vidxidx = 1;
-			}
-			else
-				vidxidx = 0;
-
-			VecCopy(vert, bsp.verts[bsp.edges[edgeidx].vidx[vidxidx]]);
-
-			fs = (DotProduct(vert, s) + sshift) / 128;
-			ft = (DotProduct(vert, t) + tshift) / 128;
-
-			if (fs > maxs)
-				maxs = fs;
-			if (fs < mins)
-				mins = fs;
-
-			if (ft > maxt)
-				maxt = ft;
-			if (ft < mint)
-				mint = ft;
-
-		}
-
-		//ignore above. Move this to the vertex loop.
-		//Store fs & ft in a small array. Keep track of the size & XYZ array coords here
-		//Then, multiply these by lw/lh to get tex coords. (negatives?)
-		//These coords will also depend on the XYZ stuff
-		//Then, do the subimage. Need some algorithm to pack this stuff
-	}
-#endif
+	texsize = ATLAS_SIZE;
+	arraysize = ATLAS_LEVELS;
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, texsize, texsize, arraydepth, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 void BuildVertexList(vertexinfo_c* vi)
 {
-	vec3_t vert;
-
-	int faceidx;
-	int edgeidx;
-	int vidxidx;
-
-	//tex stuff
-	float sshift, tshift;
-	vec3_t s, t;
-
-	//run through faces then add to an array based on tex name. Then add to a final array and save indices;
-	//all required textures should be put in a dynamic gl texture array. This array can be bound to GL_TEXTURE0
-	//sidenote: textures can be stored in the BSP, but won't be used.
-	
-	//do something similar with lightmaps. The structure of getting the right lightmap should be
-	//to use the face's lightmap ofs into the light array.
-	
-	//when building fanarrays, just loop through the vertex array, switching indices in the texture and light atlases
 #if 1
 	for (unsigned mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
 		RecursiveBSPNodeVertices(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
 	
 	vec3_c ofs(0, 0, 0);
 	byte* lmap = atlas[0].GetBlock();
-	//byte* lmap = bsp.lightmap;
-	WriteBMPFile("textures/atlas.bmp", ATLAS_SIZE, ATLAS_SIZE, atlas[0].GetBlock(), true, false);
-	FlipTexture(lmap, ATLAS_SIZE, ATLAS_SIZE);
+
+	//WriteBMPFile("textures/atlas.bmp", ATLAS_SIZE, ATLAS_SIZE, atlas[0].GetBlock(), true, false);
+	//FlipTexture(lmap, ATLAS_SIZE, ATLAS_SIZE);
+
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], ofs.v[2], ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
+	
 #else
 
 #if 1
@@ -741,35 +622,8 @@ void BuildFanArrays()
 	
 	
 	numfans = 0;
-#if 1
 	edgecount = 0;
 	for (int mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
 		RecursiveBSPNodeArrays(mdlidx, bsp.models[mdlidx].headnodes_index[0], pvs);
 
-#else
-	unsigned leafofs = 1;
-	for (unsigned mdlidx = 0; mdlidx < 1/*bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t)*/; mdlidx++)
-	{
-		for (unsigned leafidx = leafofs; (leafidx - leafofs) < bsp.models[mdlidx].num_visleafs; leafidx++)
-		{
-			for (unsigned short marksurfiter = 0; marksurfiter < bsp.leaves[leafidx].num_marksurfs; marksurfiter++) //face loop
-			{
-				faceidx = bsp.marksurfs[bsp.leaves[leafidx].firstmarksurf + marksurfiter];
-
-				//FIXME: hack to add all bmodels besides world to the fanarrays.
-				//PVS doesn't currently work for these. Might be going through this stuff incorrectly.
-				if (pvs[leafidx] || (mdlidx))
-				{
-					startfans[numfans] = edgecount;
-					countfans[numfans] = bsp.faces[faceidx].num_edges;
-					numfans++;
-				}
-
-				edgecount += bsp.faces[faceidx].num_edges;
-			}
-		}
-		leafofs += bsp.models[mdlidx].num_visleafs;
-	}
-
-#endif
 }

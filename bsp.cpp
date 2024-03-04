@@ -236,7 +236,7 @@ int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node)
 	else
 		nextnode = bsp->nodes[node].children[1]; //back
 
-	RecursiveBSPNodeSearch(point, bsp, nextnode);
+	return RecursiveBSPNodeSearch(point, bsp, nextnode);
 }
 
 //note: start & end must lie in node. This is why I'm starting with node 0

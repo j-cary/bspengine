@@ -17,3 +17,16 @@ public:
 
 	~atlas_c();
 };
+
+class atlas3_c
+{
+private:
+	atlas_c layer[ATLAS_LEVELS];
+	unsigned depth; //of the current layer
+public:
+	bool AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t);
+	byte* GetBlock(int _depth);
+
+	atlas3_c();
+	~atlas3_c();
+};

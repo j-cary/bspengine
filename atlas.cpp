@@ -94,3 +94,27 @@ atlas_c::~atlas_c()
 	if (block)
 		free(block);
 }
+
+//=======================
+// atlas3_c
+//=======================
+
+bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
+{
+	return layer[depth].AddBlock(w, h, block, s, t);
+}
+
+byte* atlas3_c::GetBlock(int _depth)
+{
+	return layer[_depth].GetBlock();
+}
+
+atlas3_c::atlas3_c()
+{
+	depth = 0;
+}
+
+atlas3_c::~atlas3_c()
+{
+
+}

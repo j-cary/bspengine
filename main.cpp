@@ -15,15 +15,17 @@ gamestate_c game;
 winfo_t winfo;
 
 //TODO list:
-//return s and t values from addblock, add these to vertex data
-//lightmaps - 2d array texture with multiple maps per depth level
-//gl error checking
+//3d atlas
+//tex mipmaps
+//switch to bgra
 //collision
 //fix texture absorbing problem
 //abort function
 //fix pvs handlin
 //fix 0th leaf not drawing everything
+//fix half pixel offset thing
 //start caching stuff
+//gl error checking
 
 void SetupWindow(winfo_t* win, int width, int height);
 
@@ -38,10 +40,12 @@ int WinMain() //fix the parms here
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	double time = glfwGetTime();
 	SetupWindow(&winfo, 800, 600);
 	SetupView(winfo.win);
 	SetupInput(winfo.win);
 	SetupSound();
+	printf("Setup took: %f\n", glfwGetTime() - time);
 
 	while (!glfwWindowShouldClose(winfo.win))
 	{
