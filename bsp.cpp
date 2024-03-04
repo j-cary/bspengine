@@ -1,6 +1,6 @@
 #include "bsp.h"
 #include "file.h"
-//test
+
 void ReadBSPFile(const char file[], bsp_t* bsp)
 {
 	FILE* f;
@@ -293,15 +293,15 @@ byte* DecompressVis(bsp_t* bsp, int leafidx)
 {
 	static byte pvs[1000]; //use num_visleafs to make this dynamic. Just once!
 	int v = bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
-
 	int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
 
-	static int lastleaf = 0xFFFFFFF;
-	if (lastleaf == leafidx)
-		return NULL;
-	lastleaf = leafidx;
-
-	memset(pvs, 0, 1000);
+	if (leafidx)
+		memset(pvs, 0, 1000);
+	else
+	{ //outside world
+		memset(pvs, 1, 1000);
+		return pvs;
+	}
 
 	//printf("Leaf %i with ofs %i can see ", leafidx, v);
 	for (int l = 1; l < numleaves; v++)

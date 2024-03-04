@@ -442,7 +442,6 @@ void BuildVertexList(vertexinfo_c* vi)
 	byte* lmap = atlas[0].GetBlock();
 
 	//WriteBMPFile("textures/atlas.bmp", ATLAS_SIZE, ATLAS_SIZE, atlas[0].GetBlock(), true, false);
-	//FlipTexture(lmap, ATLAS_SIZE, ATLAS_SIZE);
 
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], ofs.v[2], ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	
@@ -590,23 +589,13 @@ void BuildFanArrays()
 	int faceidx;
 
 	static byte* pvs = 0; //fix this
-	byte* tmppvs = 0;
+	//byte* tmppvs = 0;
 
 	//find leaf, then render the pvs at that leaf
 	if (!in.pvslock)
-		tmppvs = DecompressVis(&bsp, RecursiveBSPNodeSearch(in.org, &bsp, 0));
+		pvs = DecompressVis(&bsp, RecursiveBSPNodeSearch(in.org, &bsp, 0));
 	//non world model leaves don't have any vis data.
 	//why can world leaves see bmodels in enttest but not in other maps?
-
-	if (tmppvs) //not in the same pvs as last frame
-		pvs = tmppvs;
-
-	if (!pvs)
-	{
-		printf("Invalid PVS set!\n");
-		return;
-	}
-
 	
 	//figuring out bmodel node stuff
 	/*

@@ -167,6 +167,12 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 		//free(buf);
 	}
 
+	if (swapcolors)
+		BRG2RGB(data, w, h);
+
+	if (flip)
+		FlipTexture(data, w, h);
+
 	fclose(f);
 	return false;
 }

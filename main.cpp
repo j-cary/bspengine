@@ -15,14 +15,13 @@ gamestate_c game;
 winfo_t winfo;
 
 //TODO list:
+//cleanup draw.cpp
 //3d atlas
 //tex mipmaps
 //switch to bgra
 //collision
 //fix texture absorbing problem
 //abort function
-//fix pvs handlin
-//fix 0th leaf not drawing everything
 //fix half pixel offset thing
 //start caching stuff
 //gl error checking
@@ -45,7 +44,7 @@ int WinMain() //fix the parms here
 	SetupView(winfo.win);
 	SetupInput(winfo.win);
 	SetupSound();
-	printf("Setup took: %f\n", glfwGetTime() - time);
+	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
 
 	while (!glfwWindowShouldClose(winfo.win))
 	{
