@@ -8,25 +8,26 @@ extern input_c in;
 extern winfo_t winfo;
 bsp_t bsp;
 
-shader_c shdr;
 shader_c bspshader;
 
-glid tex, tex2;
 glid texarray, lmaparray;
 glid VAO;
 
+//todo: maybe implement this without glm
 glm::vec3 cam = glm::vec3(0.0f, 64.0f, 0.0f);
 glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 vertexinfo_c vi;
-char texlist[16][5] = {};
+char texlist[16][MAX_TEXTURES] = {};
 
+//these should really be dynamic
 int startfans[65536]; //offset of each fan into verts
 int countfans[65536]; //number of edges in each face
 int numfans = 0; //total fans
 
-extern atlas_c atlas[ATLAS_LEVELS];
+//extern atlas_c atlas[ATLAS_LEVELS];
+extern atlas3_c atlas;
 
 void ResizeWindow(GLFWwindow* win, int width, int height)
 {
@@ -40,7 +41,7 @@ void SetupView(GLFWwindow* win)
 	shader_c tmp("shaders/nvbsp.glsl", "shaders/nfbsp.glsl");
 
 	tmp.Use();
-	ReadBSPFile("maps/tris.bsp", &bsp);
+	ReadBSPFile("maps/2fort.bsp", &bsp);
 
 	BuildTextureList();
 	InitLmapList();
@@ -74,44 +75,12 @@ void SetupView(GLFWwindow* win)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 
-	//Texture mapping stuff
-#if 1
-
 	tmp.Use();
 	tmp.SetI("texarray", 0); //setting to GL_TEXTURE0
 	tmp.SetI("lmaparray", 1); //setting to GL_TEXTURE1
 	bspshader = tmp;
 
 	glEnable(GL_DEPTH_TEST);
-#else
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-
-	byte* buf;
-	buf = ReadBMPFile("textures/test.bmp", true);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)buf);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glGenTextures(1, &tex2);
-	glBindTexture(GL_TEXTURE_2D, tex2);
-
-	buf = ReadBMPFile("textures/lighttest.bmp", true);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)buf);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-	tmp.Use();
-	tmp.SetI("m_texture", 0);
-	tmp.SetI("m_texture2", 1);
-	bspshader = tmp;
-
-	glEnable(GL_DEPTH_TEST);
-#endif
 }
 
 void DrawView(GLFWwindow* win)
@@ -155,7 +124,7 @@ void DrawView(GLFWwindow* win)
 	glfwPollEvents();
 }
 
-void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
+void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 {
 	int leaf;
 
@@ -164,7 +133,7 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 	float sshift, tshift;
 	float fs, ft;
 	float maxs, mins, maxt, mint;
-	float czs, czt;
+	//float czs, czt;
 	int vertexcnt;
 
 	vec3_t vert;
@@ -182,14 +151,17 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 
 			VecCopy(s, bsp.texinfo[bsp.faces[faceidx].texinfo_index].s);
 			sshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].s_shift;
-
 			VecCopy(t, bsp.texinfo[bsp.faces[faceidx].texinfo_index].t);
 			tshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].t_shift;
 
+			if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "sky"))
+				continue;
+			if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "aaatrigger"))
+				continue;
 
 			maxs = maxt = -999999;
 			mins = mint = 999999;
-			czs = czt = 999999;
+			//czs = czt = 999999;
 			vertexcnt = 0;
 
 			//construct the polygon
@@ -208,15 +180,15 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 				VecCopy(vert, bsp.verts[bsp.edges[edgeidx].vidx[vidxidx]]);
 				VecAdd(vert, bsp.models[model].origin);
 
-				fs = (DotProduct(vert, s) + sshift) / 128;
-				ft = (DotProduct(vert, t) + tshift) / 128;
+				fs = (DotProduct(vert, s) + sshift) / TEXTURE_SIZE;
+				ft = (DotProduct(vert, t) + tshift) / TEXTURE_SIZE;
 
-				vi->verts[vi->edgecount][0] = vert[0];
-				vi->verts[vi->edgecount][1] = vert[1];
-				vi->verts[vi->edgecount][2] = vert[2];
+				vi->verts[vi->edgecount][VI_X] = vert[0];
+				vi->verts[vi->edgecount][VI_Y] = vert[1];
+				vi->verts[vi->edgecount][VI_Z] = vert[2];
 
-				vi->verts[vi->edgecount][3] = fs;
-				vi->verts[vi->edgecount][4] = ft; //fixme: divide these by tex size
+				vi->verts[vi->edgecount][VI_S] = fs;
+				vi->verts[vi->edgecount][VI_T] = ft;
 
 				for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
 				{
@@ -233,11 +205,12 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 					maxt = ft;
 				if (ft < mint)
 					mint = ft;
-
+				/*
 				if (abs(fs) - abs(czs) < 0)
 					czs = fs;
 				if (abs(ft) - abs(czt))
 					czt = ft;
+				*/
 
 				vertexcnt++;
 				vi->edgecount++;
@@ -246,56 +219,54 @@ void RecursiveBSPNodeVertices(vertexinfo_c* vi, int model, int node)
 
 			int lw, lh;
 			vec3_t texofs = {};
-			float sofs, tofs;
-
 			
 			lw = ceil(maxs * 8) - floor(mins * 8) + 1;
 			lh = ceil(maxt * 8) - floor(mint * 8) + 1;
 			
 			float block_s = 0, block_t = 0;
-			atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
+			int block_z;
+			//atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
+			if (atlas.AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t, block_z))
+				SYS_Exit("Ran out of atlas space!", "atlas", "R_BuildVertexList");
 
 			for (; vertexcnt > 0; vertexcnt--)
 			{
 				int idx = vi->edgecount - vertexcnt;
 
-				vi->verts[idx][6] = vi->verts[idx][3] - mins;
-				vi->verts[idx][6] /= (maxs - mins);
+				vi->verts[idx][VI_LS] = vi->verts[idx][VI_S] - mins;
+				vi->verts[idx][VI_LS] /= (maxs - mins);
 
 				//half pixel offset
+				if (vi->verts[idx][VI_LS] == 0)
+					vi->verts[idx][VI_LS] = 0.5 / lw;
+				else if (vi->verts[idx][VI_LS] == 1)
+					vi->verts[idx][VI_LS] = 1 -(0.5 / lw);
 				
-				if (vi->verts[idx][6] == 0)
-					vi->verts[idx][6] = 0.5 / lw;
-				else if (vi->verts[idx][6] == 1)
-					vi->verts[idx][6] = 1 -(0.5 / lw);
-				
-
-				vi->verts[idx][6] = (vi->verts[idx][6] * lw) / (float)ATLAS_SIZE + block_s;
+				vi->verts[idx][VI_LS] = (vi->verts[idx][VI_LS] * lw) / (float)ATLAS_SIZE + block_s;
 
 
-				vi->verts[idx][7] = vi->verts[idx][4] - mint;
-				vi->verts[idx][7] /= (maxt - mint);
+				vi->verts[idx][VI_LT] = vi->verts[idx][VI_T] - mint;
+				vi->verts[idx][VI_LT] /= (maxt - mint);
 
 				//half pixel offset
+				if (vi->verts[idx][VI_LT] == 0)
+					vi->verts[idx][VI_LT] = 0.5 / lh;
+				else if (vi->verts[idx][VI_LT] == 1)
+					vi->verts[idx][VI_LT] = 1 - (0.5 / lh);
 				
-				if (vi->verts[idx][7] == 0)
-					vi->verts[idx][7] = 0.5 / lh;
-				else if (vi->verts[idx][7] == 1)
-					vi->verts[idx][7] = 1 - (0.5 / lh);
-				
-
-				vi->verts[idx][7] = (vi->verts[idx][7] * lh) / (float)ATLAS_SIZE + block_t;
-
-
+				vi->verts[idx][VI_LT] = (vi->verts[idx][VI_LT] * lh) / (float)ATLAS_SIZE + block_t;
+				vi->verts[idx][VI_LI] = block_z;
 				//printf("%i - %f, %f\n", idx, vi->verts[idx][6], vi->verts[idx][7]);
+				//if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "sky"))
+				//	vi->verts[idx][6] = vi->verts[idx][7] = -1;
 			}
 
 		}
 		return;
 	}
 
-	RecursiveBSPNodeVertices(vi, model,  bsp.nodes[node].children[0]); //front
-	RecursiveBSPNodeVertices(vi, model,  bsp.nodes[node].children[1]); //back
+	R_BuildVertexList(vi, model,  bsp.nodes[node].children[0]); //front
+	R_BuildVertexList(vi, model,  bsp.nodes[node].children[1]); //back
 }
 
 void BuildTextureList()
@@ -329,7 +300,7 @@ void BuildTextureList()
 		strcat(filename, "textures/");
 		strcat(filename, texlist[i]);
 		strcat(filename, ".bmp");
-
+		//printf("%s\n", filename);
 		buf = ReadBMPFile(filename, true);
 		if (buf)
 		{
@@ -409,7 +380,7 @@ void BuildTextureList()
 void InitLmapList()
 {
 	int arraysize, texsize;
-	int arraydepth = 2; //tmp
+	int arraydepth = ATLAS_LEVELS; //tmp
 	glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &arraysize);
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
 
@@ -424,7 +395,6 @@ void InitLmapList()
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
 
 	texsize = ATLAS_SIZE;
-	arraysize = ATLAS_LEVELS;
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, texsize, texsize, arraydepth, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -434,122 +404,28 @@ void InitLmapList()
 
 void BuildVertexList(vertexinfo_c* vi)
 {
-#if 1
 	for (unsigned mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
-		RecursiveBSPNodeVertices(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
+		R_BuildVertexList(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
 	
 	vec3_c ofs(0, 0, 0);
-	byte* lmap = atlas[0].GetBlock();
+	byte* lmap;
+	unsigned depth = atlas.GetDepth();
 
-	//WriteBMPFile("textures/atlas.bmp", ATLAS_SIZE, ATLAS_SIZE, atlas[0].GetBlock(), true, false);
-
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], ofs.v[2], ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
-	
-#else
-
-#if 1
-	//almost 100% sure that a search through the BSP tree needs to get done here.
-	//basically go through the tree and add all faces of every leaf to the vertex list.
-	//not entirely sure how to do the above yet. 
-	//each model's BSP is (presumably) separate and running through each tree 
-	//should hopefully construct the right pvs and vertex stuff...
-	//sidenote: num_visleafs can be used to size PVS data
-
-	unsigned leafofs = 1;
-	for (unsigned mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
+	char name[] = "textures/atlas00.bmp";
+	printf("writing ");
+	for (int i = 0; i <= depth; i++)
 	{
-		for (unsigned leafidx = leafofs; (leafidx - leafofs) < bsp.models[mdlidx].num_visleafs; leafidx++)
-		{
-			for (unsigned short marksurfiter = 0; marksurfiter < bsp.leaves[leafidx].num_marksurfs; marksurfiter++) //face loop
-			{
-				faceidx = bsp.marksurfs[bsp.leaves[leafidx].firstmarksurf + marksurfiter];
-
-				VecCopy(s, bsp.texinfo[bsp.faces[faceidx].texinfo_index].s);
-				sshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].s_shift;
-
-				VecCopy(t, bsp.texinfo[bsp.faces[faceidx].texinfo_index].t);
-				tshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].t_shift;
-
-				//bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name;
-
-				//construct the polygon
-				for (int edgeiter = 0; edgeiter < bsp.faces[faceidx].num_edges; edgeiter++) //edge loop
-				{
-					edgeidx = bsp.surfedges[bsp.faces[faceidx].firstedge_index + edgeiter];
-
-					if (edgeidx < 0)
-					{
-						edgeidx = abs(edgeidx);
-						vidxidx = 1;
-					}
-					else
-						vidxidx = 0;
-
-					VecCopy(vert, bsp.verts[bsp.edges[edgeidx].vidx[vidxidx]]);
-					VecAdd(vert, bsp.models[mdlidx].origin);
-					vi->verts[vi->edgecount][0] = vert[0];
-					vi->verts[vi->edgecount][1] = vert[1];
-					vi->verts[vi->edgecount][2] = vert[2];
-
-					vi->verts[vi->edgecount][3] = (DotProduct(vert, s) + sshift) / 128;
-					vi->verts[vi->edgecount][4] = (DotProduct(vert, t) + tshift) / 128; //fixme: divide these by tex size
-
-					vi->edgecount++;
-
-				}
-			}
-		}
-		leafofs += bsp.models[mdlidx].num_visleafs;
+		printf("%i ", i + 1);
+		lmap = atlas.GetBlock(i);
+		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, false);
+		name[15]++;
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}
-#else
-	//this currently adds each models verts to the list x times, where x is the number of models in the map.
-	//I think
-	for (unsigned leafidx = 1; leafidx < 20/*bsp.header.lump[LMP_LEAVES].len / sizeof(bspleaf_t)*/; leafidx++) //leaf loop
-	{
-		for (unsigned short marksurfiter = 0; marksurfiter < bsp.leaves[leafidx].num_marksurfs; marksurfiter++) //face loop
-		{
-			faceidx = bsp.marksurfs[bsp.leaves[leafidx].firstmarksurf + marksurfiter];
-
-			VecCopy(s, bsp.texinfo[bsp.faces[faceidx].texinfo_index].s);
-			sshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].s_shift;
-
-			VecCopy(t, bsp.texinfo[bsp.faces[faceidx].texinfo_index].t);
-			tshift = bsp.texinfo[bsp.faces[faceidx].texinfo_index].t_shift;
-
-			//construct the polygon
-			for (int edgeiter = 0; edgeiter < bsp.faces[faceidx].num_edges; edgeiter++) //edge loop
-			{
-				edgeidx = bsp.surfedges[bsp.faces[faceidx].firstedge_index + edgeiter];
-
-				if (edgeidx < 0)
-				{
-					edgeidx = abs(edgeidx);
-					vidxidx = 1;
-				}
-				else
-					vidxidx = 0;
-
-				VecCopy(vert, bsp.verts[bsp.edges[edgeidx].vidx[vidxidx]]);
-
-				vi->verts[vi->edgecount][0] = vert[0];
-				vi->verts[vi->edgecount][1] = vert[1];
-				vi->verts[vi->edgecount][2] = vert[2];
-
-				vi->verts[vi->edgecount][3] = (DotProduct(vert, s) + sshift) / 128;
-				vi->verts[vi->edgecount][4] = (DotProduct(vert, t) + tshift) / 128; //fixme: divide these by tex size
-
-				vi->edgecount++;
-
-			}
-		}
-	}
-	
-#endif
-#endif
+	printf("lightmap(s)\n");
 }
 
 int edgecount = 0; 
-void RecursiveBSPNodeArrays(int model, int node, byte* pvs)
+void R_BuildFanArrays(int model, int node, byte* pvs)
 {
 	int leaf;
 	int faceidx, edgeidx, vidxidx;
@@ -567,6 +443,11 @@ void RecursiveBSPNodeArrays(int model, int node, byte* pvs)
 		{
 			faceidx = bsp.marksurfs[bsp.leaves[leaf].firstmarksurf + marksurfiter];
 
+			if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "sky"))
+				continue;
+			if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "aaatrigger"))
+				continue;
+
 			if (pvs[leaf] || (model))
 			{
 				startfans[numfans] = edgecount;
@@ -578,18 +459,15 @@ void RecursiveBSPNodeArrays(int model, int node, byte* pvs)
 		return;
 	}
 
-	RecursiveBSPNodeArrays(model, bsp.nodes[node].children[0], pvs);
-	RecursiveBSPNodeArrays(model, bsp.nodes[node].children[1], pvs);
+	R_BuildFanArrays(model, bsp.nodes[node].children[0], pvs);
+	R_BuildFanArrays(model, bsp.nodes[node].children[1], pvs);
 }
 
 void BuildFanArrays()
 {
-	//int edgecount = 0;
-
 	int faceidx;
 
-	static byte* pvs = 0; //fix this
-	//byte* tmppvs = 0;
+	static byte* pvs = 0;
 
 	//find leaf, then render the pvs at that leaf
 	if (!in.pvslock)
@@ -613,6 +491,6 @@ void BuildFanArrays()
 	numfans = 0;
 	edgecount = 0;
 	for (int mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
-		RecursiveBSPNodeArrays(mdlidx, bsp.models[mdlidx].headnodes_index[0], pvs);
+		R_BuildFanArrays(mdlidx, bsp.models[mdlidx].headnodes_index[0], pvs);
 
 }

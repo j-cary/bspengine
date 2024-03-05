@@ -291,15 +291,15 @@ int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* bsp, int node, v
 
 byte* DecompressVis(bsp_t* bsp, int leafidx)
 {
-	static byte pvs[1000]; //use num_visleafs to make this dynamic. Just once!
+	static byte pvs[10000]; //use num_visleafs to make this dynamic. Just once!
 	int v = bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
 	int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
 
 	if (leafidx)
-		memset(pvs, 0, 1000);
+		memset(pvs, 0, 10000);
 	else
 	{ //outside world
-		memset(pvs, 1, 1000);
+		memset(pvs, 1, 10000);
 		return pvs;
 	}
 

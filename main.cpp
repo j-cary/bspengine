@@ -1,5 +1,5 @@
 #include <iostream> //for printf
-
+#include <Windows.h>
 #include <glad.h>
 #include <glfw3.h>
 
@@ -15,25 +15,25 @@ gamestate_c game;
 winfo_t winfo;
 
 //TODO list:
-//cleanup draw.cpp
-//3d atlas
+//get args working for winmain. set default map, too
+//clean up draw
 //tex mipmaps
 //switch to bgra
 //collision
-//fix texture absorbing problem
+//fix texture absorbing problem - is this fixed?
 //abort function
 //fix half pixel offset thing
+//fix sky lightmapping stuff
 //start caching stuff
 //gl error checking
 
 void SetupWindow(winfo_t* win, int width, int height);
 
-int WinMain() //fix the parms here
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nCmdShow)
 {
 #if STDWINCON
 	CreateConsole();
 #endif
-
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);

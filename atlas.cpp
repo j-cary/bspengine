@@ -1,18 +1,14 @@
 #include "atlas.h"
 
-atlas_c atlas[ATLAS_LEVELS];
+//atlas_c atlas[ATLAS_LEVELS];
+atlas3_c atlas;
 
 atlas_c::atlas_c()
 {
 	memset(depth, 0, sizeof(depth));
 	//block = (byte*)malloc(ATLAS_SIZE * ATLAS_SIZE * 3);
 	block = (byte*)malloc(ATLAS_SIZE * ATLAS_SIZE * 3);
-	memset(block, 0x80, ATLAS_SIZE * ATLAS_SIZE * 3);
-}
-
-byte* atlas_c::GetBlock()
-{
-	return block;
+	memset(block, 0x00, ATLAS_SIZE * ATLAS_SIZE * 3);
 }
 
 bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
@@ -64,8 +60,8 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 		return 1; //reached the bottom of the atlas / nothing wide enough to fit this texture
 
 
-	if (!block) //move this up top
-		return 1;
+	//if (!block) //move this up top
+	//	return 1;
 
 	//printf("Adding block from %i, %i to %i, %i\n", bestx, initialdepth, bestx + w - 1, initialdepth + h - 1);
 
@@ -99,22 +95,24 @@ atlas_c::~atlas_c()
 // atlas3_c
 //=======================
 
-bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
+bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t, int& _depth)
 {
-	return layer[depth].AddBlock(w, h, block, s, t);
-}
+	bool ret;
 
-byte* atlas3_c::GetBlock(int _depth)
-{
-	return layer[_depth].GetBlock();
-}
+	for (int i = 0; i < ATLAS_LEVELS; i++)
+	{
+		if (!(ret = layer[depth].AddBlock(w, h, block, s, t)))
+		{
+			_depth = depth;
+			break; //successful write
+		}
 
-atlas3_c::atlas3_c()
-{
-	depth = 0;
-}
+		//ran out of space, try the next level
 
-atlas3_c::~atlas3_c()
-{
 
+		//printf("Had to increment depth to %i\n", depth);
+		depth++;
+	}
+
+	return ret; //zero if there's no more space
 }
