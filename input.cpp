@@ -1,5 +1,6 @@
 #include "input.h"
 #include "draw.h"//tmp
+#include "math.h"
 
 input_c in;
 
@@ -200,7 +201,7 @@ input_c::input_c()
 
 	pvslock = false;
 	fullscreen = false;
-	movetype = MOVETYPE_WALK;
+	movetype = MOVETYPE_NOCLIP;
 }
 
 void ToggleMouseCursor()

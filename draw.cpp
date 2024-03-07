@@ -2,16 +2,17 @@
 #include "bsp.h"
 #include "shaders.h"
 #include "atlas.h"
+#include "math.h"
 
 extern gamestate_c game;
 extern input_c in;
 extern winfo_t winfo;
 bsp_t bsp;
-
 shader_c bspshader;
 
+
 glid texarray, lmaparray;
-glid VAO;
+glid VAO, VBO;
 
 //todo: maybe implement this without glm
 glm::vec3 cam = glm::vec3(0.0f, 64.0f, 0.0f);
@@ -39,27 +40,42 @@ void ResizeWindow(GLFWwindow* win, int width, int height)
 void SetupView(GLFWwindow* win)
 {
 	shader_c tmp("shaders/nvbsp.glsl", "shaders/nfbsp.glsl");
+	tmp.Use();
+	glGenVertexArrays(1, &VAO); //vertex array object
+	glGenBuffers(1, &VBO); //vertex buffer object
+
+	if (!bsp.name[0]);
+		SetupBSP("maps/2fort.bsp");
+
 
 	tmp.Use();
-	ReadBSPFile("maps/2fort.bsp", &bsp);
+	tmp.SetI("texarray", 0); //setting to GL_TEXTURE0
+	tmp.SetI("lmaparray", 1); //setting to GL_TEXTURE1
+	bspshader = tmp;
 
+	glEnable(GL_DEPTH_TEST);
+}
+
+void SetupBSP(const char* name)
+{
+	if(!strcmp(bsp.name, name))
+		return;
+
+	//need to rip controls here
+	memset(&bsp, 0, sizeof(bsp_t));
+	memset(&vi, 0, sizeof(vertexinfo_c));
+	atlas.Clear();
+	ReadBSPFile(name, &bsp);
 	BuildTextureList();
 	InitLmapList();
 	BuildVertexList(&vi);
 
-
-	glid VBO, EBO;
-	glGenVertexArrays(1, &VAO); //vertex array object
-	glGenBuffers(1, &VBO); //vertex buffer object
-	//glGenBuffers(1, &EBO); //element buffer object
+	strcpy(bsp.name, name);
 
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vi.edgecount * VI_SIZE * sizeof(float), vi.verts, GL_STATIC_DRAW);
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vi), vi, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VI_SIZE * sizeof(float), NULL); //vertices
 	glEnableVertexAttribArray(0);
@@ -73,14 +89,6 @@ void SetupView(GLFWwindow* win)
 	glEnableVertexAttribArray(4);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-
-	tmp.Use();
-	tmp.SetI("texarray", 0); //setting to GL_TEXTURE0
-	tmp.SetI("lmaparray", 1); //setting to GL_TEXTURE1
-	bspshader = tmp;
-
-	glEnable(GL_DEPTH_TEST);
 }
 
 void DrawView(GLFWwindow* win)
@@ -193,7 +201,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
 				{
 					if (!strcmp(texlist[i], bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
-						vi->verts[vi->edgecount][5] = i; //texid
+						vi->verts[vi->edgecount][VI_TI] = i; //texid
 				}
 
 				if (fs > maxs)
@@ -388,7 +396,7 @@ void InitLmapList()
 	if((arraysize * texsize) < bsp.header.lump[LMP_LIGHT].len / sizeof(*bsp.lightmap))
 		SYS_Exit("GL 2D array cannot possibly hold lightmap data", "bsp.lightmap", "InitLmapList");
 
-	printf("can hold a lightmap of size %i\n", arraysize * texsize);
+	//printf("can hold a lightmap of size %i\n", arraysize * texsize);
 
 	glGenTextures(1, &lmaparray);
 	glActiveTexture(GL_TEXTURE1);
@@ -412,16 +420,16 @@ void BuildVertexList(vertexinfo_c* vi)
 	unsigned depth = atlas.GetDepth();
 
 	char name[] = "textures/atlas00.bmp";
-	printf("writing ");
+	//printf("writing ");
 	for (int i = 0; i <= depth; i++)
 	{
-		printf("%i ", i + 1);
+		//printf("%i ", i + 1);
 		lmap = atlas.GetBlock(i);
 		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, false);
 		name[15]++;
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}
-	printf("lightmap(s)\n");
+	//printf("lightmap(s)\n");
 }
 
 int edgecount = 0; 

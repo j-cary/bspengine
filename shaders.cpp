@@ -25,14 +25,6 @@ shader_c::shader_c(const char* vname, const char* fname)
 	int success;
 	char infolog[512];
 
-	/*
-	if (!(vfile = fopen(vname, "r")))
-		return;
-
-	if (!(ffile = fopen(fname, "r")))
-		return;
-	*/
-
 	if (!(vfile = LocalFileOpen(vname, "r")))
 		return;
 	if (!(ffile = LocalFileOpen(fname, "r")))

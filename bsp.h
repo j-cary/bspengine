@@ -175,6 +175,7 @@ typedef struct bsp_s
 	bspedge_t edges[MAX_EDGES];
 	int surfedges[MAX_SURFEDGES];
 	bspmodel_t models[MAX_MODELS];
+	char name[FILENAME_MAX];
 } bsp_t;
 
 void ReadBSPFile(const char file[], bsp_t* bsp);

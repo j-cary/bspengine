@@ -1,6 +1,5 @@
 #include "cmath" //cos and sin
-
-#include "common.h"
+#include "math.h"
 
 extern inline void VecSet(vec3_t vec, float x, float y, float z)
 {

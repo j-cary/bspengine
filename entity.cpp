@@ -1,4 +1,5 @@
 #include "entity.h"
+#include "math.h"
 
 ent_c entlist[MAX_ENTITIES];
 int entidx;

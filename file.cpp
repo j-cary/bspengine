@@ -152,7 +152,7 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 	{
 		//byte* buf;
 		//buf = (byte*)malloc(w * 3 + pad);
-		byte buf[128];
+		byte buf[TEXTURE_SIZE];
 
 		for (int i = 0; i < h; i++)
 		{
@@ -254,6 +254,25 @@ void ReadCFGFile(const char* name, input_c* in)
 			{
 				for (int j = 0; j < sizeof(inputcmds) / (CMD_LEN + sizeof(void*)); j++)
 				{
+					if (inputcmds[j].name[0] == '*')
+					{//command with argument
+						//printf("found a cmd with args\n");
+
+						char* curs = in->binds[keyvalueidx].key;
+						while (*curs != '\0')
+						{//find the end of the actual cmd
+							if (*curs == ' ')
+								break;
+							curs++;
+						}
+
+						if (!strncmp(&inputcmds[j].name[1], in->binds[keyvalueidx].key, curs - in->binds[keyvalueidx].key))
+						{
+							strcpy(in->keys[i].cmd, in->binds[keyvalueidx].key);
+							break;
+						}
+					}
+
 					if (!strncmp(in->binds[keyvalueidx].key, inputcmds[j].name, CMD_LEN)) //valid input. If not valid, do nothing
 					{
 						if (in->binds[keyvalueidx].key[0] == '+')

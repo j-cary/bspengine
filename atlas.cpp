@@ -5,10 +5,8 @@ atlas3_c atlas;
 
 atlas_c::atlas_c()
 {
-	memset(depth, 0, sizeof(depth));
-	//block = (byte*)malloc(ATLAS_SIZE * ATLAS_SIZE * 3);
 	block = (byte*)malloc(ATLAS_SIZE * ATLAS_SIZE * 3);
-	memset(block, 0x00, ATLAS_SIZE * ATLAS_SIZE * 3);
+	Clear();
 }
 
 bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
@@ -85,6 +83,12 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 	return 0;
 }
 
+void atlas_c::Clear()
+{
+	memset(depth, 0, sizeof(depth));
+	memset(block, 0x80, ATLAS_SIZE * ATLAS_SIZE * 3);
+}
+
 atlas_c::~atlas_c()
 {
 	if (block)
@@ -108,11 +112,19 @@ bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t,
 		}
 
 		//ran out of space, try the next level
-
-
 		//printf("Had to increment depth to %i\n", depth);
 		depth++;
 	}
 
-	return ret; //zero if there's no more space
+	return ret; //1 if there's no more space
+}
+
+void atlas3_c::Clear()
+{
+	for (int i = 0; i <= depth; i++)
+	{
+		layer[i].Clear();
+	}
+
+	depth = 0;
 }

@@ -139,11 +139,13 @@
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="file.cpp" />
+    <ClCompile Include="game.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="pcmd.cpp" />
+    <ClCompile Include="pmove.cpp" />
     <ClCompile Include="shaders.cpp" />
     <ClCompile Include="sound.cpp" />
   </ItemGroup>
@@ -154,9 +156,12 @@
     <ClInclude Include="draw.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="file.h" />
+    <ClInclude Include="game.h" />
     <ClInclude Include="glinc.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="math.h" />
     <ClInclude Include="pcmd.h" />
+    <ClInclude Include="pmove.h" />
     <ClInclude Include="shaders.h" />
     <ClInclude Include="sound.h" />
   </ItemGroup>

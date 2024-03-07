@@ -1,5 +1,6 @@
 #include "bsp.h"
 #include "file.h"
+#include "math.h"
 
 void ReadBSPFile(const char file[], bsp_t* bsp)
 {
@@ -16,7 +17,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	{
 		bsp->header.lump[i].ofs = buf[2 * i];
 		bsp->header.lump[i].len = buf[2 * i + 1];
-		printf("Lump: %i Ofs:%i, Len:%i\n", i, bsp->header.lump[i].ofs, bsp->header.lump[i].len);
+		//printf("Lump: %i Ofs:%i, Len:%i\n", i, bsp->header.lump[i].ofs, bsp->header.lump[i].len);
 	}
 
 	//ents
@@ -133,8 +134,8 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	//for (unsigned i = 1; i < bsp->header.lump[LMP_MODELS].len / sizeof(*bsp->models); i++) //skip world
 		//UpdateBModelOrg(&bsp->models[i]);
 
-	printf("\nLightmap report\n");
-	printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
+	//printf("\nLightmap report\n");
+	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
 #if 0
 	printf("\nEntity Report\n");
 	printf("%s\n", bsp->ents);
@@ -163,6 +164,10 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	printf("\nFace report\n");
 	printf("Num faces: %zi\n", bsp->header.lump[LMP_FACES].len / sizeof(*bsp->faces));
+	for (unsigned i = 0; i < bsp->header.lump[LMP_FACES].len / sizeof(*bsp->faces); i++)
+	{
+		printf("lmap ofs: %i\n", bsp->faces[i].lmap_ofs);
+	}
 
 	printf("\nVis report\n");
 	printf("Vis size: %i\n", bsp->header.lump[LMP_VIS].len);
@@ -293,7 +298,8 @@ byte* DecompressVis(bsp_t* bsp, int leafidx)
 {
 	static byte pvs[10000]; //use num_visleafs to make this dynamic. Just once!
 	int v = bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
-	int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
+	//int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
+	int numleaves = bsp->models[0].num_visleafs;
 
 	if (leafidx)
 		memset(pvs, 0, 10000);

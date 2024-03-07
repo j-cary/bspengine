@@ -14,6 +14,7 @@ public:
 	atlas_c();
 	bool AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t); //returns 1 if unable to find space. i.e. continue on to the next 2d atlas
 	byte* GetBlock() { return block; } //really not the best practice
+	void Clear();
 
 	~atlas_c();
 };
@@ -26,6 +27,7 @@ private:
 public:
 	bool AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t, int& _depth);
 	byte* GetBlock(int _depth) { return layer[_depth].GetBlock(); }
+	void Clear();
 	unsigned GetDepth() { return depth; }
 
 	atlas3_c() { depth = 0; }
