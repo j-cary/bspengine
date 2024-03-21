@@ -32,12 +32,12 @@ void SetupSound()
 	alGenBuffers(SND_MAX, sounds.buf);
 	alGenSources(SND_MAX, sounds.src);
 
-	vec3_t org;
+	vec3_c org;
 	//negate x and z components
-	VecSet(org, 320, 96, -64);
+	VecSet(org.v, 320, 96, -64);
 	//PlaySound("sound/wind.wav", org, 10, 1, 0);
-	VecSet(org, -256, 96, -384);
-	//PlaySound("sound/cicadas.wav", org, 10, 1, 1);
+	VecSet(org.v, -256, 96, -384);
+	PlaySound("sound/cicadas.wav", org, 10, 1, 1);
 
 	//really need to check if enumeration is supported here
 	//ListAudioDevices(alcGetString(NULL, ALC_DEVICE_SPECIFIER));
@@ -85,22 +85,23 @@ void ListAudioDevices(const ALCchar* devname)
 void RunSound()
 {
 	ALfloat orientation[6];
-	vec3_t fixedvel;
-	vec3_t fixedorg;
+	vec3_c fixedvel;
+	vec3_c fixedorg;
 
 	int srcstate;
 
-	orientation[0] = in.forward[0];
-	orientation[1] = in.forward[1];
-	orientation[2] = in.forward[2];
-	orientation[3] = in.up[0];
-	orientation[4] = in.up[1];
-	orientation[5] = in.up[2];
+	orientation[0] = in.forward.v[0];
+	orientation[1] = in.forward.v[1];
+	orientation[2] = in.forward.v[2];
+	orientation[3] = in.up.v[0];
+	orientation[4] = in.up.v[1];
+	orientation[5] = in.up.v[2];
 
-	VecScale(fixedvel, in.vel, 1.0f / (float)game.maxtps);
-	VecCopy(fixedorg, in.org);
-	fixedorg[0] = -fixedorg[0];
-	fixedorg[2] = -fixedorg[2];
+	//AAAVEC
+	VecScale(fixedvel.v, in.vel, 1.0f / (float)game.maxtps);
+	fixedorg = in.org;
+	fixedorg.v[0] = -fixedorg.v[0];
+	fixedorg.v[2] = -fixedorg.v[2];
 	//this mostly works...
 	
 	alListenerfv(AL_POSITION, fixedorg);
@@ -133,7 +134,7 @@ void RunSound()
 	*/
 }
 
-void PlaySound(const char* name, const vec3_t org, int gain, int pitch, bool loop)
+void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loop)
 {
 	int first = 0;
 	wavinfo_t wi;
@@ -153,7 +154,7 @@ void PlaySound(const char* name, const vec3_t org, int gain, int pitch, bool loo
 
 	alSourcef(sounds.src[first], AL_PITCH, pitch);
 	alSourcef(sounds.src[first], AL_GAIN, gain);
-	alSourcefv(sounds.src[first], AL_POSITION, org);
+	alSourcefv(sounds.src[first], AL_POSITION, org.v);
 	//alSourcefv(sounds.src[first], AL_VELOCITY, srcvel);
 	alSourcei(sounds.src[first], AL_LOOPING, loop);
 	alSourcei(sounds.src[first], AL_BUFFER, sounds.buf[first]);

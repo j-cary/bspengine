@@ -26,15 +26,15 @@ public:
 	char classname[64];
 	char name[64];
 	float light[4]; //RGB, intensity
-	vec3_t origin, forward;
-	vec3_t angles;
+	vec3_c origin, forward;
+	vec3_c angles;
 	flag_t flags;
 	char modelname[64];
 	char noise[64]; //for constant sounds
 	//model_t model;
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
-	void PlaySound(const char* name, const vec3_t ofs, int gain, int pitch);
+	void PlaySound(const char* name, const vec3_c ofs, int gain, int pitch);
 
 	void SetModel(const char* name); //For setting an external, non world mesh as model
 	void AddEnt();

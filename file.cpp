@@ -39,31 +39,67 @@ void FlipTexture(byte* data, unsigned w, unsigned h)
 	}
 }
 
-byte* ReadBMPFile(const char* filename, bool flip)
+img_c* ReadBMPFile(const char* filename, bool flip)
 {
 	FILE* f;
-	static byte buf[128 * 128 * 3];
-	static byte flipbuf[128 * 128 * 3];
-	unsigned w, h;
+	static img_c img;
+	//static byte buf[TEXTURE_SIZE * TEXTURE_SIZE * 4];
 
-		if (!(f = LocalFileOpen(filename, "rb")))
-			return NULL;
+	byte sig[3] = {};
+	int pixel_ofs;
 
-	fseek(f, 10, SEEK_SET);
-	fread(buf, 1, 4, f); //Pixel data offset
-	fread(buf, 1, 4, f); //header size
-	fread(buf, 1, 4, f);
-	w = (unsigned)buf[0];
-	fread(buf, 1, 4, f);
-	h = (unsigned)buf[0];
+	int infosize;
+	int w, h;
+	short planes; //always 1
+	short bpx;
+	int compression;
 
-	fseek(f, 28, SEEK_CUR); //To pixel data
-	fread(buf, 1, w * h * 3, f); //since we only deal with power of 2 textures, padding can be ignored
+	if (!(f = LocalFileOpen(filename, "rb")))
+	{
+		printf("Unable to open %s\n", filename);
+		return NULL;
+	}
 
-	BRG2RGB(buf, w, h);
+	//fileheader
+	fread(sig, 1, 2, f); //check here
+	fseek(f, 8, SEEK_CUR); //skip filesize & reserved
+	fread(&pixel_ofs, 4, 1, f);
+	//infoheader
+	fseek(f, 4, SEEK_CUR); //infoheadersize
+	fread(&w, 4, 1, f);
+	fread(&h, 4, 1, f);
+	fseek(f, 2, SEEK_CUR); //planes
+	fread(&bpx, 2, 1, f);
+	fread(&compression, 4, 1, f);
+
+	if (sig[0] != 'B' || sig[1] != 'M')
+	{
+		printf("%s is not a BMP file!\n", filename);
+		return NULL;
+	}
+
+	//if (compression)
+	{
+		//printf("%s is compressed!\n", filename);
+		//return NULL;
+	}
+
+	if (bpx != 24 && bpx != 32)
+	{
+		printf("%s is not RGB/24bit or RGBA/32bit!\n", filename);
+		return NULL;
+	}
+
+
+	fseek(f, pixel_ofs, SEEK_SET);
+	fread(img.data, 1, w * h * (bpx / 8), f);
+	img.bpx = bpx;
+
+	//BRG2RGB(img.data, w, h);
 	
 
 #if 0
+	static byte flipbuf[TEXTURE_SIZE * TEXTURE_SIZE * 4];
 	//this also flips along the y axis
 	if (flip)
 	{
@@ -79,12 +115,17 @@ byte* ReadBMPFile(const char* filename, bool flip)
 	}
 #else
 	
-	if (flip)
-		FlipTexture(buf, w, h);
+	//if (flip)
+	//	FlipTexture(img.data, w, h);
 #endif
 
 	fclose(f);
-	return buf;
+	return &img;
+}
+
+img_c* ReadTGAFile(const char* name)
+{
+	return NULL;
 }
 
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors)
@@ -312,8 +353,7 @@ void ReadWAVFile(const char* name, wavinfo_t* info, bool music)
 	int datasize;
 
 	if (!(f = LocalFileOpen(name, "rb")))
-		SYS_Exit("unable to open wav file", name, "ReadWAVFile");
-
+		SYS_Exit("unable to open wav file %s", name);
 	fseek(f, 0, SEEK_SET);
 
 	fread(buf, 1, 4, f);

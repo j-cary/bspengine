@@ -8,7 +8,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	int buf[128];
 
 	if (!(f = LocalFileOpen(file, "rb")))
-		return;
+		SYS_Exit("unable to open BSP file %s", file);
 
 	fread(buf, 4, 1, f);
 	bsp->header.ver = buf[0];
@@ -346,7 +346,8 @@ void UpdateBModelOrg(bspmodel_t* mod)
 	{
 		if (entlist[last].modelname[0] == '*')
 		{//assume this is a bmodel
-			VecCopy(mod->origin, entlist[last].origin);
+			//VecCopy(mod->origin, entlist[last].origin);
+			entlist[last].origin = mod->origin;
 			last++;
 			return;
 		}

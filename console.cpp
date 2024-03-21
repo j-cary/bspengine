@@ -1,5 +1,6 @@
 #include <iostream>
 #include "common.h"
+#include "file.h"
 #if STDWINCON
 #include "windows.h"
 #include "consoleapi.h"
@@ -11,11 +12,33 @@
 #include <iostream>
 #include <fstream>
 
-int ConPrintf(const char* _Format, ...)
+void SYS_Exit(const char* fmt, ...)
 {
-	//TODO: ...
-	printf(_Format);
-	return 0;
+	va_list args;
+	FILE* log;
+
+	log = LocalFileOpen("log.txt", "w");
+
+	va_start(args, fmt);
+	vfprintf(log, fmt, args);
+	va_end(args);
+
+	//CleanupSound();
+	glfwTerminate();
+
+	exit(1);
+}
+
+int ConPrintf(const char* format, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start(args, format);
+	ret = vprintf(format, args);
+	va_end(args);
+
+	return ret;
 }
 
 void CreateConsole()
@@ -29,18 +52,11 @@ void CreateConsole()
 
 }
 
-char* vtos(vec3_t v)
-{//FIXTHIS
-	static char buf[32];
-	sprintf(buf, "%.2f %.2f %.2f", v[0], v[1], v[2]);
-	return buf;
-}
 char* fltos(int flag)
 {
 	int idx = 31;
 	static char buf[33];
 
-	//!!!FIXME: This relies on overflow to work right. Not good
 	for (unsigned int i = 1; i != 0; i *= 2, idx--)
 	{
 		if (flag & i)

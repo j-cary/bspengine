@@ -11,7 +11,7 @@ bsp_t bsp;
 shader_c bspshader;
 
 
-glid texarray, lmaparray;
+glid texarray, alphaarray, lmaparray;
 glid VAO, VBO;
 
 //todo: maybe implement this without glm
@@ -27,7 +27,6 @@ int startfans[65536]; //offset of each fan into verts
 int countfans[65536]; //number of edges in each face
 int numfans = 0; //total fans
 
-//extern atlas_c atlas[ATLAS_LEVELS];
 extern atlas3_c atlas;
 
 void ResizeWindow(GLFWwindow* win, int width, int height)
@@ -44,8 +43,8 @@ void SetupView(GLFWwindow* win)
 	glGenVertexArrays(1, &VAO); //vertex array object
 	glGenBuffers(1, &VBO); //vertex buffer object
 
-	if (!bsp.name[0]);
-		SetupBSP("maps/2fort.bsp");
+	if (!bsp.name[0])
+		SetupBSP("maps/blk.bsp");
 
 
 	tmp.Use();
@@ -95,16 +94,16 @@ void DrawView(GLFWwindow* win)
 {
 	glClearColor(0.0f, 0.0f, 0.9f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	cam[0] = in.org[0];
-	cam[1] = in.org[1];
-	cam[2] = in.org[2];
-	forward[0] = in.forward[0];
-	forward[1] = in.forward[1];
-	forward[2] = in.forward[2];
-	up[0] = in.up[0];
-	up[1] = in.up[1];
-	up[2] = in.up[2];
+	
+	cam[0] = in.org.v[0];
+	cam[1] = in.org.v[1];
+	cam[2] = in.org.v[2];
+	forward[0] = in.forward.v[0];
+	forward[1] = in.forward.v[1];
+	forward[2] = in.forward.v[2];
+	up[0] = in.up.v[0];
+	up[1] = in.up.v[1];
+	up[2] = in.up.v[2];
 
 	BuildFanArrays();
 
@@ -235,8 +234,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 			int block_z;
 			//atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
 			if (atlas.AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t, block_z))
-				SYS_Exit("Ran out of atlas space!", "atlas", "R_BuildVertexList");
-
+				SYS_Exit("Ran out of atlas space!");
 			for (; vertexcnt > 0; vertexcnt--)
 			{
 				int idx = vi->edgecount - vertexcnt;
@@ -279,13 +277,13 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 
 void BuildTextureList()
 {
-	byte* buf;
+	img_c* img;
 	//TODO: fix this nasty stuff
-	static byte missingline[128 * 3] = {};
-	static byte missingline2[128 * 3] = {};
+	static byte missingline[TEXTURE_SIZE * 4] = {};
+	static byte missingline2[TEXTURE_SIZE * 4] = {};
 
 	byte color[3];
-	static byte missing[128 * 128 * 3];
+	static byte missing[TEXTURE_SIZE * TEXTURE_SIZE * 4];
 
 	int num_textures;
 	char filename[64] = {};
@@ -295,7 +293,7 @@ void BuildTextureList()
 
 	num_textures = bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t);
 
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, 128, 128, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, TEXTURE_SIZE, TEXTURE_SIZE, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -309,10 +307,10 @@ void BuildTextureList()
 		strcat(filename, texlist[i]);
 		strcat(filename, ".bmp");
 		//printf("%s\n", filename);
-		buf = ReadBMPFile(filename, true);
-		if (buf)
+		img = ReadBMPFile(filename, true);
+		if (img->data)
 		{
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, buf);
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 			//strcat(filename, "2");
 			//WriteBMPFile(filename, 128, 128, buf, true);
 		}
@@ -323,7 +321,7 @@ void BuildTextureList()
 			color[0] = 0x80 + i * 0x4;
 			color[1] = 0;
 			color[2] = 0x80 + i * 0x4;
-			for (int j = 0; j < 128 * 3; j += 3)
+			for (int j = 0; j < TEXTURE_SIZE * 3; j += 3)
 			{
 				if (j % 24 == 0)
 					state = !state;
@@ -342,15 +340,16 @@ void BuildTextureList()
 				}
 			}
 
-			for (int j = 0; j < 128; j++)
+			byte* buf;
+			for (int j = 0; j < TEXTURE_SIZE; j++)
 			{
 				if (j % 8 == 0)
 					state = !state;
-				buf = &missing[j * 128 * 3];
+				buf = &missing[j * TEXTURE_SIZE * 4];
 				if(state)
-					memcpy(buf, missingline, 128 * 3);
+					memcpy(buf, missingline, TEXTURE_SIZE * 4);
 				else
-					memcpy(buf, missingline2, 128 * 3);
+					memcpy(buf, missingline2, TEXTURE_SIZE * 4);
 
 			}
 #else
@@ -377,8 +376,9 @@ void BuildTextureList()
 			}
 #endif
 
-			buf = missing;
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, buf);
+			//img->data = missing;
+			memcpy(img->data, missing, TEXTURE_SIZE * TEXTURE_SIZE * 4);
+			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 		}
 		
 		filename[0] = 0;
@@ -393,9 +393,8 @@ void InitLmapList()
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
 
 	//not final check since lightmaps won't be tightly packed
-	if((arraysize * texsize) < bsp.header.lump[LMP_LIGHT].len / sizeof(*bsp.lightmap))
-		SYS_Exit("GL 2D array cannot possibly hold lightmap data", "bsp.lightmap", "InitLmapList");
-
+	if ((arraysize * texsize) < bsp.header.lump[LMP_LIGHT].len / sizeof(*bsp.lightmap))
+		SYS_Exit("GL 2D array cannot possibly hold lightmap data");
 	//printf("can hold a lightmap of size %i\n", arraysize * texsize);
 
 	glGenTextures(1, &lmaparray);

@@ -32,4 +32,4 @@ void RunSound();
 void CleanupSound();
 
 
-void PlaySound(const char* name, const vec3_t org, int gain, int pitch, bool loop);
+void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loop);

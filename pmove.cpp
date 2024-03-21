@@ -10,14 +10,14 @@ const float pAccelRate = 400;
 const float pFriction = 6;
 const float pStopSpeed = 100;
 
-void PAccelerate(vec3_t wishdir, float wishspd, float accel);
+void PAccelerate(vec3_c wishdir, float wishspd, float accel);
 void PFriction();
 void PClip(vec3_c& wishvel);
 
 void PMove()
 {
-	vec3_t wishvel, wishdir;
-	vec3_t fixedvel;
+	vec3_c wishvel, wishdir;
+	vec3_c fixedvel;
 	float wishspd;
 
 #if 0 //watermove
@@ -33,16 +33,16 @@ void PMove()
 		wishspd = pMaxSpeed;
 	}
 #else
-	vec3_t fwd, right;
+	vec3_c fwd, right;
 	float newpitch;
 	float spd;
 
 	newpitch = in.pitch / 3; //so looking down doesn't impact forward speed as much
 	GetAngleVectors(newpitch, in.yaw, fwd, right);
 
-	wishvel[0] = fwd[0] * in.moveforward + right[0] * in.movesideways;
-	wishvel[1] = 0;
-	wishvel[2] = fwd[2] * in.moveforward + right[2] * in.movesideways;
+	wishvel.v[0] = fwd.v[0] * in.moveforward + right.v[0] * in.movesideways;
+	wishvel.v[1] = 0;
+	wishvel.v[2] = fwd.v[2] * in.moveforward + right.v[2] * in.movesideways;
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);
@@ -76,7 +76,7 @@ void PMove()
 	//vel[1] -= gravity * delTime?
 }
 
-void PAccelerate(vec3_t wishdir, float wishspd, float accel)
+void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 {
 	float addspd, accelspd, curspd;
 	//printf("%.3f | %.3f, %.3f, %.3f\n", wishspd, wishdir[0], wishdir[1], wishdir[2]);
@@ -89,7 +89,7 @@ void PAccelerate(vec3_t wishdir, float wishspd, float accel)
 		accelspd = addspd;
 	//printf("%f\n", accelspd);
 	for (int i = 0; i < 3; i++)
-		in.vel[i] += accelspd * wishdir[i];
+		in.vel.v[i] += accelspd * wishdir.v[i];
 
 	//printf("%.3f\n", curspd);
 	//printf("%f | %.2f, %.2f, %.2f | %f | %f\n", wishspd, in.vel[0], in.vel[1], in.vel[2], addspd, accelspd);
@@ -104,8 +104,8 @@ void PFriction()
 	spd = VecLength(in.vel);
 	if (spd < 1)
 	{
-		in.vel[0] = 0;
-		in.vel[2] = 0;
+		in.vel.v[0] = 0;
+		in.vel.v[2] = 0;
 		return;
 	}
 

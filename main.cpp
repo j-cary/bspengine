@@ -16,22 +16,18 @@
 gamestate_c game;
 winfo_t winfo;
 
-//TODO list:
+//TODO list:	
 //clean up whole program. Less globals, more parms. Functions need to return vals etc.
-//switch over to vec3_c
-//clean up keybinds system
-//clean up draw
-//switch to bgra
+//switch to bgra - need parallel texture list, maybe face sorting
+//tex mipmaps
+//fix texture absorbing problem - is this fixed?
+//pvs bug
 //Text drawing - Lucida console - lawnmower man
 //change textures over to 192x192. This will map to 128
-//tex mipmaps
-//text drawing
 //fix PVS for models - fat pvs?
 //collision
-//fix texture absorbing problem - is this fixed?
 //lightmap issue in tris2. Fixed when adding light to problem area. Maybe from sharing lightmaps.
 //get args working for winmain. set default map, too. Can't run PCmd. All out of order here
-//abort function
 //fix half pixel offset thing
 //fix sky lightmapping stuff
 //start caching stuff
@@ -134,11 +130,4 @@ void SetupWindow(winfo_t* winfo, int width, int height)
 	glfwSetFramebufferSizeCallback(winfo->win, ResizeWindow);
 	glfwSetCursorPosCallback(winfo->win, CursorMove);
 	glfwSetKeyCallback(winfo->win, KeyPress);
-}
-
-void SYS_Exit(const char* msg, const char* var, const char* function)
-{
-	printf("%s has failed: %s var: %s\n", function, msg, var);
-	//Sleep(500);
-	exit(1);
 }

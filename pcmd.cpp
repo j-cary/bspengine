@@ -12,6 +12,9 @@ void PKeys()
 		if (!in.keys[i].pressed)
 			continue;
 
+		if (!in.keys[i].cmd[0])
+			continue;
+
 		if (in.keys[i].time > game.time)
 			continue;
 
@@ -122,7 +125,7 @@ void PCmdUp(input_c* in, int key)
 		return;
 
 
-	in->org[1] += MVSPEEDtmp;
+	in->org.v[1] += MVSPEEDtmp;
 }
 
 void PCmdDown(input_c* in, int key)
@@ -131,7 +134,7 @@ void PCmdDown(input_c* in, int key)
 		return;
 
 
-	in->org[1] -= MVSPEEDtmp;
+	in->org.v[1] -= MVSPEEDtmp;
 }
 
 void PCmdFullscreen(input_c* in, int key)
@@ -153,7 +156,7 @@ void PCmdMenu(input_c* in, int key)
 
 void PCmdPos(input_c* in, int key)
 {
-	printf("pos: %s, fwd: %.2f, %.2f, %.2f pitch: %f, yaw: %f\n", vtos(in->org), in->forward[0], in->forward[1], in->forward[2], in->pitch, in->yaw);
+	printf("pos: %s, fwd: %s pitch: %f, yaw: %f\n", in->org.str(), in->forward.str(), in->pitch, in->yaw);
 }
 
 void PCmdRmode(input_c* in, int key)

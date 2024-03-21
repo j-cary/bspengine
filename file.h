@@ -4,9 +4,9 @@
 
 FILE* LocalFileOpen(const char* filename, const char* mode);
 
-//24-bit bmps with no alpha channel
-//buf is a dynamic array of pixel data. It MUST be freed after use.
-byte* ReadBMPFile(const char* name, bool flip);
+//24-bit or 32-bit
+img_c* ReadBMPFile(const char* name, bool flip);
+img_c* ReadTGAFile(const char* name);
 void FlipTexture(byte* data, unsigned w, unsigned h);
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors);
 

@@ -42,7 +42,7 @@ extern inline void CrossProduct(const vec3_t vec1, const vec3_t vec2, vec3_t out
 }
 
 extern inline float DotProduct(const vec3_t vec1, const vec3_t vec2)
-{
+ {
 	return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
 }
 
@@ -80,7 +80,7 @@ extern inline void GetAngleVectors(float pitch, float yaw, vec3_t forward, vec3_
 
 	//FIXME: this is not the correct way to do this
 	VecNormalize(forward, forward);
-	CrossProduct(forward, upvec, right);
+	CrossProduct(forward, upvec.v, right);
 	VecNormalize(right, right);
 }
 

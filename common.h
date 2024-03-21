@@ -62,13 +62,22 @@ public:
 	}
 	inline float dot(const vec3_c& vec) { return v[0] * vec.v[0] + v[1] * vec.v[1] + v[2] * vec.v[2]; }
 	inline vec3_c crs(const vec3_c& vec) { return vec3_c(v[1] * vec.v[2] - v[2] * vec.v[1], v[2] * vec.v[0] - v[0] * vec.v[2], v[0] * vec.v[1] - v[1] * vec.v[0]); }
+	char* str() //there can be no more than 16 calls to this function in a single printf
+	{
+		static char str[16][32];
+		static int strcnt = 0;
+		strcnt = strcnt % 16;
+
+		sprintf(str[strcnt], "%.2f, %.2f, %.2f", v[0], v[1], v[2]);
+		return str[strcnt++];
+	};
 };
 //inline vec3_c operator*(float f, const vec3_c& vec) { return vec * f; }
 
-const vec3_t zerovec = { 0, 0, 0 };
-const vec3_t upvec = { 0, 1, 0 };
+const vec3_c zerovec = { 0, 0, 0 };
+const vec3_c upvec = { 0, 1, 0 };
 
-void SYS_Exit(const char* msg, const char* var,  const char* function);
+void SYS_Exit(const char* fmt, ...);
 
 //entity.cpp
 
@@ -122,9 +131,9 @@ public:
 	mousebuttonflags_t mouseflags;
 
 	float yaw, pitch;
-	vec3_t org, right, forward, up;
+	vec3_c org, right, forward, up;
 
-	vec3_t vel;
+	vec3_c vel;
 	int moveforward; // negative for backwards
 	int movesideways;
 
@@ -153,7 +162,7 @@ public:
 		lasttick = nexttick = tickdelta = 0;
 		time = timedelta = lasttime = 0;
 
-		maxfps = 100;
+		maxfps = 250;
 	}
 
 	//general timing
@@ -175,7 +184,6 @@ public:
 	long tick;
 	const int maxtps = 128;
 };
-void ToggleMouseCursor();
 
 //console.cpp
 #define STDWINCON 1
@@ -183,5 +191,11 @@ int ConPrintf(const char* _Format, ...);
 void CreateConsole();
 
 //these functions return strings that should only be used for copying from or printing
-char* vtos(vec3_t v);
 char* fltos(int flag);
+
+class img_c
+{
+public:
+	int bpx;
+	byte data[TEXTURE_SIZE * TEXTURE_SIZE * 4]; //to fit biggest texture possible
+};

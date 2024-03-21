@@ -4,13 +4,6 @@
 
 input_c in;
 
-vec3_t aforward, aright;
-
-extern glm::vec3 cam;
-extern glm::vec3 forward;
-extern glm::vec3 up;
-
-//extern GLFWwindow* win;
 extern winfo_t winfo;
 
 void SetupInput(GLFWwindow* win)
@@ -85,38 +78,6 @@ void KeyPress(GLFWwindow* win, int key, int scancode, int action, int mods)
 
 }
 
-void Input(GLFWwindow* win)
-{
-	float curTime;
-	float spd;
-	float delTime;
-	static float lastTime = 0;
-
-	if (glfwGetKey(win, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	//glfwSetWindowShouldClose(win, true);
-
-	curTime = glfwGetTime();
-	delTime = curTime - lastTime;
-	lastTime = curTime;
-
-	spd = 2.5 * delTime;
-
-	glm::vec3 right = glm::cross(forward, up);
-	right = glm::normalize(right);
-
-	if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
-		cam += spd * forward;
-	if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
-		cam -= spd * forward;
-	if (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS)
-		cam -= spd * right;
-	if (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS)
-		cam += spd * right;
-}
-
-
-
 //input_c stuff
 
 int input_c::MapGLFWKeyIndex(int in)
@@ -180,18 +141,10 @@ input_c::input_c()
 	yaw = 270;
 	pitch = 0;
 
-	org[0] = 0;
-	org[1] = 64;
-	org[2] = 0;
-	right[0] = 0;
-	right[1] = 0;
-	right[2] = 1;
-	forward[0] = 0;
-	forward[1] = 0;
-	forward[2] = -1;
-	up[0] = 0;
-	up[1] = 1;
-	up[2] = 0;
+	VecSet(org, 0, 64, 0);
+	VecSet(right, 0, 0, 1);
+	VecSet(forward, 0, 0, -1); //wrong
+	VecSet(up, 0, 1, 0);
 
 	VecSet(vel, 0, 0, 0);
 	moveforward = 0;

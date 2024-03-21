@@ -29,7 +29,7 @@ void ent_c::DelEnt()
 	inuse = 0;
 }
 
-void ent_c::PlaySound(const char* name, const vec3_t ofs, int gain, int pitch)
+void ent_c::PlaySound(const char* name, const vec3_c ofs, int gain, int pitch)
 {
 	//printf("trying to play %s\n", name);
 }
@@ -51,9 +51,9 @@ ent_c::ent_c()
 
 	light[0] = light[1] = light[2] = light[3] = 0;
 
-	VecSet(origin, 0, 0, 0);
-	VecSet(forward, 0, 0, 0);
-	VecSet(angles, 0, 0, 0);
+	VecSet(origin.v, 0, 0, 0);
+	VecSet(forward.v, 0, 0, 0);
+	VecSet(angles.v, 0, 0, 0);
 
 	flags = 0;
 
@@ -280,7 +280,7 @@ void PCmdPrintEntlist(input_c* in, int key)
 
 		printf("%s with org %s, name %s, model %s, noise %s\n", 
 			entlist[i].classname, 
-			vtos(entlist[i].origin), 
+			entlist[i].origin.str(),
 			entlist[i].name,
 			entlist[i].modelname,
 			entlist[i].noise);
