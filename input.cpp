@@ -155,6 +155,8 @@ input_c::input_c()
 	pvslock = false;
 	fullscreen = false;
 	movetype = MOVETYPE_NOCLIP;
+
+	fov = 105;
 }
 
 void ToggleMouseCursor()

@@ -37,7 +37,7 @@ void SetupSound()
 	VecSet(org.v, 320, 96, -64);
 	//PlaySound("sound/wind.wav", org, 10, 1, 0);
 	VecSet(org.v, -256, 96, -384);
-	PlaySound("sound/cicadas.wav", org, 10, 1, 1);
+	//PlaySound("sound/cicadas.wav", org, 10, 1, 1);
 
 	//really need to check if enumeration is supported here
 	//ListAudioDevices(alcGetString(NULL, ALC_DEVICE_SPECIFIER));

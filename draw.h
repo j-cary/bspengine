@@ -63,3 +63,7 @@ void BuildFanArrays();
 
 void DrawView(GLFWwindow* win);
 void UpdateProjection();
+
+//todo: cleanup shaders here and in draw
+void SetupSky(const char* name);
+void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h);

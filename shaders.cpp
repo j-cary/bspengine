@@ -14,8 +14,8 @@ shader_c::shader_c()
 shader_c::shader_c(const char* vname, const char* fname)
 {
 	FILE* vfile, *ffile;
-	char vsrc[1024] = {};
-	char fsrc[1024] = {};
+	char vsrc[0x1000] = {}; //fixme!
+	char fsrc[0x1000] = {};
 	char* vs = vsrc;
 	char* fs = fsrc;
 
@@ -26,9 +26,9 @@ shader_c::shader_c(const char* vname, const char* fname)
 	char infolog[512];
 
 	if (!(vfile = LocalFileOpen(vname, "r")))
-		return;
+		SYS_Exit("Unable to open shader file %s\n", vname);
 	if (!(ffile = LocalFileOpen(fname, "r")))
-		return;
+		SYS_Exit("Unable to open shader file %s\n", fname);
 
 	//these loops might be a little complicated for what they are
 	for (i = 0; !feof(vfile); i++)

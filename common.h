@@ -12,6 +12,7 @@
 //maxes
 #define MAX_ENTITIES 4096
 #define TEXTURE_SIZE 128
+#define SKY_SIZE 256
 
 //macro defs 
 
@@ -143,6 +144,8 @@ public:
 	bool fullscreen;
 	int movetype;
 
+	float fov;
+
 	int MapGLFWKeyIndex(int in);
 
 	input_c();
@@ -197,5 +200,36 @@ class img_c
 {
 public:
 	int bpx;
-	byte data[TEXTURE_SIZE * TEXTURE_SIZE * 4]; //to fit biggest texture possible
+	int width, height;
+	byte data[256 * 256 * 4]; //to fit biggest texture possible
+
+	void BRG2RGB()
+	{
+		for (unsigned i = 0; i < width * height * (bpx / 8); i += (bpx / 8))
+		{
+			byte tmp;
+			tmp = data[i];
+			data[i] = data[i + 2];
+			data[i + 2] = tmp;
+		}
+	}
+
+	void Flip()
+	{
+		int bspx = bpx / 8;
+		for (unsigned i = 0, j = height - 1; i < height / 2; i++, j--)
+		{
+			for (unsigned k = 0; k < width * bspx; k++)
+			{
+				byte tmp;
+				unsigned first, fsecond;
+				first = i * height * bspx + k;
+				fsecond = j * height * bspx + k;
+
+				tmp = data[first];
+				data[first] = data[fsecond];
+				data[fsecond] = tmp;
+			}
+		}
+	}
 };

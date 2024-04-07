@@ -39,6 +39,25 @@ void FlipTexture(byte* data, unsigned w, unsigned h)
 	}
 }
 
+img_c* PeekBMPFile(const char* filename)
+{
+	static img_c img;
+	FILE* f;
+
+	if (!(f = LocalFileOpen(filename, "rb")))
+	{
+		//printf("Unable to peek %s\n", filename);
+		return NULL;
+	}
+	fseek(f, 0x12, SEEK_SET);
+	fread(&img.width, 4, 1, f);
+	fread(&img.height, 4, 1, f);
+	fseek(f, 0x1C, SEEK_SET);
+	fread(&img.bpx, 2, 1, f);
+
+	return &img;
+}
+
 img_c* ReadBMPFile(const char* filename, bool flip)
 {
 	FILE* f;
@@ -90,42 +109,118 @@ img_c* ReadBMPFile(const char* filename, bool flip)
 		return NULL;
 	}
 
+	//if (w != TEXTURE_SIZE || h != TEXTURE_SIZE)
+	//{
+	//	printf("%s is not %ix%i\n", filename, TEXTURE_SIZE, TEXTURE_SIZE);
+	//	return NULL;
+	//}
+
 
 	fseek(f, pixel_ofs, SEEK_SET);
-	fread(img.data, 1, w * h * (bpx / 8), f);
+	fread(img.data, 1, w * h * (bpx / 8), f); //assuming no padding
 	img.bpx = bpx;
+	img.width = w;
+	img.height = h;
 
-	//BRG2RGB(img.data, w, h);
+	img.BRG2RGB();
 	
-
-#if 0
-	static byte flipbuf[TEXTURE_SIZE * TEXTURE_SIZE * 4];
-	//this also flips along the y axis
 	if (flip)
-	{
-		for (unsigned i = 0, j = (w * h * 3) - 3; i < w * h * 3; i += 3, j -= 3)
-		{
-			flipbuf[j] = buf[i];
-			flipbuf[j + 1] = buf[i + 1];
-			flipbuf[j + 2] = buf[i + 2];
-		}
-
-		fclose(f);
-		return flipbuf;
-	}
-#else
-	
-	//if (flip)
-	//	FlipTexture(img.data, w, h);
-#endif
+		img.Flip();
 
 	fclose(f);
 	return &img;
 }
 
-img_c* ReadTGAFile(const char* name)
+img_c* MakeNullImg(int bpx)
 {
-	return NULL;
+	static img_c img;
+
+	//TODO: fix this nasty stuff
+	byte missingline[TEXTURE_SIZE * 4] = {};
+	byte missingline2[TEXTURE_SIZE * 4] = {};
+	
+	byte color[4];
+	byte missing[TEXTURE_SIZE * TEXTURE_SIZE * 4];
+#if 1
+	bool state = 0;
+	color[0] = rand();
+	color[1] = rand();
+	color[2] = rand();
+	color[3] = 0x80;
+
+	//printf("%i %i %i\n", rand(), rand(), rand());
+
+
+	for (int j = 0; j < TEXTURE_SIZE * (bpx / 8); j += (bpx / 8))
+	{
+		if (j % bpx == 0)
+			state = !state;
+
+		if (state)
+		{
+			missingline[j] = color[0];
+			missingline[j + 1] = color[1];
+			missingline[j + 2] = color[2];
+			if (bpx == 32)
+			{
+				missingline[j + 3] = color[3];
+				missingline2[j + 3] = color[3];
+			}
+
+
+		}
+		else
+		{
+			missingline2[j] = color[0];
+			missingline2[j + 1] = color[1];
+			missingline2[j + 2] = color[2];
+			if (bpx == 32)
+			{
+				missingline2[j + 3] = color[3];
+				missingline[j + 3] = color[3];
+			}
+		}
+	}
+
+	byte* buf;
+	for (int j = 0; j < TEXTURE_SIZE; j++)
+	{
+		if (j % 8 == 0)
+			state = !state;
+		buf = &missing[j * TEXTURE_SIZE * (bpx / 8)];
+		if (state)
+			memcpy(buf, missingline, TEXTURE_SIZE * (bpx / 8));
+		else
+			memcpy(buf, missingline2, TEXTURE_SIZE * (bpx / 8));
+
+	}
+#else
+	for (int b = 0; b < (128 * 128 * 3) - 912; b += 24 /*8 px * RGB */) //256 loops
+	{
+		for (int iy = 0; iy < 8; iy++)
+		{
+			for (int ix = 0; ix < 8 * 3; ix += 3)
+			{
+				int idx = b + ix + iy * 128;
+				missing[idx] = 0xFF;
+				missing[idx + 1] = 0x00;
+				missing[idx + 2] = 0xFF;
+			}
+		}
+	}
+	bool state = 0;
+	for (int j = 0; j < (128 * 128 * 3); j += 3, state = !state)
+	{
+		if (state)
+			missing[j] = missing[j + 1] = missing[j + 2] = 0x00;
+		else
+			missing[j] = missing[j + 1] = missing[j + 2] = 0xFF;
+	}
+#endif
+
+	memcpy(img.data, missing, TEXTURE_SIZE * TEXTURE_SIZE * (bpx / 8));
+
+	return &img;
 }
 
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors)

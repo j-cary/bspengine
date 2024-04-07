@@ -21,6 +21,8 @@ glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 vertexinfo_c vi;
 char texlist[16][MAX_TEXTURES] = {};
+char alphalist[16][MAX_TEXTURES] = {};
+int num_textures = 0, num_atextures = 0;
 
 //these should really be dynamic
 int startfans[65536]; //offset of each fan into verts
@@ -44,15 +46,21 @@ void SetupView(GLFWwindow* win)
 	glGenBuffers(1, &VBO); //vertex buffer object
 
 	if (!bsp.name[0])
-		SetupBSP("maps/blk.bsp");
+	{
+		SetupBSP("maps/complex.bsp");
+		SetupSky("maps/complex.bsp");
+	}
 
 
 	tmp.Use();
 	tmp.SetI("texarray", 0); //setting to GL_TEXTURE0
 	tmp.SetI("lmaparray", 1); //setting to GL_TEXTURE1
+	tmp.SetI("alphaarray", 2); //setting to GL_TEXTURE2
 	bspshader = tmp;
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void SetupBSP(const char* name)
@@ -92,7 +100,7 @@ void SetupBSP(const char* name)
 
 void DrawView(GLFWwindow* win)
 {
-	glClearColor(0.0f, 0.0f, 0.9f, 1.0f);
+	glClearColor(1.0f, 0.55f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	cam[0] = in.org.v[0];
@@ -105,7 +113,8 @@ void DrawView(GLFWwindow* win)
 	up[1] = in.up.v[1];
 	up[2] = in.up.v[2];
 
-	BuildFanArrays();
+
+	bspshader.Use();
 
 	glm::mat4 mdl = glm::mat4(1); //model transform / rotation
 	bspshader.SetM4F("model", glm::value_ptr(mdl));
@@ -114,18 +123,24 @@ void DrawView(GLFWwindow* win)
 	view = glm::lookAt(cam, cam + forward, up);
 	bspshader.SetM4F("view", glm::value_ptr(view));
 
-	glm::mat4 proj = glm::perspective(glm::radians(105.0f), (float)winfo.w / (float)winfo.h, 0.1f, 4096.0f); //projection
+	glm::mat4 proj = glm::perspective(glm::radians(in.fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
 	proj = glm::scale(proj, glm::vec3(-1.0, 1.0, 1.0));
 	bspshader.SetM4F("projection", glm::value_ptr(proj));
+
+	BuildFanArrays();
 	
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, alphaarray);
 
 	bspshader.Use();
 	glBindVertexArray(VAO);
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
+	
+	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
 
 	glfwSwapBuffers(win);
 	glfwPollEvents();
@@ -197,10 +212,19 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				vi->verts[vi->edgecount][VI_S] = fs;
 				vi->verts[vi->edgecount][VI_T] = ft;
 
-				for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
+				for (int i = 0; i < num_textures; i++)
 				{
 					if (!strcmp(texlist[i], bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
 						vi->verts[vi->edgecount][VI_TI] = i; //texid
+				}
+
+				for (int i = 0; i < num_atextures; i++)
+				{
+					if (!strcmp(alphalist[i], bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
+					{
+						vi->verts[vi->edgecount][VI_TI] = ~i;
+						//printf("%s is RGBA and has ofs %i\n", alphalist[i], ~i);
+					}
 				}
 
 				if (fs > maxs)
@@ -278,111 +302,107 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 void BuildTextureList()
 {
 	img_c* img;
-	//TODO: fix this nasty stuff
-	static byte missingline[TEXTURE_SIZE * 4] = {};
-	static byte missingline2[TEXTURE_SIZE * 4] = {};
 
-	byte color[3];
-	static byte missing[TEXTURE_SIZE * TEXTURE_SIZE * 4];
-
-	int num_textures;
 	char filename[64] = {};
+
+	for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
+	{
+		strcpy(filename, "textures/");
+		strcat(filename, bsp.miptex[i].name);
+		strcat(filename, ".bmp");
+		img = PeekBMPFile(filename);
+
+		if (!img) //handle this later
+		{
+			if (bsp.miptex[i].name[0] != '~')
+				num_textures++;
+			else
+				num_atextures++;
+			continue;
+		}
+
+		if (img->bpx == 32 && bsp.miptex[i].name[0] != '~')
+			SYS_Exit("alpha texture %s does not start with ~!\n", bsp.miptex[i].name);
+		if (img->bpx == 24 && bsp.miptex[i].name[0] == '~')
+			SYS_Exit("non-alpha texture %s starts with ~!\n", bsp.miptex[i].name);
+
+		if (img->bpx == 24)
+			num_textures++;
+		else
+			num_atextures++;
+	}
+
+	printf("%i texture(s) and %i alpha texture(s)\n", num_textures, num_atextures);
+
 	glGenTextures(1, &texarray);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
-
-	num_textures = bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t);
-
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, TEXTURE_SIZE, TEXTURE_SIZE, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glGenTextures(1, &alphaarray);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, alphaarray);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, TEXTURE_SIZE, TEXTURE_SIZE, num_atextures, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	//FIXME: texture 0 is somehow swallowing surrounding textures in some cases
-	for (int i = 0; i < num_textures; i++)
+	int tex_i = 0, alpha_i = 0;
+	for (int i = 0; i < num_textures + num_atextures; i++)
 	{
-		strcpy(texlist[i], bsp.miptex[i].name);
-		strcat(filename, "textures/");
-		strcat(filename, texlist[i]);
+		strcpy(filename, "textures/");
+		strcat(filename, bsp.miptex[i].name);
 		strcat(filename, ".bmp");
-		//printf("%s\n", filename);
+		//printf("%s is %i\n", texlist[i], i);
 		img = ReadBMPFile(filename, true);
-		if (img->data)
+		if (img)
 		{
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
-			//strcat(filename, "2");
-			//WriteBMPFile(filename, 128, 128, buf, true);
+			if (img->bpx == 24)
+			{
+				strcpy(texlist[tex_i], bsp.miptex[i].name);
+				glActiveTexture(GL_TEXTURE0);
+				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
+				tex_i++;
+			}
+			else if (img->bpx == 32)
+			{
+				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
+				glActiveTexture(GL_TEXTURE2);
+				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+				alpha_i++;
+			}
 		}
 		else
 		{
-#if 1
-			bool state = 0;
-			color[0] = 0x80 + i * 0x4;
-			color[1] = 0;
-			color[2] = 0x80 + i * 0x4;
-			for (int j = 0; j < TEXTURE_SIZE * 3; j += 3)
-			{
-				if (j % 24 == 0)
-					state = !state;
-				
-				if (state)
-				{
-					missingline[j] = color[0];
-					missingline[j + 1] = color[1];
-					missingline[j + 2] = color[2];
-				}
-				else
-				{
-					missingline2[j] = color[0];
-					missingline2[j + 1] = color[1];
-					missingline2[j + 2] = color[2];
-				}
+			if (bsp.miptex[i].name[0] != '~')
+			{//alpha
+				strcpy(texlist[tex_i], bsp.miptex[i].name);
+				img = MakeNullImg(24);
+				glActiveTexture(GL_TEXTURE0);
+				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
+				tex_i++;
 			}
-
-			byte* buf;
-			for (int j = 0; j < TEXTURE_SIZE; j++)
+			else
 			{
-				if (j % 8 == 0)
-					state = !state;
-				buf = &missing[j * TEXTURE_SIZE * 4];
-				if(state)
-					memcpy(buf, missingline, TEXTURE_SIZE * 4);
-				else
-					memcpy(buf, missingline2, TEXTURE_SIZE * 4);
+				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
+				img = MakeNullImg(32);
+				glActiveTexture(GL_TEXTURE2);
+				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
+				alpha_i++;
 
-			}
-#else
-			for (int b = 0; b < (128 * 128 * 3) - 912; b += 24 /*8 px * RGB */) //256 loops
-			{
-				for (int iy = 0; iy < 8; iy++)
-				{
-					for (int ix = 0; ix < 8 * 3; ix += 3)
-					{
-						int idx = b + ix + iy * 128;
-						missing[idx] = 0xFF;
-						missing[idx + 1] = 0x00;
-						missing[idx + 2] = 0xFF;
 			}
 		}
 	}
-			bool state = 0;
-			for (int j = 0; j < (128 * 128 * 3); j += 3, state = !state)
-			{
-				if (state)
-					missing[j] = missing[j + 1] = missing[j + 2] = 0x00;
-				else
-					missing[j] = missing[j + 1] = missing[j + 2] = 0xFF;
-			}
-#endif
-
-			//img->data = missing;
-			memcpy(img->data, missing, TEXTURE_SIZE * TEXTURE_SIZE * 4);
-			glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
-		}
-		
-		filename[0] = 0;
-	}
+	
+	//glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
 void InitLmapList()

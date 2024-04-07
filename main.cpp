@@ -16,9 +16,11 @@
 gamestate_c game;
 winfo_t winfo;
 
-//TODO list:	
+//TODO list:
+//compile complex for half life and see if lighting bugs are present
+//wireframe - learnopengl - hello triangle
 //clean up whole program. Less globals, more parms. Functions need to return vals etc.
-//switch to bgra - need parallel texture list, maybe face sorting
+//switch to bgra - face sorting
 //tex mipmaps
 //fix texture absorbing problem - is this fixed?
 //pvs bug

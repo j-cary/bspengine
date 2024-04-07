@@ -5,8 +5,9 @@
 FILE* LocalFileOpen(const char* filename, const char* mode);
 
 //24-bit or 32-bit
-img_c* ReadBMPFile(const char* name, bool flip);
-img_c* ReadTGAFile(const char* name);
+img_c* PeekBMPFile(const char* filename);
+img_c* ReadBMPFile(const char* filename, bool flip);
+img_c* MakeNullImg(int bpx);
 void FlipTexture(byte* data, unsigned w, unsigned h);
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors);
 
