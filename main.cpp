@@ -17,24 +17,35 @@ gamestate_c game;
 winfo_t winfo;
 
 //TODO list:
-//compile complex for half life and see if lighting bugs are present
+//TEXTURES:
+//	change textures over to 192x192. This will map to 128
+//	improve texture loading in draw.cpp
+//	make texture functions more robust.
+//	switch to bgra - face sorting
+//	tex mipmaps
+//	fix texture absorbing problem - is this fixed?
+//LIGHTMAPS:
+//	lightmap issue in tris2. Fixed when adding light to problem area. Maybe from sharing lightmaps.
+//	fix half pixel offset thing
+//	fix sky lightmapping stuff - is this even a problem anymore?
+//PVS:
+//	pvs bug
+//	fix PVS for models - fat pvs?
+//TEXT:
+//	use texture array for textures
+//	use single draw call per string
+//	make text transparent
+//MISC:
+//	clean up whole program. Less globals, more parms. Functions need to return vals etc.
+//	get args working for winmain. set default map, too. Can't run PCmd. All out of order here
+//	start caching stuff
+//	gl error checking
+
+
+//NEW STUFF
 //wireframe - learnopengl - hello triangle
-//clean up whole program. Less globals, more parms. Functions need to return vals etc.
-//switch to bgra - face sorting
-//tex mipmaps
-//fix texture absorbing problem - is this fixed?
-//pvs bug
 //Text drawing - Lucida console - lawnmower man
-//change textures over to 192x192. This will map to 128
-//fix PVS for models - fat pvs?
 //collision
-//lightmap issue in tris2. Fixed when adding light to problem area. Maybe from sharing lightmaps.
-//get args working for winmain. set default map, too. Can't run PCmd. All out of order here
-//fix half pixel offset thing
-//fix sky lightmapping stuff
-//start caching stuff
-//gl error checking
-//debug line drawing + wireframe mode
 
 void SetupWindow(winfo_t* win, int width, int height);
 

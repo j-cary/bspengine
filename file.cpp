@@ -58,6 +58,7 @@ img_c* PeekBMPFile(const char* filename)
 	return &img;
 }
 
+//todo: give max dimension args, reject if img is too big
 img_c* ReadBMPFile(const char* filename, bool flip)
 {
 	FILE* f;
@@ -220,7 +221,58 @@ img_c* MakeNullImg(int bpx)
 
 	memcpy(img.data, missing, TEXTURE_SIZE * TEXTURE_SIZE * (bpx / 8));
 
+	img.height = img.width = TEXTURE_SIZE;
+
 	return &img;
+}
+
+img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio)
+{
+	static img_c dst;
+	float xs, ys;
+	float ox, oy;
+	int pxlen;
+
+	if (!src)
+		return NULL;
+
+	if (!new_w || !new_h)
+		return NULL;
+
+	if (src->width == new_w && src->height == new_h)
+	{
+		*xratio = *yratio = 1.0f;
+		return src;
+	}
+
+	dst.width = new_w;
+	dst.height = new_h;
+
+	*xratio = xs = (float)src->width / (float)new_w;
+	*yratio = ys = (float)src->height / (float)new_h;
+
+	pxlen = src->bpx / 8;
+	
+	oy = 0;
+	for (int ny = 0; ny < new_h; ny++, oy += ys)
+	{
+		ox = 0;
+		//printf("sy: %.2f / %i => dy: %i\n", oy, (int)floor(oy), ny);
+		for (int nx = 0; nx < new_w * pxlen; nx += pxlen, ox += pxlen * xs)
+		{
+			int dsti = ny * new_w * pxlen + nx;
+			int srci = (floor(oy) * src->width * pxlen) + (floor(ox / pxlen) * pxlen);
+
+			int y, x;
+			y = floor(oy);
+			x = floor(ox / pxlen);
+
+			for (int i = 0; i < pxlen; i++) //copy the pixel
+				dst.data[dsti + i] = src->data[srci + i];
+		}
+	}
+
+	return &dst;
 }
 
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors)

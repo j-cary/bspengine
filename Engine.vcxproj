@@ -113,7 +113,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;openAL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;openAL32.lib;freetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,6 +138,7 @@
     <ClCompile Include="console.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="draw_sky.cpp" />
+    <ClCompile Include="draw_text.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="game.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="draw.h" />
     <ClInclude Include="draw_sky.h" />
+    <ClInclude Include="draw_text.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="file.h" />
     <ClInclude Include="game.h" />

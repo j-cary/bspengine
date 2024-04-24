@@ -223,8 +223,8 @@ public:
 			{
 				byte tmp;
 				unsigned first, fsecond;
-				first = i * height * bspx + k;
-				fsecond = j * height * bspx + k;
+				first = i * width * bspx + k;
+				fsecond = j * width * bspx + k;
 
 				tmp = data[first];
 				data[first] = data[fsecond];

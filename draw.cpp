@@ -20,7 +20,13 @@ glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
 vertexinfo_c vi;
-char texlist[16][MAX_TEXTURES] = {};
+//char texlist[16][MAX_TEXTURES] = {};
+typedef struct texlist_s
+{
+	char name[16] = {};
+	float xscale, yscale; //ex: 0.5 for a tex half the size of the max
+} texlist_t;
+texlist_t texlist[MAX_TEXTURES] = {};
 char alphalist[16][MAX_TEXTURES] = {};
 int num_textures = 0, num_atextures = 0;
 
@@ -50,6 +56,8 @@ void SetupView(GLFWwindow* win)
 		SetupBSP("maps/complex.bsp");
 		SetupSky("maps/complex.bsp");
 	}
+
+	SetupText();
 
 
 	tmp.Use();
@@ -102,6 +110,7 @@ void DrawView(GLFWwindow* win)
 {
 	glClearColor(1.0f, 0.55f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT);
 	
 	cam[0] = in.org.v[0];
 	cam[1] = in.org.v[1];
@@ -141,6 +150,7 @@ void DrawView(GLFWwindow* win)
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
 	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
+	DrawText(&winfo);
 
 	glfwSwapBuffers(win);
 	glfwPollEvents();
@@ -157,6 +167,8 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 	float maxs, mins, maxt, mint;
 	//float czs, czt;
 	int vertexcnt;
+
+	texlist_t* tex = NULL;
 
 	vec3_t vert;
 
@@ -214,8 +226,14 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 
 				for (int i = 0; i < num_textures; i++)
 				{
-					if (!strcmp(texlist[i], bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
+					if (!strcmp(texlist[i].name, bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
+					{
 						vi->verts[vi->edgecount][VI_TI] = i; //texid
+						//vi->verts[vi->edgecount][VI_S] /= texlist[i].xscale;
+						//vi->verts[vi->edgecount][VI_T] /= texlist[i].yscale;
+						tex = &texlist[i];
+						break;
+					}
 				}
 
 				for (int i = 0; i < num_atextures; i++)
@@ -286,6 +304,12 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				
 				vi->verts[idx][VI_LT] = (vi->verts[idx][VI_LT] * lh) / (float)ATLAS_SIZE + block_t;
 				vi->verts[idx][VI_LI] = block_z;
+
+				if (tex)
+				{//here so lightmap coordinate calculations aren't messed up
+					vi->verts[idx][VI_S] /= tex->xscale; 
+					vi->verts[idx][VI_T] /= tex->yscale;
+				}
 				//printf("%i - %f, %f\n", idx, vi->verts[idx][6], vi->verts[idx][7]);
 				//if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "sky"))
 				//	vi->verts[idx][6] = vi->verts[idx][7] = -1;
@@ -367,7 +391,8 @@ void BuildTextureList()
 		{
 			if (img->bpx == 24)
 			{
-				strcpy(texlist[tex_i], bsp.miptex[i].name);
+				strcpy(texlist[tex_i].name, bsp.miptex[i].name);
+				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(GL_TEXTURE0);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 				tex_i++;
@@ -375,6 +400,7 @@ void BuildTextureList()
 			else if (img->bpx == 32)
 			{
 				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
+				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(GL_TEXTURE2);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 				alpha_i++;
@@ -384,8 +410,9 @@ void BuildTextureList()
 		{
 			if (bsp.miptex[i].name[0] != '~')
 			{//alpha
-				strcpy(texlist[tex_i], bsp.miptex[i].name);
+				strcpy(texlist[tex_i].name, bsp.miptex[i].name);
 				img = MakeNullImg(24);
+				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(GL_TEXTURE0);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 				tex_i++;
@@ -394,6 +421,7 @@ void BuildTextureList()
 			{
 				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
 				img = MakeNullImg(32);
+				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(GL_TEXTURE2);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 				alpha_i++;

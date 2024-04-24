@@ -1,2 +1,3 @@
 licenses
 gnu license for openal
+probably should build all these on this computer

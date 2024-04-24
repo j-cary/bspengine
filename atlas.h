@@ -3,7 +3,7 @@
 
 //have a class for every z-value in the 3d array
 #define ATLAS_LEVELS 15 //todo: make this dynamic
-#define ATLAS_SIZE	256 /*16384*/ //ditto
+#define ATLAS_SIZE	384 /*16384*/ //ditto
 
 class atlas_c
 {
