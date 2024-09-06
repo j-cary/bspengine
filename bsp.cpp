@@ -244,9 +244,24 @@ int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node)
 	return RecursiveBSPNodeSearch(point, bsp, nextnode);
 }
 
+extern bsp_t bsp;
+
+//player collision 
+void ptrace_c::Trace(vec3_c start, vec3_c _end)
+{
+	vec3_c hit;
+	bspplane_t* tmpplane = NULL;
+
+	allsolid = initsolid = inempty = inwater = false;
+	ent = 0;
+
+	RecursiveBSPClipNodeSearch(start.v, _end.v, &bsp, 0, end.v, tmpplane);
+	plane = *tmpplane;
+}
+
 //note: start & end must lie in node. This is why I'm starting with node 0
 //this should spit out an intersection point
-int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* bsp, int node, vec3_t hit, bspplane_t*& plane)
+int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* _bsp, int node, vec3_t hit, bspplane_t*& plane)
 {
 	bspclip_t* curnode;
 	float dist1, dist2;
@@ -269,16 +284,16 @@ int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* bsp, int node, v
 	}
 
 
-	curnode = &bsp->clips[node];
-	plane = &bsp->planes[curnode->plane];
+	curnode = &_bsp->clips[node];
+	plane = &_bsp->planes[curnode->plane];
 	dist1 = DotProduct(plane->normal, start) - plane->dist;
 	dist2 = DotProduct(plane->normal, end) - plane->dist;
 
 	//handle case where the segment lies entirely in a child
 	if (dist1 >= 0 && dist2 >= 0)
-		return RecursiveBSPClipNodeSearch(start, end, bsp, curnode->children[0], hit, plane);
+		return RecursiveBSPClipNodeSearch(start, end, _bsp, curnode->children[0], hit, plane);
 	if (dist1 < 0 && dist2 < 0)
-		return RecursiveBSPClipNodeSearch(start, end, bsp, curnode->children[1], hit, plane);
+		return RecursiveBSPClipNodeSearch(start, end, _bsp, curnode->children[1], hit, plane);
 
 	//handle the segment being intersected by the plane
 	frac = dist1 / (dist1 - dist2);
@@ -289,17 +304,17 @@ int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* bsp, int node, v
 	side = (dist1 >= 0) ? 0 : 1;
 
 	//go through the children in order now
-	if (RecursiveBSPClipNodeSearch(start, split, bsp, curnode->children[side], hit, plane))
+	if (RecursiveBSPClipNodeSearch(start, split, _bsp, curnode->children[side], hit, plane))
 		return 1;
-	return RecursiveBSPClipNodeSearch(split, end, bsp, curnode->children[1 - side], hit, plane);
+	return RecursiveBSPClipNodeSearch(split, end, _bsp, curnode->children[1 - side], hit, plane);
 }
 
-byte* DecompressVis(bsp_t* bsp, int leafidx)
+byte* DecompressVis(bsp_t* _bsp, int leafidx)
 {
 	static byte pvs[10000]; //use num_visleafs to make this dynamic. Just once!
-	int v = bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
+	int v = _bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
 	//int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
-	int numleaves = bsp->models[0].num_visleafs;
+	int numleaves = _bsp->models[0].num_visleafs;
 
 	if (leafidx)
 		memset(pvs, 0, 10000);
@@ -313,17 +328,17 @@ byte* DecompressVis(bsp_t* bsp, int leafidx)
 	for (int l = 1; l < numleaves; v++)
 	{
 #if 1
-		if (bsp->vis[v] == 0) // all the leaves in this byte are invisible. Redundant check for speed I think
+		if (_bsp->vis[v] == 0) // all the leaves in this byte are invisible. Redundant check for speed I think
 		{
 			v++;
-			l += 8 * bsp->vis[v]; // skip some leaves
+			l += 8 * _bsp->vis[v]; // skip some leaves
 		}
 		else
 #endif
 		{// examine bits right to left
 			for (byte bit = 1; bit != 0; bit = bit * 2, l++)
 			{
-				if (bsp->vis[v] & bit)
+				if (_bsp->vis[v] & bit)
 				{
 					pvs[l] = 1;
 					//printf("%i, ", l);

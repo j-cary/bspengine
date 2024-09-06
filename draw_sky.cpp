@@ -118,7 +118,7 @@ void SetupSky(const char* name)
 
 	//texture stuff
 	glGenTextures(1, &sky2darray);
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(SKY_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, sky2darray);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, SKY_SIZE, SKY_SIZE, 6, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
@@ -127,7 +127,7 @@ void SetupSky(const char* name)
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(SKY_TEXTURE_UNIT);
 
 	for (int i = 0; skyname[i]; i++)
 	{
@@ -170,7 +170,7 @@ void SetupSky(const char* name)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	sky2dshader.Use();
-	sky2dshader.SetI("sky2darray", 3); //GL_TEXTURE3
+	sky2dshader.SetI("sky2darray", TUtoI(SKY_TEXTURE_UNIT)); //GL_TEXTURE3
 }
 
 void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h)
@@ -192,7 +192,7 @@ void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h)
 	proj = glm::scale(proj, glm::vec3(-1.0, 1.0, 1.0));
 	sky2dshader.SetM4F("sky2d_projection", glm::value_ptr(proj));
 
-	glActiveTexture(GL_TEXTURE3);
+	glActiveTexture(SKY_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, sky2darray);
 
 	sky2dshader.Use();

@@ -137,12 +137,14 @@
     <ClCompile Include="bsp.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="draw.cpp" />
+    <ClCompile Include="draw_models.cpp" />
     <ClCompile Include="draw_sky.cpp" />
     <ClCompile Include="draw_text.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="md2.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
@@ -162,6 +164,7 @@
     <ClInclude Include="file.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="glinc.h" />
+    <ClInclude Include="md2.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="pcmd.h" />

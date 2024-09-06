@@ -9,6 +9,16 @@
 #include "common.h"
 #include "file.h" //bsp stuff, change later
 
+#define BASE_TEXTURE_UNIT	GL_TEXTURE0
+#define WORLD_TEXTURE_UNIT	GL_TEXTURE0
+#define LIGHT_TEXTURE_UNIT	GL_TEXTURE1
+#define ALPHA_TEXTURE_UNIT	GL_TEXTURE2
+#define SKY_TEXTURE_UNIT	GL_TEXTURE3
+#define TEXT_TEXTURE_UNIT	GL_TEXTURE4
+#define MODEL_TEXTURE_UNIT	GL_TEXTURE5
+
+#define TUtoI(x) (x - BASE_TEXTURE_UNIT)
+
 //temporary structure for giving GL vertexinfo
 
 enum VI_ARRAY_MEMBERS
@@ -70,3 +80,6 @@ void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h);
 
 void SetupText();
 void DrawText(winfo_t* winfo);
+
+void SetupModels();
+void DrawModels();

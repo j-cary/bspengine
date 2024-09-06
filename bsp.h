@@ -184,6 +184,24 @@ void UpdateBModelOrg(bspmodel_t* mod);
 
 //used to check what leaf a point is in
 int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node);
-//used for collision detection
+
+//used for player collision detection
+class ptrace_c
+{
+private:
+
+public:
+	bool allsolid; //invalid plane
+	bool initsolid; //start was in a solid
+	bool inempty, inwater;
+	float fraction; //time completed. 1.0 means nothing was hit
+	vec3_c end;
+	bspplane_t plane;
+	int ent; //entity that the surface belongs to
+
+	ptrace_c(vec3_c start, vec3_c end) { Trace(start, end); };
+	void Trace(vec3_c start, vec3_c end);
+};
+
 int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* bsp, int node, vec3_t hit, bspplane_t*& plane);
 byte* DecompressVis(bsp_t* bsp, int leafidx); //second parm is temporary for debugging

@@ -58,12 +58,13 @@ void SetupView(GLFWwindow* win)
 	}
 
 	SetupText();
+	SetupModels();
 
 
 	tmp.Use();
-	tmp.SetI("texarray", 0); //setting to GL_TEXTURE0
-	tmp.SetI("lmaparray", 1); //setting to GL_TEXTURE1
-	tmp.SetI("alphaarray", 2); //setting to GL_TEXTURE2
+	tmp.SetI("texarray", TUtoI(WORLD_TEXTURE_UNIT)); //setting to GL_TEXTURE0
+	tmp.SetI("lmaparray", TUtoI(LIGHT_TEXTURE_UNIT)); //setting to GL_TEXTURE1
+	tmp.SetI("alphaarray", TUtoI(ALPHA_TEXTURE_UNIT)); //setting to GL_TEXTURE2
 	bspshader = tmp;
 
 	glEnable(GL_DEPTH_TEST);
@@ -138,17 +139,18 @@ void DrawView(GLFWwindow* win)
 
 	BuildFanArrays();
 	
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(WORLD_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(LIGHT_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
-	glActiveTexture(GL_TEXTURE2);
+	glActiveTexture(ALPHA_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, alphaarray);
 
 	bspshader.Use();
 	glBindVertexArray(VAO);
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
+	DrawModels();
 	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
 	DrawText(&winfo);
 
@@ -277,42 +279,37 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 			//atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
 			if (atlas.AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t, block_z))
 				SYS_Exit("Ran out of atlas space!");
+
+			printf("%-2i, %-2i => %f, %f / %f, %f\n", lw, lh, block_s, block_t, block_s * ATLAS_SIZE, block_t * ATLAS_SIZE);
+
 			for (; vertexcnt > 0; vertexcnt--)
 			{
 				int idx = vi->edgecount - vertexcnt;
+				float* v = vi->verts[idx];
 
-				vi->verts[idx][VI_LS] = vi->verts[idx][VI_S] - mins;
-				vi->verts[idx][VI_LS] /= (maxs - mins);
-
-				//half pixel offset
-				if (vi->verts[idx][VI_LS] == 0)
-					vi->verts[idx][VI_LS] = 0.5 / lw;
-				else if (vi->verts[idx][VI_LS] == 1)
-					vi->verts[idx][VI_LS] = 1 -(0.5 / lw);
-				
-				vi->verts[idx][VI_LS] = (vi->verts[idx][VI_LS] * lw) / (float)ATLAS_SIZE + block_s;
-
-
-				vi->verts[idx][VI_LT] = vi->verts[idx][VI_T] - mint;
-				vi->verts[idx][VI_LT] /= (maxt - mint);
+				v[VI_LS] = v[VI_S] - mins;
+				v[VI_LS] /= (maxs - mins);
 
 				//half pixel offset
-				if (vi->verts[idx][VI_LT] == 0)
-					vi->verts[idx][VI_LT] = 0.5 / lh;
-				else if (vi->verts[idx][VI_LT] == 1)
-					vi->verts[idx][VI_LT] = 1 - (0.5 / lh);
+				v[VI_LS] += (-v[VI_LS] + 0.5) / lw;
 				
-				vi->verts[idx][VI_LT] = (vi->verts[idx][VI_LT] * lh) / (float)ATLAS_SIZE + block_t;
-				vi->verts[idx][VI_LI] = block_z;
+				v[VI_LS] = (v[VI_LS] * lw) / (float)ATLAS_SIZE + block_s;
+
+
+				v[VI_LT] = v[VI_T] - mint;
+				v[VI_LT] /= (maxt - mint);
+
+				//half pixel offset
+				v[VI_LT] += (-v[VI_LT] + 0.5) / lh;
+				
+				v[VI_LT] = (v[VI_LT] * lh) / (float)ATLAS_SIZE + block_t;
+				v[VI_LI] = block_z;
 
 				if (tex)
 				{//here so lightmap coordinate calculations aren't messed up
-					vi->verts[idx][VI_S] /= tex->xscale; 
-					vi->verts[idx][VI_T] /= tex->yscale;
+					v[VI_S] /= tex->xscale;
+					v[VI_T] /= tex->yscale;
 				}
-				//printf("%i - %f, %f\n", idx, vi->verts[idx][6], vi->verts[idx][7]);
-				//if (!strcmp(bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name, "sky"))
-				//	vi->verts[idx][6] = vi->verts[idx][7] = -1;
 			}
 
 		}
@@ -359,7 +356,7 @@ void BuildTextureList()
 	printf("%i texture(s) and %i alpha texture(s)\n", num_textures, num_atextures);
 
 	glGenTextures(1, &texarray);
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(WORLD_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, TEXTURE_SIZE, TEXTURE_SIZE, num_textures, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
@@ -369,7 +366,7 @@ void BuildTextureList()
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glGenTextures(1, &alphaarray);
-	glActiveTexture(GL_TEXTURE2);
+	glActiveTexture(ALPHA_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, alphaarray);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, TEXTURE_SIZE, TEXTURE_SIZE, num_atextures, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
@@ -393,7 +390,7 @@ void BuildTextureList()
 			{
 				strcpy(texlist[tex_i].name, bsp.miptex[i].name);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
-				glActiveTexture(GL_TEXTURE0);
+				glActiveTexture(WORLD_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 				tex_i++;
 			}
@@ -401,7 +398,7 @@ void BuildTextureList()
 			{
 				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
-				glActiveTexture(GL_TEXTURE2);
+				glActiveTexture(ALPHA_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 				alpha_i++;
 			}
@@ -413,7 +410,7 @@ void BuildTextureList()
 				strcpy(texlist[tex_i].name, bsp.miptex[i].name);
 				img = MakeNullImg(24);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
-				glActiveTexture(GL_TEXTURE0);
+				glActiveTexture(WORLD_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 				tex_i++;
 			}
@@ -422,7 +419,7 @@ void BuildTextureList()
 				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
 				img = MakeNullImg(32);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
-				glActiveTexture(GL_TEXTURE2);
+				glActiveTexture(ALPHA_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);
 				alpha_i++;
 
@@ -446,7 +443,7 @@ void InitLmapList()
 	//printf("can hold a lightmap of size %i\n", arraysize * texsize);
 
 	glGenTextures(1, &lmaparray);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(LIGHT_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, lmaparray);
 
 	texsize = ATLAS_SIZE;
@@ -472,7 +469,7 @@ void BuildVertexList(vertexinfo_c* vi)
 	{
 		//printf("%i ", i + 1);
 		lmap = atlas.GetBlock(i);
-		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, false);
+		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, true);
 		name[15]++;
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}

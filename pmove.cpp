@@ -9,10 +9,18 @@ const float pMaxSpeed = 320; //units / second
 const float pAccelRate = 400;
 const float pFriction = 6;
 const float pStopSpeed = 100;
+const float pGravity = 800;
+
+#define STOP_EPSILON (0.1f)
+#define CLIP_PLANES_MAX	4
 
 void PAccelerate(vec3_c wishdir, float wishspd, float accel);
 void PFriction();
-void PClip(vec3_c& wishvel);
+void PClip(vec3_c& wishvel, vec3_c& clippedvel);
+void PFlyMove();
+void PGroundMove();
+
+int onground = 0;
 
 void PMove()
 {
@@ -51,25 +59,56 @@ void PMove()
 		VecScale(wishvel, wishvel, pMaxSpeed / wishspd);
 		wishspd = pMaxSpeed;
 	}
+
+	//gravity
+	if (onground != -1)
+	{//on ground
+		//in.vel.v[1] = 0;
+		PAccelerate(wishdir, wishspd, 10);
+		//in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
+		//PGroundMove();
+	}
+	else
+	{//not on ground
+		PAccelerate(wishdir, wishspd, 10); //airaccelerate
+		//PFlyMove();
+	}
 #endif
 
 	//zero up vel?
 	PFriction();
 
+#if 0
 	PAccelerate(wishdir, wishspd, 10);
 	//spd = VecLength(in.vel);
-
+#endif
+#if 1
 	//currently in units / tick
 	VecScale(fixedvel, in.vel, 1.0f / (float)game.maxtps);
 	//is this in units / second now? 
-	//printf("%.2f, %.2f, %.2f\n", fixedvel[0], fixedvel[1], fixedvel[2]);
-	vec3_c fxdvel(fixedvel);
 
 	if (in.movetype != MOVETYPE_NOCLIP)
-		PClip(fxdvel);
+		PClip(fixedvel, in.vel); //I think there is some strange mis match between units here. 
+	//collisions off of certain walls have extreme bounce, some do not. Some collisions slide the player the wrong way along the wall. Tsk tsk tsk...
+
+	VecScale(fixedvel, in.vel, 1.0f / (float)game.maxtps);
+
 	
+	printf("%.2f, %.2f\n", in.vel.len(), fixedvel.len());
+	VecAdd(in.org, fixedvel);
+#else //experimental
+
+	if (in.movetype != MOVETYPE_NOCLIP)
+		PClip(in.vel);
+	//currently in units / tick
+	VecScale(fixedvel, in.vel, 1.0f / (float)game.maxtps);
+	//is this in units / second now? 
+	vec3_c fxdvel(fixedvel);
+
+
 	VecCopy(fixedvel, fxdvel.v);
 	VecAdd(in.org, fixedvel);
+#endif
 
 	//printf("%.3f\n", VecLength(fixedvel));
 
@@ -94,6 +133,8 @@ void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 	//printf("%.3f\n", curspd);
 	//printf("%f | %.2f, %.2f, %.2f | %f | %f\n", wishspd, in.vel[0], in.vel[1], in.vel[2], addspd, accelspd);
 	//printf("%.3f * %.4f * %.3f\n", accel, deltime, wishspd);
+
+
 }
 
 void PFriction()
@@ -103,13 +144,15 @@ void PFriction()
 
 	spd = VecLength(in.vel);
 	if (spd < 1)
-	{
+	{//just stop instead of decelerating if going slow
 		in.vel.v[0] = 0;
 		in.vel.v[2] = 0;
 		return;
 	}
 
 	//if(in.onground)
+	//check for ledge here, increase friction
+
 	control = spd < pStopSpeed ? pStopSpeed : spd;
 	drop += control * pFriction * game.tickdelta;
 
@@ -123,14 +166,11 @@ void PFriction()
 	VecScale(in.vel, in.vel, newspd);
 }
 
-void PClip(vec3_c& wishvel)
+void PClip(vec3_c& wishvel, vec3_c& clippedvel)
 {
 	vec3_c wishpos;
 	vec3_c endpos;
 	vec3_c org;
-	vec3_c deflect, normal;
-	vec3_c oldvel(in.vel);
-	float bounce;
 	bspplane_t* plane = NULL;
 
 	org = in.org;
@@ -140,42 +180,78 @@ void PClip(vec3_c& wishvel)
 	{
 		//printf("hit %.2f, %.2f, %.2f\n", plane->normal[0], plane->normal[1], plane->normal[2]);
 		//wishvel = endpos - org;
-#if 0
-		float backoff;
+		int i;
+		float backoff, change;
+		vec3_c newvel;
+		float bounce = 1.0f;
 
-		wishvel = endpos - org;
-		VecCopy(normal.v, plane->normal);
+		backoff = bounce * DotProduct(wishpos, plane->normal)/* * (1.0f / (float)game.maxtps)*/;
+		//printf("bck: %.2f wish: %.2f\n", backoff, wishvel.len());
 
-		backoff = wishvel.dot(normal) * 1.01;
-		for (int i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++)
 		{
-			wishvel.v[i] = wishvel.v[1] - (normal.v[i] * backoff);
-			if (wishvel.v[i] > -0.1 && wishvel.v[i] < 0.1)
-				wishvel.v[i] = 0;
+			change = plane->normal[i] * backoff;
+			newvel.v[i] = in.vel.v[i] - change;
+
+			if (newvel.v[i] > -STOP_EPSILON && newvel.v[i] < STOP_EPSILON)
+				newvel.v[i] = 0;
 		}
-#else
-		vec3_c nvec;
-		wishpos = wishpos - org;
-		VecCopy(normal.v, plane->normal);
-		nvec = normal + wishpos;
-		bounce = wishpos.dot(nvec) * 1.11;
-		wishvel = wishpos + (normal * bounce);
-		//====
-		/*
-		bounce = 10;
-
-		VecCopy(normal.v, plane->normal);
-		normal = normal * bounce;
-		wishpos = wishpos + normal;
-		wishvel = wishpos - org;
-		*/
-#endif
-
-		wishvel.v[1] = 0;
-
-		if (wishvel.dot(oldvel) <= 0)
-		{
-			VecSet(wishvel.v, 0, 0, 0);
-		}
+		//in.vel = newvel;
+		clippedvel = newvel;
 	}
+}
+void PFlyMove()
+{
+	float time_left = (1.0f) / game.maxtps;
+	int numbumps = 4;
+	vec3_c end;
+	int numplanes, blocked;
+	//ptrace_c trace;
+
+	for (int bumpcnt = 0; bumpcnt < numbumps; bumpcnt++)
+	{
+		for (int i = 0; i < 3; i++)
+			end.v[i] = in.org. v[i] + time_left * in.vel.v[i];
+
+		//trace = PPlayerMove(in.org, end);
+
+		//if (trace.startsolid || trace.allsolid)
+		{//stuck in a solid
+			in.vel = zerovec;
+			return; //3
+		}
+
+		//if (trace.frac > 0)
+		{//covered some distance
+			//in.org = trace.end;
+			numplanes = 0;
+		}
+
+		//if (trace.frac == 1)
+			break; //moved the WHOLE distance
+
+		//if (trace.plane.normal[2] > 0.7)
+		{
+			blocked |= 1;		// floor
+		}
+		//if (!trace.plane.normal[2])
+		{
+			blocked |= 2;		// step
+		}
+
+		//time_left -= time_left * trace.frac; //time_left is now the time left to move in the collided object
+
+		if (numplanes >= CLIP_PLANES_MAX)
+		{	// sanity check
+			in.vel = zerovec;
+			break;
+		}
+
+
+	}
+}
+
+void PGroundMove()
+{
+
 }

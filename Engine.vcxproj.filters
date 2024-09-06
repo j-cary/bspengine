@@ -66,6 +66,12 @@
     <ClCompile Include="draw_text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="md2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_models.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders.h">
@@ -114,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="draw_text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="md2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -26,11 +26,15 @@ winfo_t winfo;
 //	fix texture absorbing problem - is this fixed?
 //LIGHTMAPS:
 //	lightmap issue in tris2. Fixed when adding light to problem area. Maybe from sharing lightmaps.
-//	fix half pixel offset thing
-//	fix sky lightmapping stuff - is this even a problem anymore?
+//	fix weird shifting thing. SIGNIFICANT improvement when using 1x1 texture scaling. is TEXTURE_SIZE related to this?
+//  texture coordinates are good, must be in math in atlas or in draw.
 //PVS:
 //	pvs bug
+//  bad pvs with single leaf
 //	fix PVS for models - fat pvs?
+//VERTICES:
+//	a considerable amount of fans have co-linear but unnecesary vertices!
+//	this appears to be a totally separate issue from the lightmap coordinates
 //TEXT:
 //	use texture array for textures
 //	use single draw call per string
@@ -43,6 +47,7 @@ winfo_t winfo;
 
 
 //NEW STUFF
+//models - SMD format
 //wireframe - learnopengl - hello triangle
 //Text drawing - Lucida console - lawnmower man
 //collision

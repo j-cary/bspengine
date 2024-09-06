@@ -29,7 +29,7 @@ void SetupText()
 	//	SYS_Exit("Unable to load char 'X'!");
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // disable byte-alignment restriction
-	glActiveTexture(GL_TEXTURE4);
+	glActiveTexture(TEXT_TEXTURE_UNIT);
 
 	for (unsigned char c = 0; c < 128; c++)
 	{
@@ -84,7 +84,7 @@ void SetupText()
 	glBindVertexArray(0);
 
 	textshader.Use();
-	textshader.SetI("text", 4); //GL_TEXTURE4
+	textshader.SetI("text", TUtoI(TEXT_TEXTURE_UNIT)); //GL_TEXTURE4
 
 }
 
@@ -115,7 +115,7 @@ void DrawString(const char* str, float x, float y, float scale, vec3_c* color)
 		glUniform3f(glGetUniformLocation(textshader.id, "textColor"), 1.0f, 1.0f, 1.0f);
 	}
 
-	glActiveTexture(GL_TEXTURE4);
+	glActiveTexture(TEXT_TEXTURE_UNIT);
 	glBindVertexArray(text_vao);
 
 	for (int i = 0; str[i]; i++)
