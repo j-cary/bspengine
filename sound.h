@@ -27,7 +27,7 @@ typedef struct alsound_s
 void SetupSound();
 void ListAudioDevices(const ALCchar *devname);
 
-void RunSound();
+void SoundTick();
 
 void CleanupSound();
 

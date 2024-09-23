@@ -44,6 +44,7 @@ void ResizeWindow(GLFWwindow* win, int width, int height)
 	winfo.h = height;
 }
 
+//change this into two funcs. One to load BSP and one to load ents and models.
 void SetupView(GLFWwindow* win)
 {
 	shader_c tmp("shaders/nvbsp.glsl", "shaders/nfbsp.glsl");
@@ -58,7 +59,9 @@ void SetupView(GLFWwindow* win)
 	}
 
 	SetupText();
-	SetupModels();
+	//This MUST be called after BSP load, and entities MUST be loaded after the model shader is setup. (Skins are loaded during entity loading)
+	//Pretty intertwined system here, not good!
+	SetupModels(bsp.ents, bsp.header.lump[LMP_ENTS].len);
 
 
 	tmp.Use();
@@ -150,7 +153,7 @@ void DrawView(GLFWwindow* win)
 	glBindVertexArray(VAO);
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
-	DrawModels();
+	DrawModels(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(proj));
 	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
 	DrawText(&winfo);
 
@@ -280,7 +283,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 			if (atlas.AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t, block_z))
 				SYS_Exit("Ran out of atlas space!");
 
-			printf("%-2i, %-2i => %f, %f / %f, %f\n", lw, lh, block_s, block_t, block_s * ATLAS_SIZE, block_t * ATLAS_SIZE);
+			//printf("%-2i, %-2i => %f, %f / %f, %f\n", lw, lh, block_s, block_t, block_s * ATLAS_SIZE, block_t * ATLAS_SIZE);
 
 			for (; vertexcnt > 0; vertexcnt--)
 			{

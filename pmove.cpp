@@ -94,7 +94,7 @@ void PMove()
 	VecScale(fixedvel, in.vel, 1.0f / (float)game.maxtps);
 
 	
-	printf("%.2f, %.2f\n", in.vel.len(), fixedvel.len());
+	//printf("%.2f, %.2f\n", in.vel.len(), fixedvel.len());
 	VecAdd(in.org, fixedvel);
 #else //experimental
 

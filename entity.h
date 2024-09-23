@@ -12,6 +12,14 @@ enum AIFLAGS
 };
 typedef flag_t aiflags_t;
 
+typedef struct mdlidx_s
+{
+	unsigned mid;
+	unsigned skin;
+	unsigned frame;
+	unsigned frame_max;
+} mdlidx_t;
+
 class ent_c
 {
 private:
@@ -31,12 +39,18 @@ public:
 	flag_t flags;
 	char modelname[64];
 	char noise[64]; //for constant sounds
-	//model_t model;
+	bool playing; //keep track of status
+	
+	unsigned mid, mid2, mid3; //model id's
+	unsigned skin, skin2, skin3; //respective skins
+
+	int TMP_FRAME = 0;
+
+	mdlidx_t mdli[3]; //3 models can belong to an ent
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
-	void PlaySound(const char* name, const vec3_c ofs, int gain, int pitch);
+	void MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped);
 
-	void SetModel(const char* name); //For setting an external, non world mesh as model
 	void AddEnt();
 	void DelEnt();
 
@@ -45,4 +59,5 @@ public:
 	~ent_c();
 };
 
-void RunEnts();
+
+void EntTick(gamestate_c* gs);

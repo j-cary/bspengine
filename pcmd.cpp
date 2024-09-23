@@ -15,7 +15,7 @@ void PKeys()
 		if (!in.keys[i].cmd[0])
 			continue;
 
-		if (in.keys[i].time > game.time)
+		if (in.keys[i].time > game.time) //note: this check does NOT work while debugging!
 			continue;
 
 		//do the command

@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "entity.h" //for the model list
 
 //https://github.com/malortie/assimp/wiki/MDL:-Half-Life-1-file-format
 
@@ -141,6 +142,10 @@ typedef unsigned short achunk_t[6];
 #define MD2_ID				"IDP2"
 #define MD2_VERSION			8
 
+#define MODELS_MAX			16
+#define MODELS_MAX_VERTICES	(MODELS_MAX * MD2_VERTICES_MAX)
+#define MODELS_MAX_SKINS	(MODELS_MAX * MD2_SKINS_MAX)
+
 typedef struct md2header_s
 {
 	char id[4]; //IDP2
@@ -179,7 +184,7 @@ typedef struct md2frame_s
 typedef struct md2tri_s
 {
 	short vertex_idx[3];
-	short texture_idx[3];
+	short tcoord_idx[3];
 } md2tri_t;
 
 typedef struct md2tcoord_s
@@ -197,6 +202,17 @@ typedef struct md2skin_s
 {
 	char name[64];
 } md2skin_t;
+
+
+//communication with openGL
+struct md2vertexinfo_t
+{//do NOT rearrange these! GL expects them in this order
+	float v[MODELS_MAX_VERTICES][3];
+	float st[MODELS_MAX_VERTICES][2]; //this is easier to pass to GL than a separate float for each coordinate
+	unsigned u[MODELS_MAX_VERTICES]; //index into 2d texture array; skin index. Wasteful! This will only change when changing model, not vertex!
+	vec3_t norm[MODELS_MAX_VERTICES]; //Calculated at runtime. Quake2's normal hack is not used here
+};
+
 
 class md2_c
 {
@@ -227,6 +243,7 @@ public:
 		glcmds = NULL;
 		cur_skin_cnt = cur_tcoord_cnt = cur_tri_cnt = cur_frame_cnt = cur_glcmd_cnt = 0;
 		memset(&hdr, 0, sizeof(hdr));
+		strcpy(name, "");
 	}
 
 	md2_c(const char* name)
@@ -283,7 +300,95 @@ public:
 		}
 	}
 
-	void LoadMD2(const char* name);
+	void LoadMD2(const char* name); //This loads the model info into mem. May be unused.
+	void UnloadMD2(); 
 };
+
+//Ideal system: Load ALL frames of ALL models in use. Have a list of ents with models, including their origins, skins, and frame number. This can then be used to determine what data to send to GL.
+//Due to the fact that MOST ents with the same models won't be on the exact same frame, the renderer will just go in order. This means there may be duplicate frames!
+//the vertexinfo is going to have to be started from scratch every frame. MOST models will be animating, so it just makes more sense this way.
+
+//TODO:
+//test this further...
+//need to test: adding models after initial filling - see if loading a new model on top of an old one works
+//removing ents sharing the same ent non-sequentially
+//lighting...
+
+typedef struct entll_s
+{
+	ent_c* ent;
+	struct entll_s* next;
+} entll_t;
+
+class md2list_c
+{
+private:
+	//internal record keeping
+	md2_c mdls[MODELS_MAX] = {}; //an entity's 'mid' is an index in this list, ll, or skins.
+	entll_t* ll[MODELS_MAX]; 
+	unsigned skins[MODELS_MAX][MD2_SKINS_MAX]; //record of what index into the texture array each models' skins' are in. obviously can hold the maximum number of skins for each model
+	unsigned layers_used[MODELS_MAX]; //record what indices in the texture array have been used. Work on this later for atlas stuff.... sigh.... fuuuuuuckkkkk....
+	//this is techincally a redundant array
+
+	//for building the list that gets sent to GL every frame
+	void AddMDLtoList(ent_c* ent, unsigned ofs, unsigned frame, unsigned skin_no);
+	//loads all of a model's skins and puts them into the texture array. Fills out this model's respective list to keep track of where in that array the skins are
+	void LoadSkins(md2_c* md2, unsigned* skins);
+public:
+	md2vertexinfo_t vi; //rebuilt every frame
+	int vertices;
+
+	md2list_c()
+	{
+		//memset(ents, NULL, sizeof(ents));
+		memset(ll, NULL, sizeof(ll));
+		memset(&vi, 0, sizeof(vi));
+		memset(skins, 0xFF, sizeof(skins)); //0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
+		memset(layers_used, 0, sizeof(layers_used));
+		vertices = 0;
+	}
+
+	~md2list_c()
+	{
+		//free up the linked list of entity pointers
+		for (int x = 0; x < MODELS_MAX; x++)
+		{//array loop
+			entll_t* curs = ll[x];
+
+			while (curs)
+			{//linked list loop
+				entll_t* next = curs->next;
+				delete curs;
+				curs = next;
+			}
+		}
+	}
+
+	void Dump();
+	unsigned Alloc(const char* name, ent_c* ent, mdlidx_t* emid); //check if loading is needed. Increment used and ents either way
+	void Free(unsigned* mid, ent_c* ent); //similar to above
+
+	//Called frame-by-frame
+	void BuildList();
+	//to be called ONCE after setting up the skin texture array
+	void FillSkinArray();
+
+	void TMP();
+};
+
+
+
+//every entity will have 2-4 model identifiers. It can request the model list to fill these in. It can also give the list a model id to be removed.
+// 
+//The list will keep track of what ents are tied to a model. (multiple ents can share the same model). 
+//the ent will also have skin, origin, and frame_no variables that the list will be able to retrieve at any time.
+// 
+//Models will be loaded into the 'mdls' array in the model list. Skins need to be loaded and kept track of. (Removing a model may remove multiple skins, freeing up space)
+//
+//Every frame, the list will prepare a new vertex list to give to GL. 
+//The list will walk through all the saved ents and determine their model and frame number. The base vertex info can then be selected and modified based on origin. The skin will also be given to GL
+//
+//For the time being, I am NOT using an atlas. When models become a problem I will implement it!
+//
 
 #endif

@@ -125,5 +125,11 @@
     <ClInclude Include="md2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="anorms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="draw_models.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

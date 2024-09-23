@@ -241,15 +241,22 @@ img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio
 
 	if (src->width == new_w && src->height == new_h)
 	{
-		*xratio = *yratio = 1.0f;
+		if (xratio)
+			*xratio = 1.0f;
+		if (yratio)
+			*yratio = 1.0f;
 		return src;
 	}
 
 	dst.width = new_w;
 	dst.height = new_h;
 
-	*xratio = xs = (float)src->width / (float)new_w;
-	*yratio = ys = (float)src->height / (float)new_h;
+	xs = (float)src->width / (float)new_w;
+	ys = (float)src->height / (float)new_h;
+	if (xratio)
+		*xratio = xs;
+	if (yratio)
+		*yratio = ys;
 
 	pxlen = src->bpx / 8;
 	

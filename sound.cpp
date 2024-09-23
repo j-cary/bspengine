@@ -82,7 +82,7 @@ void ListAudioDevices(const ALCchar* devname)
 	printf("=================\n");
 }
 
-void RunSound()
+void SoundTick()
 {
 	ALfloat orientation[6];
 	vec3_c fixedvel;
@@ -100,8 +100,8 @@ void RunSound()
 	//AAAVEC
 	VecScale(fixedvel.v, in.vel, 1.0f / (float)game.maxtps);
 	fixedorg = in.org;
-	fixedorg.v[0] = -fixedorg.v[0];
-	fixedorg.v[2] = -fixedorg.v[2];
+	//fixedorg.v[0] = -fixedorg.v[0];
+	//fixedorg.v[2] = -fixedorg.v[2];
 	//this mostly works...
 	
 	alListenerfv(AL_POSITION, fixedorg);

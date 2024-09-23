@@ -12,6 +12,7 @@
 #include "sound.h"
 #include "entity.h"
 #include "game.h"
+#include "md2.h"
 
 gamestate_c game;
 winfo_t winfo;
@@ -44,6 +45,7 @@ winfo_t winfo;
 //	get args working for winmain. set default map, too. Can't run PCmd. All out of order here
 //	start caching stuff
 //	gl error checking
+
 
 
 //NEW STUFF
@@ -88,8 +90,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			//printf("%f\n", game.tickdelta);
 			PMove();
 			PKeys(); //THIS SHOULD NOT BE HERE! MOVE THIS OUTSIDE ALL LOOPS WHEN UP AND DOWN ARE BASE IN PMOVE!!!!
-			RunEnts();
-			RunSound();
+			EntTick(&game);
+			SoundTick();
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;
 		}

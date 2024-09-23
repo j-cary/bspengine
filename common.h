@@ -13,6 +13,8 @@
 #define MAX_ENTITIES 4096
 #define TEXTURE_SIZE 128
 #define SKY_SIZE 256
+#define MD2_TEXTURE_SIZE 512
+#define TEXTURE_SIZE_LARGEST MD2_TEXTURE_SIZE
 
 //macro defs 
 
@@ -201,7 +203,7 @@ class img_c
 public:
 	int bpx;
 	int width, height;
-	byte data[256 * 256 * 4]; //to fit biggest texture possible
+	byte data[TEXTURE_SIZE_LARGEST * TEXTURE_SIZE_LARGEST * 4]; //to fit biggest texture possible
 
 	void BRG2RGB()
 	{

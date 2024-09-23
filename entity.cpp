@@ -1,20 +1,40 @@
 #include "entity.h"
 #include "math.h"
+#include "sound.h"
+#include "md2.h" //md2list
 
 ent_c entlist[MAX_ENTITIES];
 int entidx;
 
+extern md2list_c md2list;
+
 extern gamestate_c game;
 
-void RunEnts()
+const int model_hz = 2; //should be nicely divisible by maxtps
+
+void EntTick(gamestate_c* gs)
 {
+	int model_skiptick = gs->maxtps / model_hz; //how many ticks to skip inbetween model frame updates
+	bool model_updatetick = !(gs->tick % model_skiptick);
+	//should be a half second skip here
+
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		if (!entlist[i].inuse)
+		ent_c* ent = &entlist[i];
+		if (!ent->inuse)
 			continue;
 
-		if (*entlist[i].noise)
-			entlist[i].PlaySound(entlist[i].noise, zerovec, 10, 1);
+		if (*ent->noise && !ent->playing)
+		{
+			ent->playing = true;
+			ent->MakeNoise(ent->noise, ent->origin, 10, 1, true);
+		}
+
+		if (ent->mid < MODELS_MAX && model_updatetick)
+		{
+			printf("model frame tick\n");
+			//ent->TMP_FRAME++;
+		}
 		
 	}
 }
@@ -22,6 +42,9 @@ void RunEnts()
 void ent_c::AddEnt()
 {
 	inuse = 1;
+
+	if (*modelname)
+		mid = md2list.Alloc(modelname, this, &mdli[0]);
 }
 
 void ent_c::DelEnt()
@@ -29,9 +52,11 @@ void ent_c::DelEnt()
 	inuse = 0;
 }
 
-void ent_c::PlaySound(const char* name, const vec3_c ofs, int gain, int pitch)
+void ent_c::MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped)
 {
 	//printf("trying to play %s\n", name);
+	//FIXME!!! need some way of stopping looping sounds
+	PlaySound(name, ofs, gain, pitch, looped);
 }
 
 ent_c::ent_c()
@@ -48,6 +73,10 @@ ent_c::ent_c()
 	memset(modelname, 0, 64);
 
 	memset(noise, 0, 64);
+	playing = false;
+
+	mid = mid2 = mid3 = -1;
+	skin = skin2 = skin3 = 0;
 
 	light[0] = light[1] = light[2] = light[3] = 0;
 
@@ -177,6 +206,7 @@ keytranslate_t spawnkeys[] =
 	"spawnflags", &IntTranslate, offsetof(ent_c, flags),
 	"model", &StrTranslate, offsetof(ent_c, modelname),
 	"noise", &StrTranslate, offsetof(ent_c, noise),
+	"frame", &IntTranslate, offsetof(ent_c, TMP_FRAME),
 	NULL, NULL, 0,
 };
 
@@ -201,7 +231,7 @@ void MakeEntityList(char* str, int len)
 
 	char key[16] = {};
 	char* k = key;
-	char val[32] = {};
+	char val[128] = {};
 	char* v = val;
 
 	//fixme: check for bad string here
@@ -289,4 +319,15 @@ void PCmdPrintEntlist(input_c* in, int key)
 	in->keys[key].time = game.time + 0.5;
 }
 
-//
+void PCmdPrintMD2list(input_c* in, int key)
+{
+	md2list.Dump();
+	in->keys[key].time = game.time + 0.5;
+}
+
+void PCmdTMP(input_c* in, int key)
+{//temp to test removing entities
+	md2list.TMP();
+	in->keys[key].time = game.time + 0.5;
+	in->keys[key].pressed = 0;
+}

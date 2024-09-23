@@ -154,10 +154,12 @@
     <ClCompile Include="sound.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="anorms.h" />
     <ClInclude Include="atlas.h" />
     <ClInclude Include="bsp.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="draw.h" />
+    <ClInclude Include="draw_models.h" />
     <ClInclude Include="draw_sky.h" />
     <ClInclude Include="draw_text.h" />
     <ClInclude Include="entity.h" />

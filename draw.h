@@ -81,5 +81,5 @@ void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h);
 void SetupText();
 void DrawText(winfo_t* winfo);
 
-void SetupModels();
-void DrawModels();
+void SetupModels(char* ent_str, int ent_len);
+void DrawModels(float* model, float* view, float* proj);
