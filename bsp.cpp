@@ -37,7 +37,26 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 		bsp->planes[i].normal[1] = bsp->planes[i].normal[2];
 		bsp->planes[i].normal[2] = tmp;
 
-		//FIXME: swap types, too
+		//CHECKME!!!
+		switch (bsp->planes[i].type)
+		{
+		case 1:
+			bsp->planes[i].type = 2;
+			break;
+		case 2:
+			bsp->planes[i].type = 1;
+			break;
+		case 4:
+			bsp->planes[i].type = 5;
+			break;
+		case 5:
+			bsp->planes[i].type = 4;
+			break;
+
+		default:
+			break;
+		}
+		
 	}
 
 	//textures
@@ -136,19 +155,19 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	//printf("\nLightmap report\n");
 	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
-#if 0
 	printf("\nEntity Report\n");
 	printf("%s\n", bsp->ents);
 
 	printf("\nPlane Report\n");
 	printf("Num Planes: %zi\n", bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes));
-	/*
+	
 	for (unsigned i = 0; i < bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes); i++)
 		printf("normal: %.2f %.2f %.2f, dist: %.2f, type: %i\n"
 			, bsp->planes[i].normal[0], bsp->planes[i].normal[1], bsp->planes[i].normal[2]
 			, bsp->planes[i].dist
 			, bsp->planes[i].type);
-	*/
+	
+#if 0
 
 	printf("\nTexture report\n");
 	printf("Num textures: %i\n", bsp->num_miptextures);
@@ -247,7 +266,7 @@ int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node)
 extern bsp_t bsp;
 
 //player collision 
-void ptrace_c::Trace(vec3_c start, vec3_c _end)
+bool ptrace_c::Trace(vec3_c start, vec3_c _end)
 {
 	vec3_c hit;
 	bspplane_t* tmpplane = NULL;
@@ -255,12 +274,25 @@ void ptrace_c::Trace(vec3_c start, vec3_c _end)
 	allsolid = initsolid = inempty = inwater = false;
 	ent = 0;
 
-	RecursiveBSPClipNodeSearch(start.v, _end.v, &bsp, 0, end.v, tmpplane);
+	//if (!RecursiveBSPClipNodeSearch(start.v, _end.v, &bsp, 0, end.v, tmpplane))
+	//	return false;
 	plane = *tmpplane;
+	return true;
+}
+
+void ptrace_c::Dump()
+{
+	printf("allsolid: %i initsolid: %i frac: %.5f pln: %.2f %.2f %.2f end: %s\n", 
+		allsolid, 
+		initsolid, 
+		fraction, 
+		plane.normal[0], plane.normal[1], plane.normal[2],
+		end.str());
 }
 
 //note: start & end must lie in node. This is why I'm starting with node 0
 //this should spit out an intersection point
+#if 0
 int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* _bsp, int node, vec3_t hit, bspplane_t*& plane)
 {
 	bspclip_t* curnode;
@@ -285,7 +317,7 @@ int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* _bsp, int node, 
 
 
 	curnode = &_bsp->clips[node];
-	plane = &_bsp->planes[curnode->plane];
+	plane = &_bsp->planes[curnode->plane]; //this seems wrong sometimes...
 	dist1 = DotProduct(plane->normal, start) - plane->dist;
 	dist2 = DotProduct(plane->normal, end) - plane->dist;
 
@@ -309,6 +341,163 @@ int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* _bsp, int node, 
 	return RecursiveBSPClipNodeSearch(split, end, _bsp, curnode->children[1 - side], hit, plane);
 }
 
+#else
+
+int HullPointContents(int num, vec3_t p)
+{
+	float		d;
+	bspclip_t* node;
+	bspplane_t* plane;
+
+	while (num >= 0)
+	{
+		//if (num < hull->firstclipnode || num > hull->lastclipnode)
+		//	SV_Error("SV_HullPointContents: bad node number");
+
+		//these should be offsets from the diffrent hulls but this SHOULD work for the world
+		node = &bsp.clips[num]; //??
+		plane = &bsp.planes[node->plane]; //??
+
+		if (plane->type < 3) //axially aligned surface
+			d = p[plane->type] - plane->dist;
+		else
+			d = DotProduct(plane->normal, p) - plane->dist;
+
+		if (d < 0)
+			num = node->children[1];
+		else
+			num = node->children[0];
+	}
+
+	return num;
+}
+
+//nice floating point-compatible epsilon
+#define DIST_EPSILON	(0.03125)
+
+//this is setting initsolid correctly
+bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace)
+{
+	bspclip_t* node;
+	bspplane_t* plane;
+	float		t1, t2;
+	float		frac;
+	int			i;
+	vec3_t		mid;
+	int			side;
+	float		midf;
+
+	// check for empty
+	if (num < 0)
+	{
+		if (num != CONTENTS_SOLID)
+		{
+			trace->allsolid = false;
+			if (num == CONTENTS_EMPTY)
+				trace->inempty = true;
+			else
+				trace->inwater = true;
+		}
+		else
+			trace->initsolid = true;
+		return true;		// empty
+	}
+
+	//if (num < hull->firstclipnode || num > hull->lastclipnode)
+	//	Sys_Error("SV_RecursiveHullCheck: bad node number");
+
+	//
+	// find the point distances
+	//
+	node = &bsp.clips[num]; //??
+	plane = &bsp.planes[node->plane]; //??
+
+	if (plane->type < 3)
+	{
+		t1 = p1.v[plane->type] - plane->dist;
+		t2 = p2.v[plane->type] - plane->dist;
+	}
+	else
+	{
+		t1 = DotProduct(plane->normal, p1) - plane->dist;
+		t2 = DotProduct(plane->normal, p2) - plane->dist;
+	}
+
+	if (t1 >= 0 && t2 >= 0)
+		return RecursiveBSPClipNodeSearch(node->children[0], p1f, p2f, p1, p2, trace);
+	if (t1 < 0 && t2 < 0)
+		return RecursiveBSPClipNodeSearch(node->children[1], p1f, p2f, p1, p2, trace);
+
+	// put the crosspoint DIST_EPSILON pixels on the near side
+	if (t1 < 0)
+		frac = (t1 + DIST_EPSILON) / (t1 - t2);
+	else
+		frac = (t1 - DIST_EPSILON) / (t1 - t2);
+	if (frac < 0)
+		frac = 0;
+	if (frac > 1)
+		frac = 1;
+
+	midf = p1f + (p2f - p1f) * frac;
+	for (i = 0; i < 3; i++)
+		mid[i] = p1.v[i] + frac * (p2.v[i] - p1.v[i]);
+
+	side = (t1 < 0);
+
+	// move up to the node
+	if (!RecursiveBSPClipNodeSearch(node->children[side], p1f, midf, p1, mid, trace))
+		return false;
+
+
+	if (HullPointContents(node->children[side ^ 1], mid)!= CONTENTS_SOLID) // go past the node
+		return RecursiveBSPClipNodeSearch(node->children[side ^ 1], midf, p2f, mid, p2, trace);
+
+	if (trace->allsolid)
+		return false; // never got out of the solid area
+
+	//==================
+	// the other side of the node is solid, this is the impact point
+	//==================
+	if (!side)
+	{
+		//VectorCopy(plane->normal, trace->plane.normal);
+		VecCopy(trace->plane.normal, plane->normal);
+		trace->plane.dist = plane->dist;
+	}
+	else
+	{
+		vec3_t tmp;
+		VecCopy(tmp, plane->normal);
+		VecNegate(tmp);
+		//VectorSubtract(vec3_origin, plane->normal, trace->plane.normal);
+		VecAdd(trace->plane.normal, tmp);
+		trace->plane.dist = -plane->dist;
+	}
+
+	while (HullPointContents(0, mid) == CONTENTS_SOLID)
+	{ // shouldn't really happen, but does occasionally
+		frac -= 0.1f;
+		if (frac < 0)
+		{
+			trace->fraction = midf;
+			VecCopy(mid, trace->end);
+			printf("backup past 0\n");
+			return false;
+		}
+		midf = p1f + (p2f - p1f) * frac;
+		for (i = 0; i < 3; i++)
+			mid[i] = p1.v[i] + frac * (p2.v[i] - p1.v[i]);
+	}
+
+	trace->fraction = midf;
+	//VecCopy(mid, trace->end);
+	trace->end = mid;
+
+	return false;
+
+}
+#endif
+
 byte* DecompressVis(bsp_t* _bsp, int leafidx)
 {
 	static byte pvs[10000]; //use num_visleafs to make this dynamic. Just once!
@@ -316,7 +505,7 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	//int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
 	int numleaves = _bsp->models[0].num_visleafs;
 
-	if (leafidx)
+	if (leafidx > 1) //if there is just one leaf make everything visible
 		memset(pvs, 0, 10000);
 	else
 	{ //outside world

@@ -10,13 +10,12 @@ extern md2list_c md2list;
 
 extern gamestate_c game;
 
-const int model_hz = 2; //should be nicely divisible by maxtps
+const int model_hz = 16; //should be nicely divisible by maxtps. 32 model frames in a second
 
 void EntTick(gamestate_c* gs)
 {
 	int model_skiptick = gs->maxtps / model_hz; //how many ticks to skip inbetween model frame updates
 	bool model_updatetick = !(gs->tick % model_skiptick);
-	//should be a half second skip here
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
@@ -30,10 +29,9 @@ void EntTick(gamestate_c* gs)
 			ent->MakeNoise(ent->noise, ent->origin, 10, 1, true);
 		}
 
-		if (ent->mid < MODELS_MAX && model_updatetick)
+		if (ent->mdli[0].mid < MODELS_MAX && model_updatetick)
 		{
-			printf("model frame tick\n");
-			//ent->TMP_FRAME++;
+			ent->mdli[0].frame = (++ent->mdli[0].frame) % ent->mdli[0].frame_max;
 		}
 		
 	}
@@ -44,7 +42,7 @@ void ent_c::AddEnt()
 	inuse = 1;
 
 	if (*modelname)
-		mid = md2list.Alloc(modelname, this, &mdli[0]);
+		mdli[0].mid = md2list.Alloc(modelname, this, &mdli[0]);
 }
 
 void ent_c::DelEnt()
@@ -75,8 +73,11 @@ ent_c::ent_c()
 	memset(noise, 0, 64);
 	playing = false;
 
-	mid = mid2 = mid3 = -1;
-	skin = skin2 = skin3 = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		mdli[i].frame = mdli[i].frame_max = mdli[i].skin = 0;
+		mdli[i].mid = 0xFFFFFFFF;
+	}
 
 	light[0] = light[1] = light[2] = light[3] = 0;
 
@@ -206,7 +207,7 @@ keytranslate_t spawnkeys[] =
 	"spawnflags", &IntTranslate, offsetof(ent_c, flags),
 	"model", &StrTranslate, offsetof(ent_c, modelname),
 	"noise", &StrTranslate, offsetof(ent_c, noise),
-	"frame", &IntTranslate, offsetof(ent_c, TMP_FRAME),
+	"frame", &IntTranslate, offsetof(ent_c, mdli[0].frame),
 	NULL, NULL, 0,
 };
 

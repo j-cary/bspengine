@@ -312,6 +312,7 @@ public:
 //test this further...
 //need to test: adding models after initial filling - see if loading a new model on top of an old one works
 //removing ents sharing the same ent non-sequentially
+//interpolation
 //lighting...
 
 typedef struct entll_s
@@ -331,7 +332,7 @@ private:
 	//this is techincally a redundant array
 
 	//for building the list that gets sent to GL every frame
-	void AddMDLtoList(ent_c* ent, unsigned ofs, unsigned frame, unsigned skin_no);
+	void AddMDLtoList(ent_c* ent, mdlidx_t* midx);
 	//loads all of a model's skins and puts them into the texture array. Fills out this model's respective list to keep track of where in that array the skins are
 	void LoadSkins(md2_c* md2, unsigned* skins);
 public:
@@ -366,7 +367,7 @@ public:
 
 	void Dump();
 	unsigned Alloc(const char* name, ent_c* ent, mdlidx_t* emid); //check if loading is needed. Increment used and ents either way
-	void Free(unsigned* mid, ent_c* ent); //similar to above
+	void Free(mdlidx_t* emid, ent_c* ent); //similar to above
 
 	//Called frame-by-frame
 	void BuildList();

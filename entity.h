@@ -41,11 +41,6 @@ public:
 	char noise[64]; //for constant sounds
 	bool playing; //keep track of status
 	
-	unsigned mid, mid2, mid3; //model id's
-	unsigned skin, skin2, skin3; //respective skins
-
-	int TMP_FRAME = 0;
-
 	mdlidx_t mdli[3]; //3 models can belong to an ent
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds

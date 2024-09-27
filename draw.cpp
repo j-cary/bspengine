@@ -54,7 +54,7 @@ void SetupView(GLFWwindow* win)
 
 	if (!bsp.name[0])
 	{
-		SetupBSP("maps/complex.bsp");
+		SetupBSP("maps/test1.bsp");
 		SetupSky("maps/complex.bsp");
 	}
 

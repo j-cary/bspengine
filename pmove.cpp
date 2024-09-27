@@ -11,7 +11,7 @@ const float pFriction = 6;
 const float pStopSpeed = 100;
 const float pGravity = 800;
 
-#define STOP_EPSILON (0.1f)
+#define STOP_EPSILON (0.75f)
 #define CLIP_PLANES_MAX	4
 
 void PAccelerate(vec3_c wishdir, float wishspd, float accel);
@@ -166,6 +166,8 @@ void PFriction()
 	VecScale(in.vel, in.vel, newspd);
 }
 
+//do flymove first. should remove weird oscillations & maybe up/down movement...
+//get the other clipnodesearch function working. Figure out how to scale this shit.
 void PClip(vec3_c& wishvel, vec3_c& clippedvel)
 {
 	vec3_c wishpos;
@@ -175,30 +177,48 @@ void PClip(vec3_c& wishvel, vec3_c& clippedvel)
 
 	org = in.org;
 	wishpos = org + wishvel;
-
+#if 0
+	//make cliptest a q1 map and test the plane loading there.
 	if (RecursiveBSPClipNodeSearch(in.org, wishpos.v, &bsp, 0, endpos.v, plane))
 	{
-		//printf("hit %.2f, %.2f, %.2f\n", plane->normal[0], plane->normal[1], plane->normal[2]);
-		//wishvel = endpos - org;
+		vec3_c normal = plane->normal;
 		int i;
 		float backoff, change;
 		vec3_c newvel;
 		float bounce = 1.0f;
 
-		backoff = bounce * DotProduct(wishpos, plane->normal)/* * (1.0f / (float)game.maxtps)*/;
+		backoff = bounce * DotProduct(wishpos, normal)/* * (1.0f / (float)game.maxtps)*/;
+		//backoff /= 4.5;
+		//backoff *= (1.0 / (float)game.maxtps);
 		//printf("bck: %.2f wish: %.2f\n", backoff, wishvel.len());
 
 		for (i = 0; i < 3; i++)
 		{
-			change = plane->normal[i] * backoff;
+			change = normal.v[i] * backoff;
 			newvel.v[i] = in.vel.v[i] - change;
+
 
 			if (newvel.v[i] > -STOP_EPSILON && newvel.v[i] < STOP_EPSILON)
 				newvel.v[i] = 0;
 		}
-		//in.vel = newvel;
+
 		clippedvel = newvel;
+		//these DRAMATICALLY improved the bouncing. Still problem with nonsensical sliding on certain walls
+		clippedvel.v[2] /= 75;
+		clippedvel.v[1] /= 75;
+		clippedvel.v[0] /= 75;
+		//printf("%.5f,  %s\n", backoff, clippedvel.str());
 	}
+#else
+	ptrace_c trace;
+	trace.allsolid = true; //is this right?
+	if (RecursiveBSPClipNodeSearch(0, 0, 1, org, wishpos, &trace))
+	{
+		//printf("Traced %.2f %.2f %.2f\n", trace.plane.normal[0], trace.plane.normal[1], trace.plane.normal[2]);
+		//printf("%s => %s\n", org.str(), wishpos.str());
+		trace.Dump();
+	}
+#endif
 }
 void PFlyMove()
 {
@@ -206,14 +226,14 @@ void PFlyMove()
 	int numbumps = 4;
 	vec3_c end;
 	int numplanes, blocked;
-	//ptrace_c trace;
+	ptrace_c trace;
 
 	for (int bumpcnt = 0; bumpcnt < numbumps; bumpcnt++)
 	{
 		for (int i = 0; i < 3; i++)
 			end.v[i] = in.org. v[i] + time_left * in.vel.v[i];
 
-		//trace = PPlayerMove(in.org, end);
+		trace.Trace(in.org, end);
 
 		//if (trace.startsolid || trace.allsolid)
 		{//stuck in a solid

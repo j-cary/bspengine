@@ -255,7 +255,7 @@ unsigned md2list_c::Alloc(const char* name, ent_c* ent, mdlidx_t* _midx)
 	return ofs; //give the calling ent the mid
 }
 
-void md2list_c::Free(unsigned* mid, ent_c* ent)
+void md2list_c::Free(mdlidx_t* midx, ent_c* ent)
 {
 	//find the end of the list
 	entll_t* curs, *prev;
@@ -263,10 +263,10 @@ void md2list_c::Free(unsigned* mid, ent_c* ent)
 	if (!ent)
 		SYS_Exit("Tried freeing NULL ent from model list\n");
 
-	if (*mid >= MODELS_MAX)
-		SYS_Exit("Bogus model id %u\n", *mid);
+	if (midx->mid >= MODELS_MAX)
+		SYS_Exit("Bogus model id %u\n", midx->mid);
 
-	curs = ll[*mid];
+	curs = ll[midx->mid];
 	prev = NULL;
 
 	while (1)
@@ -282,7 +282,7 @@ void md2list_c::Free(unsigned* mid, ent_c* ent)
 	}
 
 	if (!prev) //this ent is first in the list
-		ll[*mid] = curs->next;
+		ll[midx->mid] = curs->next;
 	else
 		prev->next = curs->next;
 
@@ -291,7 +291,7 @@ void md2list_c::Free(unsigned* mid, ent_c* ent)
 	{//no more ents using this model
 		for (int i = 0; i < MD2_SKINS_MAX; i++)
 		{
-			unsigned* layer = &skins[*mid][i];
+			unsigned* layer = &skins[midx->mid][i];
 
 			if(*layer < MODELS_MAX)
 				layers_used[*layer] = 0; //zero out each layer used by a respective skin, but don't do this for the dummy values that might be at the end of the skin list
@@ -304,33 +304,33 @@ void md2list_c::Free(unsigned* mid, ent_c* ent)
 	}
 
 	delete curs;
-	*mid = 0xFFFFFFFF; //reset the ent's stored id
+	midx->mid = 0xFFFFFFFF; //reset the ent's stored id
 }
 
-void md2list_c::AddMDLtoList(ent_c* ent, unsigned ofs, unsigned frame_no, unsigned skin_no)
+void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 {
-	md2_c* md2 = &mdls[ofs];
+	md2_c* md2 = &mdls[midx->mid];
 	unsigned depth = 0;
 
-	if (frame_no >= md2->hdr.frame_cnt)
+	if (midx->frame >= md2->hdr.frame_cnt)
 	{
-		printf("oob frame %i for model %s. Max is %i\n", frame_no, md2->name, md2->hdr.frame_cnt);
-		frame_no = 0;
+		printf("oob frame %i for model %s. Max is %i\n", midx->frame, md2->name, md2->hdr.frame_cnt);
+		midx->frame = 0;
 	}
 
 	//FIXME!!! - check for oob skin values here somehow...
-	if ((depth = skins[ofs][skin_no]) >= MODELS_MAX_SKINS)
+	if ((depth = skins[midx->mid][midx->skin]) >= MODELS_MAX_SKINS)
 	{
-		printf("oob skin %i for model %s\n", skin_no, md2->name);
-		skin_no = 0;
-		depth = skins[ofs][skin_no];
+		printf("oob skin %i for model %s\n", midx->skin, md2->name);
+		midx->skin = 0;
+		depth = skins[midx->mid][midx->skin];
 	}
 
 	for (int cur_tri = 0; cur_tri < md2->hdr.tri_cnt; cur_tri++)
 	{//triangle loop
 		for (int cur_vert = 0; cur_vert < 3; cur_vert++, vertices++)
 		{//vertex loop
-			md2frame_t* frame = &md2->frames[frame_no];
+			md2frame_t* frame = &md2->frames[midx->frame];
 			md2vec3_t* vert = &frame->vertices[md2->tris[cur_tri].vertex_idx[cur_vert]];
 			short tcoord_i = md2->tris[cur_tri].tcoord_idx[cur_vert];
 
@@ -361,7 +361,7 @@ void md2list_c::BuildList()
 
 		while (curs)
 		{//linked list loop
-			AddMDLtoList(curs->ent, curs->ent->mid, curs->ent->TMP_FRAME, 0);
+			AddMDLtoList(curs->ent, &curs->ent->mdli[0]);
 			curs = curs->next;
 		}
 	}
@@ -373,6 +373,6 @@ void md2list_c::TMP()
 {
 	static int i = 4;
 
-	Free(&entlist[i].mid, &entlist[i]);
+	Free(&entlist[i].mdli[0], &entlist[i]);
 	i++;
 }
