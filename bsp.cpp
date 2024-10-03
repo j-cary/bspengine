@@ -155,6 +155,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	//printf("\nLightmap report\n");
 	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
+#if 0
 	printf("\nEntity Report\n");
 	printf("%s\n", bsp->ents);
 
@@ -167,7 +168,6 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 			, bsp->planes[i].dist
 			, bsp->planes[i].type);
 	
-#if 0
 
 	printf("\nTexture report\n");
 	printf("Num textures: %i\n", bsp->num_miptextures);
@@ -271,77 +271,28 @@ bool ptrace_c::Trace(vec3_c start, vec3_c _end)
 	vec3_c hit;
 	bspplane_t* tmpplane = NULL;
 
-	allsolid = initsolid = inempty = inwater = false;
-	ent = 0;
+	initsolid = inempty = inwater = false;
+	allsolid = true;
+	ent = NULL;
+	fraction = 1.0;
+	end = _end;
 
 	//if (!RecursiveBSPClipNodeSearch(start.v, _end.v, &bsp, 0, end.v, tmpplane))
 	//	return false;
-	plane = *tmpplane;
-	return true;
+	//plane = *tmpplane;
+
+	return RecursiveBSPClipNodeSearch(0, 0, 1, start, end, this);;
 }
 
 void ptrace_c::Dump()
 {
-	printf("allsolid: %i initsolid: %i frac: %.5f pln: %.2f %.2f %.2f end: %s\n", 
+	printf("allsolid: %i initsolid: %i frac: %.5f norm: %.2f %.2f %.2f end: %s\n", 
 		allsolid, 
 		initsolid, 
 		fraction, 
 		plane.normal[0], plane.normal[1], plane.normal[2],
 		end.str());
 }
-
-//note: start & end must lie in node. This is why I'm starting with node 0
-//this should spit out an intersection point
-#if 0
-int RecursiveBSPClipNodeSearch(vec3_t start, vec3_t end, bsp_t* _bsp, int node, vec3_t hit, bspplane_t*& plane)
-{
-	bspclip_t* curnode;
-	float dist1, dist2;
-	float frac;
-	vec3_t split;
-	bool side;
-
-	//FIXME: this runs through the same steps regardless of what leaf points are in
-	//with the exception of being outside the world
-
-	//handle leaves
-	if (node == CONTENTS_SOLID)
-	{
-		VecCopy(hit, start);
-		return 1;
-	}
-	else if (node == CONTENTS_EMPTY)
-	{//outside world
-		return 0;
-	}
-
-
-	curnode = &_bsp->clips[node];
-	plane = &_bsp->planes[curnode->plane]; //this seems wrong sometimes...
-	dist1 = DotProduct(plane->normal, start) - plane->dist;
-	dist2 = DotProduct(plane->normal, end) - plane->dist;
-
-	//handle case where the segment lies entirely in a child
-	if (dist1 >= 0 && dist2 >= 0)
-		return RecursiveBSPClipNodeSearch(start, end, _bsp, curnode->children[0], hit, plane);
-	if (dist1 < 0 && dist2 < 0)
-		return RecursiveBSPClipNodeSearch(start, end, _bsp, curnode->children[1], hit, plane);
-
-	//handle the segment being intersected by the plane
-	frac = dist1 / (dist1 - dist2);
-	for (int i = 0; i < 3; i++)
-		split[i] = start[i] + frac * (end[i] - start[i]);
-
-	//this is the side that start is on
-	side = (dist1 >= 0) ? 0 : 1;
-
-	//go through the children in order now
-	if (RecursiveBSPClipNodeSearch(start, split, _bsp, curnode->children[side], hit, plane))
-		return 1;
-	return RecursiveBSPClipNodeSearch(split, end, _bsp, curnode->children[1 - side], hit, plane);
-}
-
-#else
 
 int HullPointContents(int num, vec3_t p)
 {
@@ -480,7 +431,8 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 		if (frac < 0)
 		{
 			trace->fraction = midf;
-			VecCopy(mid, trace->end);
+			//VecCopy(mid, trace->end);
+			trace->end = mid;
 			printf("backup past 0\n");
 			return false;
 		}
@@ -496,7 +448,6 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 	return false;
 
 }
-#endif
 
 byte* DecompressVis(bsp_t* _bsp, int leafidx)
 {

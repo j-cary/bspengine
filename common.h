@@ -74,6 +74,8 @@ public:
 		sprintf(str[strcnt], "%.2f, %.2f, %.2f", v[0], v[1], v[2]);
 		return str[strcnt++];
 	};
+	inline vec3_c set(float v1, float v2, float v3) { return vec3_c(v[0] = v1, v[1] = v2, v[2] = v3); }
+
 };
 //inline vec3_c operator*(float f, const vec3_c& vec) { return vec * f; }
 

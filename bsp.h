@@ -202,9 +202,11 @@ public:
 	ptrace_c(vec3_c start, vec3_c end) { Trace(start, end); };
 	ptrace_c() 
 	{
-		allsolid = initsolid = inempty = inwater = false;
-		fraction = 0;
-		end = zerovec;
+		initsolid = inempty = inwater = false;
+		allsolid = true;
+		fraction = 1.0;
+		end = zerovec; //this should be set to the endpoint I think.
+		
 		//plane here
 		ent = NULL;
 	}
