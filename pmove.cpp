@@ -24,6 +24,7 @@ const float pGravity = 800;
 //hullpointcontents should also almost be complete
 //make a new file for these
 //want this stuff for pm_playermove and getting an ent from trace. also pm_testplayerposition
+//playermove is replacing regular trace
 
 void PAccelerate(vec3_c wishdir, float wishspd, float accel);
 void PFriction();
@@ -104,25 +105,27 @@ void ClipMove()
 
 	if (onground != GROUNDED_NOT)
 	{
-		printf("gounded\n");
+		//printf("gounded\n");
+
 		in.vel.v[1] = 0;
 		PAccelerate(wishdir, wishspd, 10);
 		//in.vel.v[1] -= movevars.entgravity * movevars.gravity * frametime;
-		in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
+		//in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
 		PGroundMove();
 	}
 	else
-	{	// not on ground, so little effect on velocity
+	{	
+		//printf("not grounded\n");
+		// 
+		// not on ground, so little effect on velocity
 		//PM_AirAccelerate(wishdir, wishspeed, movevars.accelerate);
-		printf("not grounded\n");
 		PAccelerate(wishdir, wishspd, 10);
 
 		// add gravity
 		//pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
-		in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
+		//in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
 
 		PFlyMove();
-
 	}
 }
 
@@ -480,7 +483,10 @@ void PCategorizePosition()
 }
 
 
+void NudgePosition()
+{
 
+}
 
 
 void NoClipMove()

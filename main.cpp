@@ -74,6 +74,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	SetupView(winfo.win);
 	SetupInput(winfo.win);
 	SetupSound();
+	Pmove_Init();
 	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
 
 	while (!glfwWindowShouldClose(winfo.win))

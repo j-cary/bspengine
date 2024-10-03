@@ -76,6 +76,9 @@ public:
 	};
 	inline vec3_c set(float v1, float v2, float v3) { return vec3_c(v[0] = v1, v[1] = v2, v[2] = v3); }
 
+	//scalar addition, so overloaded operators are less confusing - untested
+	inline vec3_c sAdd(float addend) { return vec3_c(v[0] + addend, v[1] + addend, v[2] + addend); };
+
 };
 //inline vec3_c operator*(float f, const vec3_c& vec) { return vec * f; }
 

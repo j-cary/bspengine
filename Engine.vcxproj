@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClCompile Include="atlas.cpp" />
     <ClCompile Include="bsp.cpp" />
+    <ClCompile Include="clip.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="draw_models.cpp" />
