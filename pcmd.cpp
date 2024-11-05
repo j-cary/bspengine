@@ -124,8 +124,12 @@ void PCmdUp(input_c* in, int key)
 	if (in->menu)
 		return;
 
+	if (in->keys[key].pressed == 2) //release cmd
+		in->moveup = 0;
+	else
+		in->moveup = 1;
 
-	in->org.v[1] += MVSPEEDtmp;
+	//in->org.v[1] += MVSPEEDtmp;
 }
 
 void PCmdDown(input_c* in, int key)
@@ -133,8 +137,11 @@ void PCmdDown(input_c* in, int key)
 	if (in->menu)
 		return;
 
-
-	in->org.v[1] -= MVSPEEDtmp;
+	if (in->keys[key].pressed == 2) //release cmd
+		in->moveup = 0;
+	else
+		in->moveup = -1;
+	//in->org.v[1] -= MVSPEEDtmp;
 }
 
 void PCmdFullscreen(input_c* in, int key)

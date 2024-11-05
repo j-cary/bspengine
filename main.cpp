@@ -17,6 +17,20 @@
 gamestate_c game;
 winfo_t winfo;
 
+//PRIORITY LIST FOR FINAL
+//weapons
+//	Bullet clipping
+//Monsters
+//	movement
+//	ai
+//	models
+//Mouse speed/accel
+//Game logic
+//	respawning
+//	pickups
+//	powerups
+//HUD
+
 //TODO list:
 //TEXTURES:
 //	change textures over to 192x192. This will map to 128
@@ -83,6 +97,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		game.timedelta = game.time - game.lasttime;
 		game.lasttime = game.time;
 
+		PKeys(); //THIS SHOULD NOT BE HERE! MOVE THIS OUTSIDE ALL LOOPS WHEN UP AND DOWN ARE BASE IN PMOVE!!!!
 		
 		if (game.nexttick < game.time)
 		{
@@ -90,7 +105,6 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			game.lasttick = game.time;
 			//printf("%f\n", game.tickdelta);
 			PMove();
-			PKeys(); //THIS SHOULD NOT BE HERE! MOVE THIS OUTSIDE ALL LOOPS WHEN UP AND DOWN ARE BASE IN PMOVE!!!!
 			EntTick(&game);
 			SoundTick();
 			game.nexttick = game.time + (1.0 / game.maxtps);

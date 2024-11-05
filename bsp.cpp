@@ -148,7 +148,30 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	//models
 	fseek(f, bsp->header.lump[LMP_MODELS].ofs, SEEK_SET);
-	fread((void*)&bsp->models, bsp->header.lump[LMP_MODELS].len, 1, f);
+	//fread((void*)&bsp->models, bsp->header.lump[LMP_MODELS].len, 1, f);
+
+	//the hulls are just there to make collision detection more uniform with regular ents
+	//they are not stored in the BSP
+	bsp->num_models = bsp->header.lump[LMP_MODELS].len / (sizeof(*bsp->models) - sizeof(bsp->models->hulls));
+	for (unsigned int i = 0; i < bsp->num_models; i++)
+	{
+		bspmodel_t* mod = &bsp->models[i];
+		fread((void*)mod, sizeof(bspmodel_t) - sizeof(bsp->models->hulls), 1, f);
+
+		for (int j = 0; j < MAX_HULLS; j++)
+		{//this is a superfluous structure to make collision with bmodels and regular bbox entities more uniform
+			//FIXME!!!
+			mod->hulls[j].firstclipnode = mod->headnodes_index[j];
+			//line 1190 in model.c - no fucking clue here
+			//mod->hulls[j].clipnodes = &bsp->clips[mod->headnodes_index[j]];
+			//mod->hulls[j].planes = &bsp->planes[mod->hulls[j].clipnodes->plane];
+			mod->hulls[j].clipnodes = bsp->clips;
+			mod->hulls[j].planes = bsp->planes;//????
+			mod->hulls[j].clip_mins = mod->mins;
+			mod->hulls[j].clip_maxs = mod->maxs;
+			//mod->hulls[j].lastclipnode = mod->headnodes_index[j] + mod->
+		}
+	}
 
 	//for (unsigned i = 1; i < bsp->header.lump[LMP_MODELS].len / sizeof(*bsp->models); i++) //skip world
 		//UpdateBModelOrg(&bsp->models[i]);
@@ -226,9 +249,10 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	}
 
 
+#endif
 	printf("\nModel report\n");
-	for (unsigned i = 0; i < bsp->header.lump[LMP_MODELS].len / sizeof(*bsp->models); i++)
-	{
+	for (unsigned i = 0; i < bsp->num_models; i++)
+	{//erm... these headnode indices are just not right...
 		printf("Org: %i, %i, %i | BBox: %i, %i, %i  %i, %i, %i | Headnodes: %i, %i, %i, %i | Num Faces: %i vis: %i\n",
 			(int)bsp->models[i].origin[0], (int)bsp->models[i].origin[1], (int)bsp->models[i].origin[2],
 			(int)bsp->models[i].mins[0], (int)bsp->models[i].mins[1], (int)bsp->models[i].mins[2], (int)bsp->models[i].maxs[0], (int)bsp->models[i].maxs[1], (int)bsp->models[i].maxs[2],
@@ -238,7 +262,6 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 		
 	}
-#endif
 
 	fclose(f);
 }

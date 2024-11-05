@@ -1,18 +1,26 @@
 #include "pmove.h"
 
+extern  physent_t physents[MAX_PHYSENTS];
+extern	int num_physents;
+
+//these are just used for colliding with regular models, not a huge deal
+//half life has 4 different mins/maxs per hull...
+const vec3_c player_mins = { -16, -36, -16 };
+const vec3_c player_maxs = { 16, 36, 16 };
+
+hull_t* HullForBox(vec3_c mins, vec3_c maxs);
+
+//TODO: somehow need to handle translation of world models. idk how tho
+
 //player collision 
 bool ptrace_c::Trace(vec3_c start, vec3_c _end)
 {
-	vec3_c hit;
-	bspplane_t* tmpplane = NULL;
+	//Default(_end);
+	//return R_HullCheck(0, 0, 1, start, end, this);
+	
 
-	initsolid = inempty = inwater = false;
-	allsolid = true;
-	ent = NULL;
-	fraction = 1.0;
-	end = _end;
-
-	return RecursiveBSPClipNodeSearch(0, 0, 1, start, end, this);;
+	PlayerMove(start, _end);
+	return fraction > 1.0;
 }
 
 void ptrace_c::Dump()
@@ -25,11 +33,82 @@ void ptrace_c::Dump()
 		end.str());
 }
 
+void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
+{
+	int			i;
+	physent_t*	pe;
+	hull_t*		hull;
+	vec3_c		mins, maxs;
+	vec3_c		offset;
+	vec3_c		start_l, end_l;
+	ptrace_c	total(_end); //fill out a default trace
+
+	//TODO: explain this loop here
+	for (i = 0; i < num_physents; i++)
+	{
+		pe = &physents[i];
+		// get the clipping hull
+		if (pe->mdl)
+			hull = &physents[i].mdl->hulls[HULL_CLIP];
+		else
+		{ //non world model
+			mins = pe->mins - player_maxs; //VectorSubtract(pe->mins, player_maxs, mins);
+			maxs = pe->maxs - player_mins; //VectorSubtract(pe->maxs, player_mins, maxs);
+			
+			hull = HullForBox(mins, maxs);
+		}
+
+		offset = pe->org; //VectorCopy(pe->origin, offset);
+
+
+		start_l = start - offset; //VectorSubtract(start, offset, start_l);
+		end_l = _end - offset; //VectorSubtract(end, offset, end_l);
+
+		Default(_end);
+		allsolid = true;
+
+		// trace a line through the apropriate clipping hull
+		R_HullCheck(hull, hull->firstclipnode, 0, 1, start_l, end_l, this);
+
+		if (allsolid)
+			initsolid = true;
+		if (initsolid)
+			fraction = 0.0;
+
+		// did we clip the move?
+		if (fraction < total.fraction)
+		{
+			// fix trace up by the offset
+			end = end + offset; //VectorAdd(trace.endpos, offset, trace.endpos);
+			total = *this;
+			total.physent = i;
+		}
+
+	}
+
+	this->allsolid = total.allsolid;
+	this->initsolid = total.initsolid;
+	this->inempty = total.inempty;
+	this->inwater = total.inwater;
+	this->fraction = total.fraction;
+	this->end = total.end;
+	this->plane = total.plane;
+	this->physent = total.physent;
+}
 
 
 
 
 
+//sv_hullforentity - just implementing this SHOULD allow bullets to work
+//if world model, 
+//retrieve the model
+//use the size of the model to determine which clipping hull to use
+//return the hull
+
+//cl_setsolidents - 
+//figure out a way to get a general area to search in first
+//go through all these ents and add them to the physent list
 
 
 
@@ -67,9 +146,12 @@ void InitBoxHull()
 	}
 }
 
-void Pmove_Init() { InitBoxHull(); };
+void Pmove_Init() 
+{ 
+	InitBoxHull(); 
+};
 
-//generate a mini BSP given a bbox
+//generate a mini BSP given a bbox - keeps algorithm symmetrical for bmodels and models
 hull_t* HullForBox(vec3_c mins, vec3_c maxs)
 {
 	box_planes[0].dist = maxs.v[0];
@@ -82,7 +164,7 @@ hull_t* HullForBox(vec3_c mins, vec3_c maxs)
 	return &box_hull;
 }
 
-#if 0 //just for water it appears. This would entail somehow building a list of collideable models on a frame-by-frame basis
+#if 0 //just for water it appears.
 int PointContents(vec3_c p)
 {
 	float		d;
@@ -122,7 +204,7 @@ int PointContents(vec3_c p)
 }
 #endif
 
-int HullPointContents(int num, vec3_c p)
+int HullPointContents(hull_t* hull, int num, vec3_c p)
 {
 	float		d;
 	bspclip_t* node;
@@ -134,9 +216,8 @@ int HullPointContents(int num, vec3_c p)
 		//if (num < hull->firstclipnode || num > hull->lastclipnode)
 		//	SV_Error("SV_HullPointContents: bad node number");
 
-		//these should be offsets from the diffrent hulls but this SHOULD work for the world
-		node = &bsp.clips[num]; //??
-		plane = &bsp.planes[node->plane]; //??
+		node = hull->clipnodes + num; //node = bsp.clips + num; 
+		plane = hull->planes + node->plane; //plane = bsp.planes + node->plane; 
 		pnorm = plane->normal;
 
 		if (plane->type < 3) //axially aligned surface
@@ -154,10 +235,9 @@ int HullPointContents(int num, vec3_c p)
 }
 
 //nice floating point-compatible epsilon
-#define DIST_EPSILON	(0.03125)
+#define DIST_EPSILON	(0.03125f)
 
-//TODO: make this a member function of ptrace
-bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace)
+bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace)
 {
 	bspclip_t*	node;
 	bspplane_t* plane;
@@ -191,12 +271,13 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 	//
 	// find the point distances
 	//
-	node = &bsp.clips[num]; //??
-	plane = &bsp.planes[node->plane]; //??
+
+	node = hull->clipnodes + num; //node = bsp.clips + num; 
+	plane = hull->planes + node->plane; //plane = bsp.planes + node->plane; 
 	pnorm = plane->normal;
 
 	if (plane->type < 3)
-	{
+	{//axis aligned plane
 		t1 = p1.v[plane->type] - plane->dist;
 		t2 = p2.v[plane->type] - plane->dist;
 	}
@@ -207,9 +288,9 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 	}
 
 	if (t1 >= 0 && t2 >= 0)
-		return RecursiveBSPClipNodeSearch(node->children[0], p1f, p2f, p1, p2, trace);
+		return R_HullCheck(hull, node->children[0], p1f, p2f, p1, p2, trace);
 	if (t1 < 0 && t2 < 0)
-		return RecursiveBSPClipNodeSearch(node->children[1], p1f, p2f, p1, p2, trace);
+		return R_HullCheck(hull, node->children[1], p1f, p2f, p1, p2, trace);
 
 	// put the crosspoint DIST_EPSILON pixels on the near side
 	if (t1 < 0)
@@ -228,12 +309,12 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 	side = (t1 < 0);
 
 	// move up to the node
-	if (!RecursiveBSPClipNodeSearch(node->children[side], p1f, midf, p1, mid, trace))
+	if (!R_HullCheck(hull, node->children[side], p1f, midf, p1, mid, trace))
 		return false;
 
 
-	if (HullPointContents(node->children[side ^ 1], mid) != CONTENTS_SOLID) // go past the node
-		return RecursiveBSPClipNodeSearch(node->children[side ^ 1], midf, p2f, mid, p2, trace);
+	if (HullPointContents(hull, node->children[side ^ 1], mid) != CONTENTS_SOLID) // go past the node
+		return R_HullCheck(hull, node->children[side ^ 1], midf, p2f, mid, p2, trace);
 
 	if (trace->allsolid)
 		return false; // never got out of the solid area
@@ -258,7 +339,7 @@ bool RecursiveBSPClipNodeSearch(int num, float p1f, float p2f, vec3_c p1, vec3_c
 		trace->plane.dist = -plane->dist;
 	}
 
-	while (HullPointContents(0, mid) == CONTENTS_SOLID)
+	while (HullPointContents(hull, hull->firstclipnode, mid) == CONTENTS_SOLID)
 	{ // shouldn't really happen, but does occasionally
 		frac -= 0.1f;
 		if (frac < 0)
@@ -307,17 +388,52 @@ bool TestPlayerPosition(vec3_c p)
 		if (PM_HullPointContents(hull, hull->firstclipnode, test) == CONTENTS_SOLID)
 			return false;
 	}
-#else
-	//just do the world
-
-
 
 #endif
 
 	return true;
 }
 
-void ptrace_c::PlayerMove(vec3_c start, vec3_c end)
-{
+#include "md2.h" //MODELS_MAX
+extern ent_c entlist[MAX_ENTITIES];
 
+void BuildPhysentList(physent_t* p, int* i)
+{
+	p[0].org = bsp.models[0].origin;
+	p[0].mdl = &bsp.models[0];
+
+	//TODO: mins/maxs
+	//search for models close to the player, not just through all of them - maybe use player's org & vel to see if a collision is even possible
+
+	*i = 1;
+	for (int ei = 0; ei < MAX_ENTITIES; ei++)
+	{
+		if (*i >= MAX_PHYSENTS)
+			break;
+
+		ent_c* e = &entlist[ei];
+
+		if (!e->inuse)
+			continue;
+
+		if (e->bmodel)
+		{
+			p[*i].org = e->bmodel->origin;
+			p[*i].mdl = e->bmodel;
+			(*i)++;
+			continue;
+		}
+		else if (e->mdli[0].mid < MODELS_MAX)
+		{
+			// need to find a way to determine a model's mins/maxs
+			p[*i].mins = player_mins;
+			p[*i].maxs = player_maxs;
+			p[*i].org = e->origin;
+
+			(*i)++;
+		}
+	}
 }
+
+//bbox thoughts: enemies have predefined ones
+//objects just use the largest extent of the models vertices among all frames...

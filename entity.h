@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include "bsp.h" //bmodel
 
 enum AIFLAGS
 {
@@ -41,7 +42,8 @@ public:
 	char noise[64]; //for constant sounds
 	bool playing; //keep track of status
 	
-	mdlidx_t mdli[3]; //3 models can belong to an ent
+	mdlidx_t mdli[3]; //3 models can belong to an ent. 0th is used as the collision model
+	struct bspmodel_s* bmodel;
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
 	void MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped);

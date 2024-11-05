@@ -140,10 +140,12 @@ public:
 
 	float yaw, pitch;
 	vec3_c org, right, forward, up;
+	float camera_vertical_offset = 32;
 
 	vec3_c vel;
 	int moveforward; // negative for backwards
 	int movesideways;
+	int moveup;
 
 	menuflags_t menu;
 

@@ -10,7 +10,9 @@ extern md2list_c md2list;
 
 extern gamestate_c game;
 
-const int model_hz = 16; //should be nicely divisible by maxtps. 32 model frames in a second
+extern bsp_t bsp;
+
+const int model_hz = 16; //should be nicely divisible by maxtps. 16 model frames in a second
 
 void EntTick(gamestate_c* gs)
 {
@@ -42,7 +44,18 @@ void ent_c::AddEnt()
 	inuse = 1;
 
 	if (*modelname)
-		mdli[0].mid = md2list.Alloc(modelname, this, &mdli[0]);
+	{
+		if (*modelname != '*')
+		{
+			mdli[0].mid = md2list.Alloc(modelname, this, &mdli[0]);
+
+		}
+		else //world model
+		{//check this out. just assuming that the number following '*' is the index into models
+			int i = atoi(&modelname[1]); //skip '*'
+			bmodel = &bsp.models[i];
+		}
+	}
 }
 
 void ent_c::DelEnt()
@@ -78,6 +91,8 @@ ent_c::ent_c()
 		mdli[i].frame = mdli[i].frame_max = mdli[i].skin = 0;
 		mdli[i].mid = 0xFFFFFFFF;
 	}
+
+	bmodel = NULL;
 
 	light[0] = light[1] = light[2] = light[3] = 0;
 

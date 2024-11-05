@@ -144,6 +144,23 @@ typedef struct bspleaf_s
 	byte ambient_levels[4];
 }bspleaf_t;
 
+
+//clipping hull. used for world models as well as regular entities
+typedef struct chull_s
+{
+	bspclip_t* clipnodes;
+	bspplane_t* planes;
+	int			firstclipnode;
+	int			lastclipnode;
+	vec3_c		clip_mins;
+	vec3_c		clip_maxs;
+} hull_t;
+
+#define HULL_FACE	0
+#define HULL_CLIP	1
+#define HULL_BIG	2 //apparently this is the point hull? - check bspfile.h
+#define HULL_POINT	3
+
 typedef struct bspmodel_s
 {
 	float mins[3], maxs[3];
@@ -151,9 +168,12 @@ typedef struct bspmodel_s
 	int headnodes_index[MAX_HULLS]; //0th is the idx into the rendering BSP tree
 	int num_visleafs;
 	int firstface, num_faces; //faces of models are stored sequentially
+	hull_t hulls[MAX_HULLS];
 } bspmodel_t;
 
 #pragma pack(pop)
+
+
 
 typedef struct bsp_s
 {
@@ -175,6 +195,7 @@ typedef struct bsp_s
 	bspedge_t edges[MAX_EDGES];
 	int surfedges[MAX_SURFEDGES];
 	bspmodel_t models[MAX_MODELS];
+	int num_models;
 	char name[FILENAME_MAX];
 } bsp_t;
 

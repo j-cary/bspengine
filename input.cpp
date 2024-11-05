@@ -145,10 +145,12 @@ input_c::input_c()
 	VecSet(right, 0, 0, 1);
 	VecSet(forward, 0, 0, -1); //wrong
 	VecSet(up, 0, 1, 0);
+	camera_vertical_offset = 32;
 
 	VecSet(vel, 0, 0, 0);
 	moveforward = 0;
 	movesideways = 0;
+	moveup = 0;
 
 	menu = MENU_NONE;
 

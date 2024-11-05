@@ -6,27 +6,26 @@ extern input_c in;
 extern bsp_t bsp;
 
 const float pMaxSpeed = 320; //units / second
-const float pAccelRate = 400;
+const float pAccelRate = 10.0;
 const float pFriction = 6;
 const float pStopSpeed = 100;
 const float pGravity = 800;
+const float pJumpSpeed = 270;
 
 #define STOP_EPSILON (0.75f)
 #define CLIP_PLANES_MAX	4
 #define STAIRSTEP_SIZE	18
 
 #define GROUNDED_NOT	(-1)
-#define GROUNDED_WORLD	0
-#define GROUNDED_ENT	1
 
-//implement hull stuff from pmovetst.c 
-//recursivehullcheck => recursiveBSPClipNodeSearch is ALMOST complete.
-//hullpointcontents should also almost be complete
-//make a new file for these
-//want this stuff for pm_playermove and getting an ent from trace. also pm_testplayerposition
-//playermove is replacing regular trace
+physent_t physents[MAX_PHYSENTS]; //0th is the world
+int num_physents = 0;
+
+//todo: nudgeposition & pm_testplayerposition - are these even necessary?
 
 void PAccelerate(vec3_c wishdir, float wishspd, float accel);
+void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel);
+void PJump();
 void PFriction();
 void PClip(vec3_c wishvel, vec3_c norm, vec3_c& clippedvel); //clip velocity and fill in a trace
 void PFlyMove(); //Clip movement and slide across multiple planes. TODO: give this some parms so groundmove isn't so fucking unreadable
@@ -39,6 +38,7 @@ void ClipMove();
 
 
 int onground = 0;
+bool jumpheld = false;
 
 void PMove()
 {
@@ -47,6 +47,9 @@ void PMove()
 		NoClipMove();
 		return;
 	}
+
+	num_physents = 1; //the world model is always in this
+	BuildPhysentList(physents, &num_physents);
 
 	//NudgePosition();
 
@@ -66,6 +69,9 @@ void PMove()
 	else
 		pmove.oldbuttons &= ~BUTTON_JUMP;
 	*/
+
+	if (in.moveup == 1)
+		PJump();
 
 	PFriction();
 
@@ -105,27 +111,23 @@ void ClipMove()
 
 	if (onground != GROUNDED_NOT)
 	{
-		//printf("gounded\n");
+		//printf("grounded %4.2f\n", in.vel.v[1]);
 
 		in.vel.v[1] = 0;
-		PAccelerate(wishdir, wishspd, 10);
-		//in.vel.v[1] -= movevars.entgravity * movevars.gravity * frametime;
-		//in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
+		PAccelerate(wishdir, wishspd, pAccelRate);
+		
+		in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps); 
 		PGroundMove();
 	}
 	else
 	{	
-		//printf("not grounded\n");
-		// 
 		// not on ground, so little effect on velocity
-		//PM_AirAccelerate(wishdir, wishspeed, movevars.accelerate);
-		PAccelerate(wishdir, wishspd, 10);
+		PAirAccelerate(wishdir, wishspd, pAccelRate);
 
 		// add gravity
-		//pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
-		//in.vel.v[1] -= pGravity * (1.0f / (float)game.maxtps);
-
+		in.vel.v[1] -= pGravity  * (1.0f / (float)game.maxtps); //pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
 		PFlyMove();
+
 	}
 }
 
@@ -161,44 +163,99 @@ void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 	accelspd = accel * game.tickdelta * wishspd; //should be 10 * deltime * 320
 	if (accelspd > addspd)
 		accelspd = addspd;
-	//printf("%f\n", accelspd);
+	
 	for (int i = 0; i < 3; i++)
 		in.vel.v[i] += accelspd * wishdir.v[i];
 
-	//printf("%.3f\n", curspd);
-	//printf("%f | %.2f, %.2f, %.2f | %f | %f\n", wishspd, in.vel[0], in.vel[1], in.vel[2], addspd, accelspd);
-	//printf("%.3f * %.4f * %.3f\n", accel, deltime, wishspd);
+}
+
+void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
+{
+	int			i;
+	float		addspeed, accelspeed, currentspeed, wishspd = wishspeed;
+
+	/*
+	if (pmove.dead)
+		return;
+	if (pmove.waterjumptime)
+		return;
+	*/
+
+	if (wishspd > 30)
+		wishspd = 30;
+
+	currentspeed = in.vel.dot(wishdir);
+	addspeed = wishspd - currentspeed;
+	if (addspeed <= 0)
+		return;
+
+	accelspeed = accel * wishspeed * game.tickdelta;
+	if (accelspeed > addspeed)
+		accelspeed = addspeed;
+
+	for (i = 0; i < 3; i++)
+		in.vel.v[i] += accelspeed * wishdir.v[i];
 
 
 }
 
 void PFriction()
 {
-	float spd, control, newspd;
-	float drop = 0;
+	float		speed, newspeed, control;
+	float		friction;
+	float		drop;
+	vec3_c		start, stop;
+	ptrace_c	trace;
 
-	spd = VecLength(in.vel);
-	if (spd < 1)
-	{//just stop instead of decelerating if going slow
-		in.vel.v[0] = 0;
-		in.vel.v[2] = 0;
+	//if (pmove.waterjumptime)
+	//	return;
+
+
+	speed = in.vel.len();
+	if (speed < 1)
+	{
+		//vel[0] = 0;
+		//vel[1] = 0;
+		in.vel.v[0] = in.vel.v[2] = 0;
 		return;
 	}
 
-	//if(in.onground)
-	//check for ledge here, increase friction
+	friction = pFriction;
 
-	control = spd < pStopSpeed ? pStopSpeed : spd;
-	drop += control * pFriction * game.tickdelta;
+	// if the leading edge is over a dropoff, increase friction
+	/*
+	if (onground != -1) {
+		start[0] = stop[0] = pmove.origin[0] + vel[0] / speed * 16;
+		start[1] = stop[1] = pmove.origin[1] + vel[1] / speed * 16;
+		start[2] = pmove.origin[2] + player_mins[2];
+		stop[2] = start[2] - 34;
+
+		trace = PM_PlayerMove(start, stop);
+
+		if (trace.fraction == 1) {
+			friction *= 2;
+		}
+	}
+	*/
+
+	drop = 0;
+
+	//if (waterlevel >= 2) // apply water friction
+	//	drop += speed * movevars.waterfriction * waterlevel * frametime;
+	/*else*/ if (onground != -1) // apply ground friction
+	{
+		control = speed < pStopSpeed ? pStopSpeed : speed;
+		drop = control * friction * game.tickdelta;
+	}
 
 
-	newspd = spd - drop;
+	// scale the velocity
+	newspeed = speed - drop;
+	if (newspeed < 0)
+		newspeed = 0;
+	newspeed /= speed;
 
-	if (newspd < 0)
-		newspd = 0;
-	newspd /= spd;
-
-	VecScale(in.vel, in.vel, newspd);
+	in.vel = in.vel * newspeed;
 }
 
 void PClip(vec3_c wishvel, vec3_c norm,  vec3_c& clippedvel)
@@ -213,7 +270,6 @@ void PClip(vec3_c wishvel, vec3_c norm,  vec3_c& clippedvel)
 	for (int i = 0; i < 3; i++) //stop minor oscillations in speed. TESTME!!! is this even doing anything?
 		if (newvel.v[i] > -STOP_EPSILON && newvel.v[i] < STOP_EPSILON)	newvel.v[i] = 0;
 
-	//not tracing up and down movement at all - up/down movement is not doing anything with the wishvel yet
 	clippedvel = newvel;
 }
 
@@ -239,7 +295,7 @@ void PFlyMove()
 	for (int bumpcnt = 0; bumpcnt < numbumps; bumpcnt++)
 	{
 		end = in.org + (in.vel * time_left);
-		trace.Trace(in.org, end);
+		trace.PlayerMove(in.org, end);
 
 		if (trace.initsolid || trace.allsolid)
 		{//stuck in a solid
@@ -328,7 +384,7 @@ void PFlyMove()
 	}
 }
 
-//UNTESTED!!!
+//NOT THOROUGHLY TESTED! - stairs
 void PGroundMove()
 {
 	vec3_c start, dest;
@@ -341,17 +397,12 @@ void PGroundMove()
 	if(!in.vel.v[0] && !in.vel.v[2])
 		return; //stationary
 
-	// first try just moving to the destination	
-	//dest[0] = pmove.origin[0] + pmove.velocity[0] * frametime;
-	//dest[1] = pmove.origin[1] + pmove.velocity[1] * frametime;
-	//dest[2] = pmove.origin[2];
-
 	dest = in.org;
 	dest.v[0] += in.vel.v[0] * ticktime;
 	dest.v[2] += in.vel.v[2] * ticktime;
 
 	// first try moving directly to the next spot
-	trace.Trace(in.org, dest);
+	trace.PlayerMove(in.org, dest);
 	if (trace.fraction == 1)
 	{//no obstruction
 		in.org = trace.end;
@@ -376,7 +427,7 @@ void PGroundMove()
 	dest = in.org;
 	dest.v[1] += STAIRSTEP_SIZE;
 
-	trace.Trace(in.org, dest);
+	trace.PlayerMove(in.org, dest);
 	if (!trace.initsolid && !trace.allsolid)
 		in.org = trace.end; //didn't get caught in a solid
 
@@ -387,7 +438,7 @@ void PGroundMove()
 	dest = in.org;
 	dest.v[1] -= STAIRSTEP_SIZE;
 
-	trace.Trace(in.org, dest);
+	trace.PlayerMove(in.org, dest);
 	if (trace.plane.normal[2] < 0.7)
 		goto usedown;
 
@@ -429,12 +480,12 @@ void PCategorizePosition()
 		onground = GROUNDED_NOT; //falling very fast, must not be grounded
 	else
 	{
-		tr.Trace(in.org, point);
+		tr.PlayerMove(in.org, point);
 		//printf("norm %.2f\n", tr.plane.normal[1]);
 		if (tr.plane.normal[1] < 0.7)
 			onground = GROUNDED_NOT;	// sliding down a ramp, falling (surfing)
 		else
-			onground = 1;
+			onground = tr.physent;
 		//else
 		//	onground = tr.ent;
 		if (onground != GROUNDED_NOT)
@@ -445,13 +496,12 @@ void PCategorizePosition()
 		}
 
 		// standing on an entity other than the world
-		/*
-		if (tr.ent > 0)
+		if (tr.physent > 0)
 		{
-			pmove.touchindex[pmove.numtouch] = tr.ent;
-			pmove.numtouch++;
+			//pmove.touchindex[pmove.numtouch] = tr.ent;
+			//pmove.numtouch++;
 		}
-		*/
+		
 	}
 
 	//
@@ -482,6 +532,49 @@ void PCategorizePosition()
 #endif
 }
 
+void PJump()
+{
+	/*
+	if (pmove.dead)
+	{
+		pmove.oldbuttons |= BUTTON_JUMP;	// don't jump again until released
+		return;
+	}
+
+	if (pmove.waterjumptime)
+	{
+		pmove.waterjumptime -= frametime;
+		if (pmove.waterjumptime < 0)
+			pmove.waterjumptime = 0;
+		return;
+	}
+
+	if (waterlevel >= 2)
+	{	// swimming, not jumping
+		onground = -1;
+
+		if (watertype == CONTENTS_WATER)
+			pmove.velocity[2] = 100;
+		else if (watertype == CONTENTS_SLIME)
+			pmove.velocity[2] = 80;
+		else
+			pmove.velocity[2] = 50;
+		return;
+	}
+	*/
+
+	if (onground == -1)
+		return;		// in air, so no effect
+
+	//if (pmove.oldbuttons & BUTTON_JUMP)
+	//	return;		// don't pogo stick
+
+	onground = -1;
+	in.vel.v[1] += pJumpSpeed;//pmove.velocity[2] += 270;
+
+	//pmove.oldbuttons |= BUTTON_JUMP;	// don't jump again until released
+}
+
 
 void NudgePosition()
 {
@@ -499,12 +592,16 @@ void NoClipMove()
 	vec3_c vel_upt; //in units/tick
 	float wishspd;
 
+	float ticktime = 1.0f / (float)game.maxtps;
+
 	newpitch = in.pitch / 3; //so looking down doesn't impact forward speed as much
 	GetAngleVectors(newpitch, in.yaw, fwd, right);
 
 	wishvel.v[0] = fwd.v[0] * in.moveforward + right.v[0] * in.movesideways;
 	wishvel.v[1] = 0;
 	wishvel.v[2] = fwd.v[2] * in.moveforward + right.v[2] * in.movesideways;
+
+	
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);
@@ -514,10 +611,18 @@ void NoClipMove()
 		wishspd = pMaxSpeed;
 	}
 
-	PAccelerate(wishdir, wishspd, 10);
+	PAccelerate(wishdir, wishspd, pAccelRate);
 
 	//change the velocity from units/second to units/tick
-	vel_upt = in.vel * (1.0f / (float)game.maxtps);
-	VecAdd(in.org, vel_upt);
+	vel_upt = in.vel * ticktime;
+	in.org = in.org +  vel_upt;
 	PFriction();
+
+	//don't want to apply any friction to up/down movement
+	if (in.moveup == 1)
+		in.org.v[1] += 300 * ticktime;
+	else if (in.moveup == -1)
+		in.org.v[1] -= 300 * ticktime;
+	
 }
+

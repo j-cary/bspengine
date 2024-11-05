@@ -117,7 +117,7 @@ void DrawView(GLFWwindow* win)
 	//glClear(GL_COLOR_BUFFER_BIT);
 	
 	cam[0] = in.org.v[0];
-	cam[1] = in.org.v[1];
+	cam[1] = in.org.v[1] + in.camera_vertical_offset;
 	cam[2] = in.org.v[2];
 	forward[0] = in.forward.v[0];
 	forward[1] = in.forward.v[1];
@@ -459,7 +459,7 @@ void InitLmapList()
 
 void BuildVertexList(vertexinfo_c* vi)
 {
-	for (unsigned mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
+	for (unsigned mdlidx = 0; mdlidx < bsp.num_models; mdlidx++)
 		R_BuildVertexList(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
 	
 	vec3_c ofs(0, 0, 0);
@@ -545,7 +545,7 @@ void BuildFanArrays()
 	
 	numfans = 0;
 	edgecount = 0;
-	for (int mdlidx = 0; mdlidx < bsp.header.lump[LMP_MODELS].len / sizeof(bspmodel_t); mdlidx++)
+	for (int mdlidx = 0; mdlidx < bsp.num_models; mdlidx++)
 		R_BuildFanArrays(mdlidx, bsp.models[mdlidx].headnodes_index[0], pvs);
 
 }
