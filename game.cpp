@@ -1,8 +1,8 @@
 #include "game.h"
 #include "pcmd.h"
-//#include "bsp.h"
+#include "bsp.h"
 
-//extern bsp_t bsp;
+extern bsp_t bsp;
 
 void SetupArgs(char* args)
 {
@@ -40,4 +40,29 @@ void SetupArgs(char* args)
 	//if (state)
 		//PCmd(buf, NULL, -1);
 
+}
+
+#include "player.h"
+#include "draw.h"
+
+void ChangeMap(const char* mapname)
+{
+	//rip controls - go to menu
+	
+	//ClearEntlist(); //empty ent list
+	
+	//md2list.Clear(); //empty md2 list
+	
+	//stop sounds
+
+	
+	ReloadBSP(mapname); //reload bsp & sky
+	
+	//should have a skybox kv in JACK... 
+	//ReloadSky(name);//reload sky
+
+	//remake entity list - tough... this has to be called first when setting up models...
+	//^this should include remaking the md2 list, too
+	SpawnPlayer();//spawn player
+	//begin game loop again
 }

@@ -249,7 +249,6 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	}
 
 
-#endif
 	printf("\nModel report\n");
 	for (unsigned i = 0; i < bsp->num_models; i++)
 	{//erm... these headnode indices are just not right...
@@ -262,6 +261,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 		
 	}
+#endif
 
 	fclose(f);
 }

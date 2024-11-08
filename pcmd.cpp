@@ -231,7 +231,8 @@ void PCmdMapA(input_c* in, int key)
 	strcat(name, arg);
 	strcat(name, ".bsp");
 
-	SetupBSP(name);
+	ChangeMap(name);
+	//SetupBSP(name);
 
 
 	in->keys[key].time = game.time + 0.5;

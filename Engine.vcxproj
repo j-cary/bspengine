@@ -150,6 +150,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="pcmd.cpp" />
+    <ClCompile Include="player.cpp" />
     <ClCompile Include="pmove.cpp" />
     <ClCompile Include="shaders.cpp" />
     <ClCompile Include="sound.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="pcmd.h" />
+    <ClInclude Include="player.h" />
     <ClInclude Include="pmove.h" />
     <ClInclude Include="shaders.h" />
     <ClInclude Include="sound.h" />

@@ -48,13 +48,20 @@ public:
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
 	void MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped);
 
-	void AddEnt();
+	void AddHammerEntity();
 	void DelEnt();
+	
+	
 
 	ent_c();
 	//ent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);
 	~ent_c();
 };
+
+//should be friend stuff - functions for interacting with the entlist
+ent_c* AllocEnt();
+ent_c* FindEntByClassName(const char* name); //will need list versions of these functions
+ent_c* FindEntByName(const char* name);
 
 
 void EntTick(gamestate_c* gs);

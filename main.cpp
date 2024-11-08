@@ -13,6 +13,14 @@
 #include "entity.h"
 #include "game.h"
 #include "md2.h"
+#include "player.h"
+
+
+/*
+* 
+* Main program flow control
+* 
+*/
 
 gamestate_c game;
 winfo_t winfo;
@@ -29,6 +37,7 @@ winfo_t winfo;
 //	respawning
 //	pickups
 //	powerups
+//	map reloading 
 //HUD
 
 //TODO list:
@@ -71,8 +80,23 @@ winfo_t winfo;
 void SetupWindow(winfo_t* win, int width, int height);
 
 
+void Setup(char* cmdargs)
+{
+	double time = glfwGetTime();
+	SetupArgs(cmdargs);
+	SetupWindow(&winfo, 800, 600);
+	SetupView(winfo.win);
+	SetupInput(winfo.win);
+	SetupSound();
+	SetupPMove();
+	SetupPlayer();
+
+	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
+}
+
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PSTR pCmdLine, _In_ int nCmdShow)
 {
+	
 #if STDWINCON
 	CreateConsole();
 #endif
@@ -82,14 +106,8 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	double time = glfwGetTime();
-	SetupArgs(pCmdLine);
-	SetupWindow(&winfo, 800, 600);
-	SetupView(winfo.win);
-	SetupInput(winfo.win);
-	SetupSound();
-	Pmove_Init();
-	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
+	Setup(pCmdLine);
+	
 
 	while (!glfwWindowShouldClose(winfo.win))
 	{
@@ -97,7 +115,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		game.timedelta = game.time - game.lasttime;
 		game.lasttime = game.time;
 
-		PKeys(); //THIS SHOULD NOT BE HERE! MOVE THIS OUTSIDE ALL LOOPS WHEN UP AND DOWN ARE BASE IN PMOVE!!!!
+		PKeys(); //get key input as frequently as possible
 		
 		if (game.nexttick < game.time)
 		{
@@ -106,6 +124,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			//printf("%f\n", game.tickdelta);
 			PMove();
 			EntTick(&game);
+			PlayerTick();
 			SoundTick();
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;

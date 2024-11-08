@@ -65,6 +65,7 @@ void SetupView(GLFWwindow* win);
 
 //these are run only after loading a BSP
 void SetupBSP(const char* name); //todo: make .bsp extension unnecessary
+void ReloadBSP(const char* name); //change maps
 void BuildTextureList();
 void InitLmapList();
 void BuildVertexList(vertexinfo_c* vi);

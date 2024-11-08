@@ -39,7 +39,7 @@ void EntTick(gamestate_c* gs)
 	}
 }
 
-void ent_c::AddEnt()
+void ent_c::AddHammerEntity()
 {
 	inuse = 1;
 
@@ -109,6 +109,52 @@ ent_c::~ent_c()
 {
 
 }
+
+ent_c* AllocEnt()
+{
+	ent_c* e = NULL;
+
+	for (int i = 0; i < MAX_ENTITIES; i++)
+	{
+		e = &entlist[i];
+
+		if (!e->inuse)
+			break;
+	}
+
+	if (!e)
+		SYS_Exit("No free ents!\n");
+
+	e->inuse = true;
+	return e;
+}
+
+ent_c* FindEntByClassName(const char* name)
+{
+	ent_c*	e = NULL;
+	ent_c*	r = NULL;
+	int		i = 0;
+
+	for (int i = 0; i < MAX_ENTITIES; i++)
+	{
+		e = &entlist[i];
+
+		if (!e->inuse)
+			continue;
+
+		if (!strcmp(name, e->classname))
+		{
+			r = e;
+			break;
+		}
+	}
+
+	return r;
+}
+
+
+
+
 
 //entlist stuff
 //entities added after worldspawn will be done manually
@@ -238,8 +284,76 @@ void VarKV(ent_c* ent, char* key, char* val)
 
 //entities are separated by curly braces. Their attributes are contained within lines. These keyvalue pairs are contained within quotes and separated by spaces.
 //len includes the final newline as well
-void MakeEntityList(char* str, int len)
+
+void ParseHammerEntity(char* start, int len)
 {
+	char	key[16];
+	char	val[128];
+	char*	k;
+	char*	v;
+	ent_c*	e;
+
+	e = AllocEnt();
+
+	for (; len > 0; len--, start++)
+	{
+		if (*start == '"')
+		{
+			k = key;
+			v = val;
+
+			//skip the first quote
+			for (start++, len--; *start != '"'; len--, start++)
+			{//get the key
+				*k = *start;
+				k++;
+			}
+
+			//skip the " " in between 
+			for (start += 3, len -= 3; *start != '"'; len--, start++)
+			{//get the val
+				*v = *start;
+				v++;
+			}
+
+			*v = *k = '\0';
+			VarKV(e, key, val);
+
+			//skip the last quote
+			start++;
+			len--;
+
+			//printf("%s - %s\n", key, val);
+		}
+	}
+
+	e->AddHammerEntity();
+}
+
+void MakeEntityList(char* str, int len)
+{//https://www.gamers.org/dEngine/quake/spec/quake-spec34/qkspec_2.htm#2.2.3
+#if 1
+	char* start = NULL;
+	int ent_len = 0;
+
+	for (; len > 0; len--, str++, ent_len++)
+	{
+		if (*str == '{')
+		{
+			ent_len = 0;
+			start = str + 1;
+
+			if (*start == '{') //this might just be a thing in .MAP files...
+				SYS_Exit("MakeEntityList is not prepared to handle brush info\n");
+		}
+
+		if (*str == '}')
+		{
+			ParseHammerEntity(start, ent_len - 2); //cut off the "\n}" pair
+		}
+	}
+
+#else
 	int entidx = 0;
 
 	bool isval = 0; //if 0, looking at a key
@@ -280,7 +394,7 @@ void MakeEntityList(char* str, int len)
 		if (*str == '}')
 		{//done with this entity
 
-			entlist[entidx].AddEnt();
+			entlist[entidx].AddHammerEntity();
 			//if(entlist[entidx].modelname[0] == '*') //bsp model
 				
 
@@ -314,7 +428,7 @@ void MakeEntityList(char* str, int len)
 		}
 
 	}
-
+#endif
 }
 
 void PCmdPrintEntlist(input_c* in, int key)

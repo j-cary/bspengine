@@ -110,6 +110,24 @@ void SetupBSP(const char* name)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+void ReloadBSP(const char* name)
+{
+	memset(&bsp, 0, sizeof(bsp_t));
+	memset(&vi, 0, sizeof(vertexinfo_c));
+	atlas.Clear();
+	ReadBSPFile(name, &bsp);
+	BuildTextureList();
+	InitLmapList();
+
+	BuildVertexList(&vi);
+	strcpy(bsp.name, name);
+
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vi.edgecount * VI_SIZE * sizeof(float), vi.verts, GL_STATIC_DRAW);
+}
+
 void DrawView(GLFWwindow* win)
 {
 	glClearColor(1.0f, 0.55f, 0.0f, 1.0f);
@@ -328,6 +346,8 @@ void BuildTextureList()
 	img_c* img;
 
 	char filename[64] = {};
+
+	num_textures = num_atextures = 0;
 
 	for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
 	{

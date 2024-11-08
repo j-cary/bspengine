@@ -54,7 +54,7 @@ typedef struct physent_s
 bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace);
 
 
-void Pmove_Init();
+void SetupPMove();
 void PMove();
 
 void BuildPhysentList(physent_t* p, int* i);

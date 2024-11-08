@@ -146,7 +146,7 @@ void InitBoxHull()
 	}
 }
 
-void Pmove_Init() 
+void SetupPMove() 
 { 
 	InitBoxHull(); 
 };
