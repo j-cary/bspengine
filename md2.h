@@ -139,7 +139,7 @@ typedef unsigned short achunk_t[6];
 #define MD2_SKINS_MAX		32
 #define MD2_NORMAL_CNT		162 //anorms.h
 
-#define MD2_ID				"IDP2"
+#define MD2_ID				"IDP2" //ID Polygon 2
 #define MD2_VERSION			8
 
 #define MODELS_MAX			16
@@ -342,11 +342,7 @@ public:
 	md2list_c()
 	{
 		//memset(ents, NULL, sizeof(ents));
-		memset(ll, NULL, sizeof(ll));
-		memset(&vi, 0, sizeof(vi));
-		memset(skins, 0xFF, sizeof(skins)); //0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
-		memset(layers_used, 0, sizeof(layers_used));
-		vertices = 0;
+		Clear();
 	}
 
 	~md2list_c()
@@ -374,9 +370,11 @@ public:
 	//to be called ONCE after setting up the skin texture array
 	void FillSkinArray();
 
+
+	void Clear();
+
 	void TMP();
 };
-
 
 
 //every entity will have 2-4 model identifiers. It can request the model list to fill these in. It can also give the list a model id to be removed.

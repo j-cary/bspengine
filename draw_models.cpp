@@ -36,7 +36,6 @@ void SetupModels(char* ent_str, int ent_len)
 	md2shader.Use();
 
 	//Texture stuff
-	img_c* img;
 	glGenTextures(1, &skinarray);
 	glActiveTexture(MODEL_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, skinarray);
@@ -50,7 +49,7 @@ void SetupModels(char* ent_str, int ent_len)
 	glActiveTexture(MODEL_TEXTURE_UNIT);
 
 	//Need to fill in skin data here, but ent list must already be loaded!
-	MakeEntityList(ent_str, ent_len);
+	LoadHammerEntities(ent_str, ent_len);
 
 
 	glGenVertexArrays(1, &md2_vao);

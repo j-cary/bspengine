@@ -251,7 +251,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				{
 					if (!strcmp(texlist[i].name, bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
 					{
-						vi->verts[vi->edgecount][VI_TI] = i; //texid
+						vi->verts[vi->edgecount][VI_TI] = (float)i; //texid
 						//vi->verts[vi->edgecount][VI_S] /= texlist[i].xscale;
 						//vi->verts[vi->edgecount][VI_T] /= texlist[i].yscale;
 						tex = &texlist[i];
@@ -263,7 +263,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				{
 					if (!strcmp(alphalist[i], bsp.miptex[bsp.texinfo[bsp.faces[faceidx].texinfo_index].miptex_index].name))
 					{
-						vi->verts[vi->edgecount][VI_TI] = ~i;
+						vi->verts[vi->edgecount][VI_TI] = (float)~i;
 						//printf("%s is RGBA and has ofs %i\n", alphalist[i], ~i);
 					}
 				}
@@ -292,8 +292,8 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 			int lw, lh;
 			vec3_t texofs = {};
 			
-			lw = ceil(maxs * 8) - floor(mins * 8) + 1;
-			lh = ceil(maxt * 8) - floor(mint * 8) + 1;
+			lw = (int)(ceil(maxs * 8) - floor(mins * 8) + 1);
+			lh = (int)(ceil(maxt * 8) - floor(mint * 8) + 1);
 			
 			float block_s = 0, block_t = 0;
 			int block_z;
@@ -312,7 +312,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				v[VI_LS] /= (maxs - mins);
 
 				//half pixel offset
-				v[VI_LS] += (-v[VI_LS] + 0.5) / lw;
+				v[VI_LS] += (-v[VI_LS] + 0.5f) / lw;
 				
 				v[VI_LS] = (v[VI_LS] * lw) / (float)ATLAS_SIZE + block_s;
 
@@ -321,10 +321,10 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 				v[VI_LT] /= (maxt - mint);
 
 				//half pixel offset
-				v[VI_LT] += (-v[VI_LT] + 0.5) / lh;
+				v[VI_LT] += (-v[VI_LT] + 0.5f) / lh;
 				
 				v[VI_LT] = (v[VI_LT] * lh) / (float)ATLAS_SIZE + block_t;
-				v[VI_LI] = block_z;
+				v[VI_LI] = (float)block_z;
 
 				if (tex)
 				{//here so lightmap coordinate calculations aren't messed up
@@ -479,7 +479,7 @@ void InitLmapList()
 
 void BuildVertexList(vertexinfo_c* vi)
 {
-	for (unsigned mdlidx = 0; mdlidx < bsp.num_models; mdlidx++)
+	for (int mdlidx = 0; mdlidx < bsp.num_models; mdlidx++)
 		R_BuildVertexList(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
 	
 	vec3_c ofs(0, 0, 0);
@@ -494,7 +494,7 @@ void BuildVertexList(vertexinfo_c* vi)
 		lmap = atlas.GetBlock(i);
 		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, true);
 		name[15]++;
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, ofs.v[0], ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, (GLint)ofs.v[0], (GLint)ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}
 	//printf("lightmap(s)\n");
 }
@@ -503,9 +503,7 @@ int edgecount = 0;
 void R_BuildFanArrays(int model, int node, byte* pvs)
 {
 	int leaf;
-	int faceidx, edgeidx, vidxidx;
-
-	vec3_t vert;
+	int faceidx;
 
 	if (node == -1)
 		return; //solid
@@ -540,8 +538,6 @@ void R_BuildFanArrays(int model, int node, byte* pvs)
 
 void BuildFanArrays()
 {
-	int faceidx;
-
 	static byte* pvs = 0;
 
 	//find leaf, then render the pvs at that leaf

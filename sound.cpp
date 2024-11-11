@@ -13,7 +13,7 @@ alsound_t sounds;
 
 void SetupSound()
 {
-	wavinfo_t wi;
+	//wavinfo_t wi;
 
 	dev = alcOpenDevice(NULL);
 	context = alcCreateContext(dev, NULL);
@@ -75,7 +75,7 @@ void ListAudioDevices(const ALCchar* devname)
 	while (dev && *dev && nextdev && *nextdev)
 	{
 		printf("%s\n", dev);
-		len = strlen(dev);
+		len = (int)strlen(dev);
 		dev += (len + 1);
 		nextdev += (len + 2);
 	}
@@ -152,8 +152,8 @@ void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loo
 	alBufferData(sounds.buf[first], wi.fmt, wi.data, wi.size, wi.rate);
 	free(wi.data);
 
-	alSourcef(sounds.src[first], AL_PITCH, pitch);
-	alSourcef(sounds.src[first], AL_GAIN, gain);
+	alSourcef(sounds.src[first], AL_PITCH, (GLfloat)pitch);
+	alSourcef(sounds.src[first], AL_GAIN, (GLfloat)gain);
 	alSourcefv(sounds.src[first], AL_POSITION, org.v);
 	//alSourcefv(sounds.src[first], AL_VELOCITY, srcvel);
 	alSourcei(sounds.src[first], AL_LOOPING, loop);

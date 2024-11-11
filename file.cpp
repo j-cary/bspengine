@@ -68,9 +68,9 @@ img_c* ReadBMPFile(const char* filename, bool flip)
 	byte sig[3] = {};
 	int pixel_ofs;
 
-	int infosize;
+	//int infosize;
 	int w, h;
-	short planes; //always 1
+	//short planes; //always 1
 	short bpx;
 	int compression;
 
@@ -268,11 +268,11 @@ img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio
 		for (int nx = 0; nx < new_w * pxlen; nx += pxlen, ox += pxlen * xs)
 		{
 			int dsti = ny * new_w * pxlen + nx;
-			int srci = (floor(oy) * src->width * pxlen) + (floor(ox / pxlen) * pxlen);
+			int srci = (int)(floor(oy) * src->width * pxlen) + (floor(ox / pxlen) * pxlen);
 
 			int y, x;
-			y = floor(oy);
-			x = floor(ox / pxlen);
+			y = (int)floor(oy);
+			x = (int)floor(ox / pxlen);
 
 			for (int i = 0; i < pxlen; i++) //copy the pixel
 				dst.data[dsti + i] = src->data[srci + i];

@@ -1,7 +1,6 @@
 #include "player.h"
 
 extern md2list_c md2list;
-//extern ent_c entlist[MAX_ENTITIES];
 extern input_c in;
 
 ent_c* player;

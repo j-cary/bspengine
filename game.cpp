@@ -44,25 +44,26 @@ void SetupArgs(char* args)
 
 #include "player.h"
 #include "draw.h"
+#include "md2.h"
+
+extern md2list_c md2list;
 
 void ChangeMap(const char* mapname)
 {
 	//rip controls - go to menu
 	
-	//ClearEntlist(); //empty ent list
-	
-	//md2list.Clear(); //empty md2 list
+	md2list.Clear(); //empty md2 list
+	ClearEntlist(); //empty ent list
 	
 	//stop sounds
 
 	
 	ReloadBSP(mapname); //reload bsp & sky
+	LoadHammerEntities(bsp.ents, bsp.header.lump[LMP_ENTS].len); //entities and md2s'
 	
 	//should have a skybox kv in JACK... 
 	//ReloadSky(name);//reload sky
 
-	//remake entity list - tough... this has to be called first when setting up models...
-	//^this should include remaking the md2 list, too
 	SpawnPlayer();//spawn player
 	//begin game loop again
 }

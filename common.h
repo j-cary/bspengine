@@ -90,7 +90,7 @@ void SYS_Exit(const char* fmt, ...);
 //entity.cpp
 
 //this is only to be called when reading a bsp. Adding other ents can be done later.
-void MakeEntityList(char* str, int len);
+void LoadHammerEntities(char* str, int len);
 
 //Input structs
 typedef struct keyvalue_s
@@ -214,7 +214,7 @@ public:
 
 	void BRG2RGB()
 	{
-		for (unsigned i = 0; i < width * height * (bpx / 8); i += (bpx / 8))
+		for (int i = 0; i < width * height * (bpx / 8); i += (bpx / 8))
 		{
 			byte tmp;
 			tmp = data[i];
@@ -226,9 +226,9 @@ public:
 	void Flip()
 	{
 		int bspx = bpx / 8;
-		for (unsigned i = 0, j = height - 1; i < height / 2; i++, j--)
+		for (int i = 0, j = height - 1; i < height / 2; i++, j--)
 		{
-			for (unsigned k = 0; k < width * bspx; k++)
+			for (int k = 0; k < width * bspx; k++)
 			{
 				byte tmp;
 				unsigned first, fsecond;

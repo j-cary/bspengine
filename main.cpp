@@ -26,6 +26,8 @@ gamestate_c game;
 winfo_t winfo;
 
 //PRIORITY LIST FOR FINAL
+//Check changemap stuff out
+//Check spawning stuff out
 //weapons
 //	Bullet clipping
 //Monsters
@@ -137,7 +139,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			game.startframe = glfwGetTime();
 			DrawView(winfo.win);
 			game.nextframe = game.startframe + (1.0 / game.maxfps);
-			game.fps = 1.0 / (game.startframe - game.endframe); 
+			game.fps = (int)(1.0 / (game.startframe - game.endframe)); 
 
 			//this gets more innaccurate the higher maxfps is
 			//printf("%i, %f\n", game.fps, game.startframe - game.endframe);

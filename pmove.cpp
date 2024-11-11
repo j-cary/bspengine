@@ -43,7 +43,7 @@ bool jumpheld = false;
 void PMove()
 {
 	if (in.movetype == MOVETYPE_NOCLIP)
-	{
+	{//FIXME: moving while walking carries over speed to noclipping
 		NoClipMove();
 		return;
 	}
@@ -92,7 +92,6 @@ void ClipMove()
 
 	vec3_c fwd, right;
 	float newpitch;
-	float spd;
 
 	newpitch = in.pitch / 3; //so looking down doesn't impact forward speed as much
 	GetAngleVectors(newpitch, in.yaw, fwd, right);
@@ -160,7 +159,7 @@ void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 	addspd = wishspd - curspd;
 	if (addspd <= 0)
 		return;
-	accelspd = accel * game.tickdelta * wishspd; //should be 10 * deltime * 320
+	accelspd = accel * (float)game.tickdelta * wishspd; //should be 10 * deltime * 320
 	if (accelspd > addspd)
 		accelspd = addspd;
 	
@@ -189,7 +188,7 @@ void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
 	if (addspeed <= 0)
 		return;
 
-	accelspeed = accel * wishspeed * game.tickdelta;
+	accelspeed = accel * wishspeed * (float)game.tickdelta;
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 
@@ -245,7 +244,7 @@ void PFriction()
 	/*else*/ if (onground != -1) // apply ground friction
 	{
 		control = speed < pStopSpeed ? pStopSpeed : speed;
-		drop = control * friction * game.tickdelta;
+		drop = control * friction * (float)game.tickdelta;
 	}
 
 
@@ -469,7 +468,7 @@ void PGroundMove()
 void PCategorizePosition()
 {
 	vec3_c point;
-	int cont;
+	//int cont;
 	ptrace_c tr;
 
 	// if the player hull point one unit down is solid, the player is grounded
@@ -586,7 +585,6 @@ void NoClipMove()
 {
 	vec3_c fwd, right;
 	float newpitch;
-	float spd;
 
 	vec3_c wishvel, wishdir;
 	vec3_c vel_upt; //in units/tick
@@ -601,7 +599,7 @@ void NoClipMove()
 	wishvel.v[1] = 0;
 	wishvel.v[2] = fwd.v[2] * in.moveforward + right.v[2] * in.movesideways;
 
-	
+	printf("%i - %s\n", in.moveforward, in.vel.str());
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);

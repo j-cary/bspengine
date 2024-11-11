@@ -3,16 +3,28 @@
 #include "sound.h"
 #include "md2.h" //md2list
 
-ent_c entlist[MAX_ENTITIES];
-int entidx;
-
+entlist_c entlist;
 extern md2list_c md2list;
-
 extern gamestate_c game;
-
 extern bsp_t bsp;
 
 const int model_hz = 16; //should be nicely divisible by maxtps. 16 model frames in a second
+
+
+typedef void (ent_c::* entfunc_t) ();
+
+typedef struct classname_hash_s
+{
+	const char name[64];
+	entfunc_t func;
+} classname_hash_t;
+
+//Spawn functions
+classname_hash_t classname_hash[] =
+{
+	"solid", &ent_c::SP_Solid,
+	"", NULL
+};
 
 void EntTick(gamestate_c* gs)
 {
@@ -21,7 +33,7 @@ void EntTick(gamestate_c* gs)
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		ent_c* ent = &entlist[i];
+		ent_c* ent = entlist[i];
 		if (!ent->inuse)
 			continue;
 
@@ -35,6 +47,9 @@ void EntTick(gamestate_c* gs)
 		{
 			ent->mdli[0].frame = (++ent->mdli[0].frame) % ent->mdli[0].frame_max;
 		}
+
+		//AI stuff
+		//actually move here
 		
 	}
 }
@@ -48,7 +63,7 @@ void ent_c::AddHammerEntity()
 		if (*modelname != '*')
 		{
 			mdli[0].mid = md2list.Alloc(modelname, this, &mdli[0]);
-
+			//TODO: check out bad/non-existant model loading
 		}
 		else //world model
 		{//check this out. just assuming that the number following '*' is the index into models
@@ -56,6 +71,16 @@ void ent_c::AddHammerEntity()
 			bmodel = &bsp.models[i];
 		}
 	}
+
+	if (*classname)
+	{
+		for (int i = 0; *classname_hash[i].name; i++)
+		{
+			if (!strcmp(classname_hash[i].name, classname))
+				(this->*classname_hash[i].func)();
+		}
+	}
+
 }
 
 void ent_c::DelEnt()
@@ -63,14 +88,7 @@ void ent_c::DelEnt()
 	inuse = 0;
 }
 
-void ent_c::MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped)
-{
-	//printf("trying to play %s\n", name);
-	//FIXME!!! need some way of stopping looping sounds
-	PlaySound(name, ofs, gain, pitch, looped);
-}
-
-ent_c::ent_c()
+void ent_c::Clear()
 {
 	velocity = accel = 0;
 	health = 0;
@@ -88,6 +106,7 @@ ent_c::ent_c()
 
 	for (int i = 0; i < 3; i++)
 	{
+		//This doesn't clear up the model list, just this ent's indices.
 		mdli[i].frame = mdli[i].frame_max = mdli[i].skin = 0;
 		mdli[i].mid = 0xFFFFFFFF;
 	}
@@ -102,7 +121,19 @@ ent_c::ent_c()
 
 	flags = 0;
 
-	inuse = 0;
+	inuse = false;
+}
+
+void ent_c::MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped)
+{
+	//printf("trying to play %s\n", name);
+	//FIXME!!! need some way of stopping looping sounds
+	PlaySound(name, ofs, gain, pitch, looped);
+}
+
+ent_c::ent_c()
+{
+	Clear();
 }
 
 ent_c::~ent_c()
@@ -116,7 +147,8 @@ ent_c* AllocEnt()
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		e = &entlist[i];
+		//e = &entlist[i];
+		e = entlist[i];
 
 		if (!e->inuse)
 			break;
@@ -137,7 +169,7 @@ ent_c* FindEntByClassName(const char* name)
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		e = &entlist[i];
+		e = entlist[i];
 
 		if (!e->inuse)
 			continue;
@@ -152,7 +184,14 @@ ent_c* FindEntByClassName(const char* name)
 	return r;
 }
 
-
+void ClearEntlist()
+{
+	for (int i = 0; i < MAX_ENTITIES; i++)
+	{
+		ent_c* e = entlist[i];
+		e->Clear();
+	}
+}
 
 
 
@@ -330,7 +369,7 @@ void ParseHammerEntity(char* start, int len)
 	e->AddHammerEntity();
 }
 
-void MakeEntityList(char* str, int len)
+void LoadHammerEntities(char* str, int len)
 {//https://www.gamers.org/dEngine/quake/spec/quake-spec34/qkspec_2.htm#2.2.3
 #if 1
 	char* start = NULL;
@@ -344,7 +383,7 @@ void MakeEntityList(char* str, int len)
 			start = str + 1;
 
 			if (*start == '{') //this might just be a thing in .MAP files...
-				SYS_Exit("MakeEntityList is not prepared to handle brush info\n");
+				SYS_Exit("LoadHammerEntities is not prepared to handle brush info\n");
 		}
 
 		if (*str == '}')
@@ -435,15 +474,17 @@ void PCmdPrintEntlist(input_c* in, int key)
 {
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		if (!entlist[i].inuse)
+		ent_c* e = entlist[i];
+
+		if (!e->inuse)
 			continue;
 
-		printf("%s with org %s, name %s, model %s, noise %s\n", 
-			entlist[i].classname, 
-			entlist[i].origin.str(),
-			entlist[i].name,
-			entlist[i].modelname,
-			entlist[i].noise);
+		printf("%s with org %s, name %s, model %s, noise %s\n",
+			e->classname,
+			e->origin.str(),
+			e->name,
+			e->modelname,
+			e->noise);
 	}
 
 	in->keys[key].time = game.time + 0.5;

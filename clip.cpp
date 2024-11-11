@@ -363,13 +363,13 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 //used in nudgeplayerposition
 bool TestPlayerPosition(vec3_c p)
 {
+#if 0
 	int			i;
 	//physent_t* pe;
 	vec3_c		mins, maxs, test;
 	hull_t*		hull;
 
 	//checking all the collideable ents
-#if 0
 	for (i = 0; i < pmove.numphysent; i++)
 	{
 		pe = &pmove.physents[i];
@@ -395,7 +395,8 @@ bool TestPlayerPosition(vec3_c p)
 }
 
 #include "md2.h" //MODELS_MAX
-extern ent_c entlist[MAX_ENTITIES];
+//extern ent_c entlist[MAX_ENTITIES];
+extern entlist_c entlist;
 
 void BuildPhysentList(physent_t* p, int* i)
 {
@@ -411,7 +412,7 @@ void BuildPhysentList(physent_t* p, int* i)
 		if (*i >= MAX_PHYSENTS)
 			break;
 
-		ent_c* e = &entlist[ei];
+		ent_c* e = entlist[ei];
 
 		if (!e->inuse)
 			continue;

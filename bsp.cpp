@@ -24,7 +24,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	fseek(f, bsp->header.lump[LMP_ENTS].ofs, SEEK_SET);
 	fread((void*)&bsp->ents, bsp->header.lump[LMP_ENTS].len, 1, f);
 
-	//MakeEntityList(bsp->ents, bsp->header.lump[LMP_ENTS].len);
+	//LoadHammerEntities(bsp->ents, bsp->header.lump[LMP_ENTS].len);
 
 	//planes
 	fseek(f, bsp->header.lump[LMP_PLANES].ofs, SEEK_SET);
@@ -153,7 +153,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	//the hulls are just there to make collision detection more uniform with regular ents
 	//they are not stored in the BSP
 	bsp->num_models = bsp->header.lump[LMP_MODELS].len / (sizeof(*bsp->models) - sizeof(bsp->models->hulls));
-	for (unsigned int i = 0; i < bsp->num_models; i++)
+	for (int i = 0; i < bsp->num_models; i++)
 	{
 		bspmodel_t* mod = &bsp->models[i];
 		fread((void*)mod, sizeof(bspmodel_t) - sizeof(bsp->models->hulls), 1, f);
@@ -178,10 +178,10 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	//printf("\nLightmap report\n");
 	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
-#if 0
 	printf("\nEntity Report\n");
 	printf("%s\n", bsp->ents);
 
+#if 0
 	printf("\nPlane Report\n");
 	printf("Num Planes: %zi\n", bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes));
 	
@@ -328,7 +328,8 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	return pvs;
 }
 
-extern ent_c entlist[MAX_ENTITIES];
+//extern ent_c entlist[MAX_ENTITIES];
+extern entlist_c entlist;
 
 void UpdateBModelOrg(bspmodel_t* mod)
 {
@@ -336,10 +337,11 @@ void UpdateBModelOrg(bspmodel_t* mod)
 
 	for (; last < MAX_ENTITIES; last++)
 	{
-		if (entlist[last].modelname[0] == '*')
+		ent_c* e = entlist[last];
+
+		if(e->modelname[0] == '*') //if (entlist[last].modelname[0] == '*')
 		{//assume this is a bmodel
-			//VecCopy(mod->origin, entlist[last].origin);
-			entlist[last].origin = mod->origin;
+			e->origin = mod->origin; //entlist[last].origin = mod->origin;
 			last++;
 			return;
 		}

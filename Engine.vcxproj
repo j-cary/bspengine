@@ -142,6 +142,7 @@
     <ClCompile Include="draw_sky.cpp" />
     <ClCompile Include="draw_text.cpp" />
     <ClCompile Include="entity.cpp" />
+    <ClCompile Include="entity_spawn.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="glad.c" />

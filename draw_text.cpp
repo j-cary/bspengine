@@ -96,7 +96,7 @@ void DrawText(winfo_t* winfo)
 	textshader.Use();
 	textshader.SetM4F("textProjection", glm::value_ptr(projection));
 
-	vec3_c color(0.2, 0.0, 1.0);
+	vec3_c color(0.2f, 0.0f, 1.0f);
 	DrawString("100", 25, 25, 0.5, &color);
 	DrawString("100", 115, 25, 0.5, &color);
 	//DrawString("TEST2", 25, 25, 1, &color);

@@ -16,7 +16,7 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 	int dpth;
 
 	//find a valid spot
-	for (int x = 0; x < ATLAS_SIZE; x++)
+	for (unsigned x = 0; x < ATLAS_SIZE; x++)
 	{
 		dpth = depth[x];
 
@@ -33,7 +33,7 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 			bool bigenough = 1;
 
 			//check if this spot can hold the block first
-			for (int x2 = 0; x2 < w; x2++)
+			for (unsigned x2 = 0; x2 < w; x2++)
 			{
 				if ((depth[x2 + x] > dpth) || ((x2 + x) > (ATLAS_SIZE - 1)))
 				{
@@ -121,7 +121,7 @@ bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t,
 
 void atlas3_c::Clear()
 {
-	for (int i = 0; i <= depth; i++)
+	for (unsigned i = 0; i <= depth; i++)
 	{
 		layer[i].Clear();
 	}

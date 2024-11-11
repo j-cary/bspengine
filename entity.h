@@ -21,6 +21,7 @@ typedef struct mdlidx_s
 	unsigned frame_max;
 } mdlidx_t;
 
+
 class ent_c
 {
 private:
@@ -51,17 +52,43 @@ public:
 	void AddHammerEntity();
 	void DelEnt();
 	
-	
+	void Clear();
+
+	//Spawn functions - these must be compatible with entfunc_t in entity.cpp!
+	void SP_Default();
+	void SP_Solid();
 
 	ent_c();
 	//ent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);
 	~ent_c();
 };
 
+class entlist_c
+{
+private:
+	int highest_used = 0; //highest index currently used in the entlist
+	//TODO: implement this - used for quicker searching
+
+	ent_c l[MAX_ENTITIES];
+public:
+
+	ent_c* operator[](int index)
+	{
+		if (index < 0 || index >= MAX_ENTITIES)
+			return NULL;
+
+		return &l[index];
+	}
+
+
+
+};
+
 //should be friend stuff - functions for interacting with the entlist
 ent_c* AllocEnt();
 ent_c* FindEntByClassName(const char* name); //will need list versions of these functions
 ent_c* FindEntByName(const char* name);
+void ClearEntlist();
 
 
 void EntTick(gamestate_c* gs);

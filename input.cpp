@@ -33,8 +33,8 @@ void CursorMove(GLFWwindow* win, double xpos, double ypos)
 	xold = xpos;
 	yold = ypos;
 
-	in.yaw -= dxpos * sensitivity;
-	in.pitch += dypos * sensitivity;
+	in.yaw -= (float)(dxpos * sensitivity);
+	in.pitch += (float)(dypos * sensitivity);
 
 	if (in.yaw >= 360)
 		in.yaw -= 360;

@@ -367,12 +367,24 @@ void md2list_c::BuildList()
 	}
 }
 
-extern ent_c entlist[MAX_ENTITIES];
+//extern ent_c entlist[MAX_ENTITIES];
+extern entlist_c entlist;
 
 void md2list_c::TMP()
 {
 	static int i = 4;
 
-	Free(&entlist[i].mdli[0], &entlist[i]);
+	//todo: check that this really works
+	ent_c* e = entlist[i];
+	Free(&e->mdli[0], e);
 	i++;
+}
+
+void md2list_c::Clear()
+{
+	memset(ll, NULL, sizeof(ll));
+	memset(&vi, 0, sizeof(vi));
+	memset(skins, 0xFF, sizeof(skins)); //0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
+	memset(layers_used, 0, sizeof(layers_used));
+	vertices = 0;
 }
