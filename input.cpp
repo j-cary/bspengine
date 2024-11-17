@@ -50,6 +50,7 @@ void CursorMove(GLFWwindow* win, double xpos, double ypos)
 	GetAngleVectors(in.pitch, in.yaw, in.forward, in.right);
 }
 
+//TODO: merge this stuff.
 void KeyPress(GLFWwindow* win, int key, int scancode, int action, int mods)
 {
 	int keyidx;
@@ -78,6 +79,31 @@ void KeyPress(GLFWwindow* win, int key, int scancode, int action, int mods)
 
 }
 
+void MouseButtonPress(GLFWwindow* win, int button, int action, int mods)
+{
+	int keyidx = in.MapGLFWMouseButtonIndex(button);
+
+	if (keyidx == -1)
+		return;
+	
+	if (action == GLFW_PRESS)
+	{
+		//printf("%i -> %i\n", key, keyidx);
+
+		in.keys[keyidx].pressed = 1;
+	}
+	else if (action == GLFW_RELEASE)
+	{
+		if (in.keys[keyidx].liftoff)
+			in.keys[keyidx].pressed = 2; //let PCmd know that this key was just released
+		else
+			in.keys[keyidx].pressed = 0;
+
+		in.keys[keyidx].time = 0;
+	}
+	
+}
+
 //input_c stuff
 
 int input_c::MapGLFWKeyIndex(int in)
@@ -96,39 +122,49 @@ int input_c::MapGLFWKeyIndex(int in)
 	}
 	if ((in >= GLFW_KEY_COMMA) && (in <= GLFW_KEY_9)) //44-57 => 5-18
 	{
-		idx = in - GLFW_KEY_COMMA + 5;
+		idx = in - GLFW_KEY_COMMA + KEY_SPLIT1;
 	}
 
 	if ((in >= GLFW_KEY_A) && (in <= GLFW_KEY_RIGHT_BRACKET))//65-93 => 19-47
 	{
-		idx = in - GLFW_KEY_A + 6 + (GLFW_KEY_9 - GLFW_KEY_COMMA);
+		idx = in - GLFW_KEY_A + KEY_SPLIT2 + (GLFW_KEY_9 - GLFW_KEY_COMMA);
 	}
 
 	if ((in >= GLFW_KEY_ESCAPE) && (in <= GLFW_KEY_END))//256-269 => 48-61
 	{
-		idx = in - GLFW_KEY_ESCAPE + 48;
+		idx = in - GLFW_KEY_ESCAPE + KEY_SPLIT3;
 	}
 
 	if ((in >= GLFW_KEY_CAPS_LOCK) && (in <= GLFW_KEY_PAUSE))//280-284 => 62-66
 	{
-		idx = in - GLFW_KEY_CAPS_LOCK + 62;
+		idx = in - GLFW_KEY_CAPS_LOCK + KEY_SPLIT4;
 	}
 
 	if ((in >= GLFW_KEY_F1) && (in <= GLFW_KEY_F12))//290-301 => 67-78
 	{
-		idx = in - GLFW_KEY_F1 + 67;
+		idx = in - GLFW_KEY_F1 + KEY_SPLIT5;
 	}
 
 	if ((in >= GLFW_KEY_KP_0) && (in <= GLFW_KEY_KP_EQUAL))//320-336 => 79-95
 	{
-		idx = in - GLFW_KEY_KP_0 + 79;
+		idx = in - GLFW_KEY_KP_0 + KEY_SPLIT6;
 	}
 
 	if ((in >= GLFW_KEY_LEFT_SHIFT) && (in <= GLFW_KEY_RIGHT_ALT))//340-346 => 96-102
 	{
-		idx = in - GLFW_KEY_LEFT_SHIFT + 96;
+		idx = in - GLFW_KEY_LEFT_SHIFT + KEY_SPLIT7;
 	}
 
+	//printf("%i\n", idx);
+	return idx;
+}
+
+int input_c::MapGLFWMouseButtonIndex(int in)
+{
+	int idx = -1;
+	
+	idx = in - GLFW_MOUSE_BUTTON_1 + KEY_SPLIT_MOUSEBUTTONS; //0 - 7 => 103 - 110
+//	printf("%i\n", idx);
 	return idx;
 }
 

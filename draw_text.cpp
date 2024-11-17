@@ -88,9 +88,10 @@ void SetupText()
 
 }
 
-void DrawText(winfo_t* winfo)
+void DrawText(winfo_t* winfo, menuflags_t menu)
 {
 	glDisable(GL_CULL_FACE);
+
 	glm::mat4 projection = glm::ortho(0.0f, (float)winfo->w, 0.0f, (float)winfo->h);
 
 	textshader.Use();
@@ -99,7 +100,11 @@ void DrawText(winfo_t* winfo)
 	vec3_c color(0.2f, 0.0f, 1.0f);
 	DrawString("100", 25, 25, 0.5, &color);
 	DrawString("100", 115, 25, 0.5, &color);
-	//DrawString("TEST2", 25, 25, 1, &color);
+
+	vec3_c color2(0.2f, 1.0f, 0.0f);
+	if(menu == MENU_NONE)
+		DrawString("+", winfo->w / 2.0f, winfo->h / 2.0f, 0.5, &color2);
+
 	glEnable(GL_CULL_FACE);
 }
 

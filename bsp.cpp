@@ -166,7 +166,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 			//mod->hulls[j].clipnodes = &bsp->clips[mod->headnodes_index[j]];
 			//mod->hulls[j].planes = &bsp->planes[mod->hulls[j].clipnodes->plane];
 			mod->hulls[j].clipnodes = bsp->clips;
-			mod->hulls[j].planes = bsp->planes;//????
+			mod->hulls[j].planes = bsp->planes;
 			mod->hulls[j].clip_mins = mod->mins;
 			mod->hulls[j].clip_maxs = mod->maxs;
 			//mod->hulls[j].lastclipnode = mod->headnodes_index[j] + mod->
@@ -178,10 +178,10 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 	//printf("\nLightmap report\n");
 	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
+#if 0
 	printf("\nEntity Report\n");
 	printf("%s\n", bsp->ents);
 
-#if 0
 	printf("\nPlane Report\n");
 	printf("Num Planes: %zi\n", bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes));
 	
@@ -249,9 +249,10 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	}
 
 
+#endif
 	printf("\nModel report\n");
 	for (unsigned i = 0; i < bsp->num_models; i++)
-	{//erm... these headnode indices are just not right...
+	{
 		printf("Org: %i, %i, %i | BBox: %i, %i, %i  %i, %i, %i | Headnodes: %i, %i, %i, %i | Num Faces: %i vis: %i\n",
 			(int)bsp->models[i].origin[0], (int)bsp->models[i].origin[1], (int)bsp->models[i].origin[2],
 			(int)bsp->models[i].mins[0], (int)bsp->models[i].mins[1], (int)bsp->models[i].mins[2], (int)bsp->models[i].maxs[0], (int)bsp->models[i].maxs[1], (int)bsp->models[i].maxs[2],
@@ -261,7 +262,6 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 		
 	}
-#endif
 
 	fclose(f);
 }

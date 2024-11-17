@@ -161,6 +161,8 @@ void PCmdMenu(input_c* in, int key)
 	in->keys[key].time = game.time + 0.5;
 }
 
+
+
 void PCmdPos(input_c* in, int key)
 {
 	printf("pos: %s, fwd: %s pitch: %f, yaw: %f\n", in->org.str(), in->forward.str(), in->pitch, in->yaw);
@@ -224,6 +226,9 @@ void PCmdMapA(input_c* in, int key)
 {
 	char* cmd = NULL, * arg = NULL;
 	char name[FILENAME_MAX] = "maps/";
+
+	if (in->keys[key].pressed == 2)
+		return;
 
 	ParseCmdArgs(in->keys[key].cmd, cmd, arg);
 

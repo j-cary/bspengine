@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ainode.cpp" />
     <ClCompile Include="atlas.cpp" />
     <ClCompile Include="bsp.cpp" />
     <ClCompile Include="clip.cpp" />
@@ -155,8 +156,10 @@
     <ClCompile Include="pmove.cpp" />
     <ClCompile Include="shaders.cpp" />
     <ClCompile Include="sound.cpp" />
+    <ClCompile Include="weapons.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ainode.h" />
     <ClInclude Include="anorms.h" />
     <ClInclude Include="atlas.h" />
     <ClInclude Include="bsp.h" />
@@ -177,6 +180,7 @@
     <ClInclude Include="pmove.h" />
     <ClInclude Include="shaders.h" />
     <ClInclude Include="sound.h" />
+    <ClInclude Include="weapons.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

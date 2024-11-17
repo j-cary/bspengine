@@ -13,13 +13,22 @@ enum AIFLAGS
 };
 typedef flag_t aiflags_t;
 
+#define RF_NONE			0
+#define RF_VIEWMODEL	1
+
 typedef struct mdlidx_s
 {
-	unsigned mid;
-	unsigned skin;
-	unsigned frame;
-	unsigned frame_max;
+	unsigned	mid;
+	unsigned	skin;
+	unsigned	frame;
+	unsigned	frame_max;
+	vec3_c		offset;
+	flag_t		rflags;
 } mdlidx_t;
+
+#define ANGLE_PITCH	0 //left/right
+#define ANGLE_YAW	2 //up/down
+#define ANGLE_ROLL	1 //head tilt
 
 
 class ent_c
@@ -46,6 +55,8 @@ public:
 	mdlidx_t mdli[3]; //3 models can belong to an ent. 0th is used as the collision model
 	struct bspmodel_s* bmodel;
 
+	int (ent_c::*tickfunc)();
+
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
 	void MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped);
 
@@ -55,8 +66,19 @@ public:
 	void Clear();
 
 	//Spawn functions - these must be compatible with entfunc_t in entity.cpp!
-	void SP_Default();
-	void SP_Solid();
+	int SP_Default();
+	int SP_Worldspawn();
+	int SP_Playerspawn();
+	int SP_Solid();
+	int SP_Model();
+	int SP_Info_Texlights();
+	int SP_Light();
+	int SP_Light_Environment();
+	int SP_Ai_Node();
+
+	//Tick functions - ditto above
+	int TK_Model();
+	int TK_Solid();
 
 	ent_c();
 	//ent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);

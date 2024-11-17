@@ -8,28 +8,38 @@ extern md2list_c md2list;
 extern gamestate_c game;
 extern bsp_t bsp;
 
-const int model_hz = 16; //should be nicely divisible by maxtps. 16 model frames in a second
 
 
-typedef void (ent_c::* entfunc_t) ();
+//todo: clean this whole hash mess up
+typedef int (ent_c::* entfunc_t) ();
 
 typedef struct classname_hash_s
 {
-	const char name[64];
-	entfunc_t func;
+	const char	name[64];
+	entfunc_t	spawnfunc;
+	entfunc_t	tickfunc;
 } classname_hash_t;
+
+
 
 //Spawn functions
 classname_hash_t classname_hash[] =
 {
-	"solid", &ent_c::SP_Solid,
+	"worldspawn",			&ent_c::SP_Worldspawn,			NULL,		
+	"playerspawn",			&ent_c::SP_Playerspawn,			NULL,
+	"solid",				&ent_c::SP_Solid,				&ent_c::TK_Solid,
+	"model",				&ent_c::SP_Model,				&ent_c::TK_Model,
+	"info_texlights",		&ent_c::SP_Info_Texlights,		NULL,
+	"light",				&ent_c::SP_Light,				NULL,
+	"light_environment",	&ent_c::SP_Light_Environment, 	NULL,
+	"ai_node",				&ent_c::SP_Ai_Node,				NULL,
 	"", NULL
 };
 
 void EntTick(gamestate_c* gs)
 {
-	int model_skiptick = gs->maxtps / model_hz; //how many ticks to skip inbetween model frame updates
-	bool model_updatetick = !(gs->tick % model_skiptick);
+	//int model_skiptick = gs->maxtps / model_hz; //how many ticks to skip inbetween model frame updates
+	//bool model_updatetick = !(gs->tick % model_skiptick);
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
@@ -43,20 +53,55 @@ void EntTick(gamestate_c* gs)
 			ent->MakeNoise(ent->noise, ent->origin, 10, 1, true);
 		}
 
+		/*
 		if (ent->mdli[0].mid < MODELS_MAX && model_updatetick)
 		{
 			ent->mdli[0].frame = (++ent->mdli[0].frame) % ent->mdli[0].frame_max;
 		}
+		*/
 
 		//AI stuff
 		//actually move here
+
+		//need to set forward here
+
+		if (ent->tickfunc)
+			(ent->*ent->tickfunc)(); //this syntax looks a little ridiculous...
 		
 	}
 }
 
 void ent_c::AddHammerEntity()
 {
-	inuse = 1;
+	int spawn = 0;
+	inuse = true;
+
+	if (*classname)
+	{
+		for (int i = 0; ; i++)
+		{
+			if (!*classname_hash[i].name)
+			{
+				spawn = SP_Default();
+				break;
+			}
+
+			if (!strcmp(classname_hash[i].name, classname)) //case-sensitive compare
+			{
+				spawn = (this->*classname_hash[i].spawnfunc)();
+
+				tickfunc = classname_hash[i].tickfunc; //can be NULL. Fixme: Should be able to be set in the spawn function.
+				break;
+			}
+		}
+	}
+
+	if (!spawn)
+	{//no spawn function or something like a light
+		inuse = false;
+		Clear();
+		return;
+	}
 
 	if (*modelname)
 	{
@@ -72,14 +117,7 @@ void ent_c::AddHammerEntity()
 		}
 	}
 
-	if (*classname)
-	{
-		for (int i = 0; *classname_hash[i].name; i++)
-		{
-			if (!strcmp(classname_hash[i].name, classname))
-				(this->*classname_hash[i].func)();
-		}
-	}
+	
 
 }
 
@@ -109,14 +147,18 @@ void ent_c::Clear()
 		//This doesn't clear up the model list, just this ent's indices.
 		mdli[i].frame = mdli[i].frame_max = mdli[i].skin = 0;
 		mdli[i].mid = 0xFFFFFFFF;
+		mdli[i].offset = zerovec;
+		mdli[i].rflags = 0x0;
 	}
 
 	bmodel = NULL;
 
+	tickfunc = NULL;
+
 	light[0] = light[1] = light[2] = light[3] = 0;
 
 	VecSet(origin.v, 0, 0, 0);
-	VecSet(forward.v, 0, 0, 0);
+	VecSet(forward.v, 1, 0, 0);
 	VecSet(angles.v, 0, 0, 0);
 
 	flags = 0;
@@ -152,6 +194,7 @@ ent_c* AllocEnt()
 
 		if (!e->inuse)
 			break;
+		e = NULL;
 	}
 
 	if (!e)
@@ -303,7 +346,7 @@ keytranslate_t spawnkeys[] =
 	"classname", &StrTranslate, offsetof(ent_c, classname),
 	"origin", &VecTranslate, offsetof(ent_c, origin),
 	"_light", &LgtTranslate, offsetof(ent_c, light),
-	"angles", &VecTranslate, offsetof(ent_c, angles),
+	"angles", &VecTranslate, offsetof(ent_c, angles),	//the first? ent loaded has weird angles for some reason
 	"spawnflags", &IntTranslate, offsetof(ent_c, flags),
 	"model", &StrTranslate, offsetof(ent_c, modelname),
 	"noise", &StrTranslate, offsetof(ent_c, noise),
@@ -356,7 +399,7 @@ void ParseHammerEntity(char* start, int len)
 			}
 
 			*v = *k = '\0';
-			VarKV(e, key, val);
+ 			VarKV(e, key, val);
 
 			//skip the last quote
 			start++;
@@ -479,9 +522,10 @@ void PCmdPrintEntlist(input_c* in, int key)
 		if (!e->inuse)
 			continue;
 
-		printf("%s with org %s, name %s, model %s, noise %s\n",
+		printf("%s with org %s, angles %s, name %s, model %s, noise %s\n",
 			e->classname,
 			e->origin.str(),
+			e->angles.str(),
 			e->name,
 			e->modelname,
 			e->noise);

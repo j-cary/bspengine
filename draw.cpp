@@ -171,9 +171,10 @@ void DrawView(GLFWwindow* win)
 	glBindVertexArray(VAO);
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
-	DrawModels(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(proj));
+	glm::mat4 iview = glm::inverse(view); //for weapon models
+	DrawModels(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(iview), glm::value_ptr(proj));
 	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
-	DrawText(&winfo);
+	DrawText(&winfo, in.menu);
 
 	glfwSwapBuffers(win);
 	glfwPollEvents();

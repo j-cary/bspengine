@@ -1,6 +1,10 @@
 #include "md2.h"
 #include "file.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 md2list_c md2list = {};
 
 void md2_c::LoadMD2(const char* filename)
@@ -144,6 +148,15 @@ void md2_c::LoadMD2(const char* filename)
 	fclose(f);
 }
 
+void md2_c::UnloadMD2()
+{
+	//we might just reuse the already allocated memory later, just clear this so there is no confusion in the list
+	if (*name)
+	{
+		strcpy(name, "");
+	}
+}
+
 
 
 
@@ -264,7 +277,7 @@ void md2list_c::Free(mdlidx_t* midx, ent_c* ent)
 		SYS_Exit("Tried freeing NULL ent from model list\n");
 
 	if (midx->mid >= MODELS_MAX)
-		SYS_Exit("Bogus model id %u\n", midx->mid);
+		SYS_Exit("Tried to free bogus model id %u\n", midx->mid);
 
 	curs = ll[midx->mid];
 	prev = NULL;
@@ -299,8 +312,8 @@ void md2list_c::Free(mdlidx_t* midx, ent_c* ent)
 			*layer = 0xFFFFFFFF; //reset skins
 		}
 
-	//Does the md2 even need to be unloaded?
-
+		//really just clearing the name
+		mdls[midx->mid].UnloadMD2();
 	}
 
 	delete curs;
@@ -311,6 +324,7 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 {
 	md2_c* md2 = &mdls[midx->mid];
 	unsigned depth = 0;
+	glm::mat4 rotate(1.0f);
 
 	if (midx->frame >= md2->hdr.frame_cnt)
 	{
@@ -318,12 +332,32 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 		midx->frame = 0;
 	}
 
-	//FIXME!!! - check for oob skin values here somehow...
 	if ((depth = skins[midx->mid][midx->skin]) >= MODELS_MAX_SKINS)
 	{
 		printf("oob skin %i for model %s\n", midx->skin, md2->name);
 		midx->skin = 0;
 		depth = skins[midx->mid][midx->skin];
+	}
+
+
+
+	//todo: calculate forward vector for ents somewhere
+
+	if (midx->rflags & RF_VIEWMODEL)
+	{
+		rotate = glm::rotate(rotate, glm::radians(-90.0f), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
+
+	}
+	else
+	{//don't rotate the viewmodel
+		vec3_c right = ent->forward.crs(upvec);
+
+		//FIXME: actually use roll - swap out upvec
+		//gonna have to set forward in ents here I think.
+		//right won't be set i think
+		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_YAW]), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
+		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_PITCH]), glm::vec3(right.v[0], right.v[1], right.v[2])); //pitch
+
 	}
 
 	for (int cur_tri = 0; cur_tri < md2->hdr.tri_cnt; cur_tri++)
@@ -337,16 +371,46 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 			//these are independent of frame number
 			vi.st[vertices][0] = (float)md2->tcoords[tcoord_i].s / (float)md2->hdr.skinwidth;
 			vi.st[vertices][1] = (float)md2->tcoords[tcoord_i].t / (float)md2->hdr.skinheight;
-			//vi.u[vertices] = 0;
 			vi.u[vertices] = depth;
+
 
 			//FIXME - calculate face normal here
 			vec3_t* norm = &vi.norm[vertices];
 			*norm[0] = *norm[1] = *norm[2] = 0;
 
-			vi.v[vertices][0] = (frame->scale[0] * vert->v[0]) + frame->translate[0] + ent->origin.v[0];
-			vi.v[vertices][1] = (frame->scale[1] * vert->v[1]) + frame->translate[1] + ent->origin.v[1];
-			vi.v[vertices][2] = (frame->scale[2] * vert->v[2]) + frame->translate[2] + ent->origin.v[2];
+
+			//scale
+			vi.v[vertices][0] = (frame->scale[0] * vert->v[0]);
+			vi.v[vertices][1] = (frame->scale[1] * vert->v[1]);
+			vi.v[vertices][2] = (frame->scale[2] * vert->v[2]);
+
+			//rotate - matrix * point
+			vec3_t rotated = { 0,0,0 };
+			for (int row = 0; row < 3; row++)
+				for (int j = 0; j < 3; j++)
+					rotated[row] += vi.v[vertices][j] * rotate[row][j];
+
+			//scale & translate
+			if (midx->rflags & RF_VIEWMODEL)
+			{
+				vi.u[vertices] |= 0x80000000; //set the highest bit. (check: Is MODELS_MAX_SKINS less than this?)
+
+				vi.v[vertices][0] = rotated[0] + frame->translate[0];
+				vi.v[vertices][1] = rotated[1] + frame->translate[1];
+				vi.v[vertices][2] = rotated[2] + frame->translate[2];
+			}
+			else
+			{
+				vi.v[vertices][0] = rotated[0] + frame->translate[0] + ent->origin.v[0];
+				vi.v[vertices][1] = rotated[1] + frame->translate[1] + ent->origin.v[1];
+				vi.v[vertices][2] = rotated[2] + frame->translate[2] + ent->origin.v[2];
+			}
+			
+			//model offset
+			vi.v[vertices][0] += midx->offset.v[0];
+			vi.v[vertices][1] += midx->offset.v[1];
+			vi.v[vertices][2] += midx->offset.v[2];
+
 		}
 	}
 }
@@ -365,6 +429,77 @@ void md2list_c::BuildList()
 			curs = curs->next;
 		}
 	}
+}
+
+void md2list_c::SetFrameGroup(mdlidx_t* m, const char* group, int offset)
+{
+	md2_c* mdl;
+	md2frame_t* f;
+	int len;
+	int frames;
+
+	if (!group || !m)
+		return;
+
+	if (m->mid >= MODELS_MAX)
+	{
+		printf("Tried to set frame of bogus model id %u\n", m->mid);
+		return;
+	}
+
+	mdl = &mdls[m->mid];
+	frames = mdl->Frames();
+	len = (int)strlen(group);
+
+	for (int i = 0; i < frames; i++)
+	{
+		f = &mdl->frames[i];
+		if (!strncmp(f->name, group, len))
+		{//'fire' might also accept 'fireb' here...
+			m->frame = i + offset;
+
+			if (m->frame > m->frame_max)
+			{
+				printf("oob offset %i from group %s requested\n", offset, group);
+				m->frame = 0;
+			}
+
+			return;
+		}
+	}
+
+	printf("%s is not a frame group\n", group);
+	m->frame = 0;
+}
+
+bool md2list_c::InFrameGroup(mdlidx_t* m, const char* group)
+{
+	md2_c* mdl;
+	md2frame_t* f;
+	int len;
+	int frames;
+
+	if (!group || !m)
+		return false;
+
+	if (m->mid >= MODELS_MAX)
+	{
+		printf("Requested group of bogus model id %u\n", m->mid);
+		return false;
+	}
+
+	mdl = &mdls[m->mid];
+	frames = mdl->Frames();
+	len = (int)strlen(group);
+
+	for (int i = 0; i < frames; i++)
+	{
+		f = &mdl->frames[i];
+		if (!strncmp(f->name, group, len) && m->frame == i)
+			return true;
+	}
+
+	return false;
 }
 
 //extern ent_c entlist[MAX_ENTITIES];
@@ -387,4 +522,7 @@ void md2list_c::Clear()
 	memset(skins, 0xFF, sizeof(skins)); //0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
 	memset(layers_used, 0, sizeof(layers_used));
 	vertices = 0;
+
+	for (int i = 0; i < MODELS_MAX; i++)
+		mdls[i].UnloadMD2();
 }

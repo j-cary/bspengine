@@ -1,17 +1,18 @@
 #include "player.h"
+#include "pcmd.h" //shooting
+#include "weapons.h"
 
 extern md2list_c md2list;
 extern input_c in;
+extern gamestate_c game;
 
 ent_c* player;
 
-const float playerspawn_vertical_offset = 20.0; //the origin of "playerspawn" sits on the ground
+const float playerspawn_vertical_offset = 36.0f; //the origin of "playerspawn" sits on the ground
+const vec3_c viewmodel_offset = { -20, -6, 16 }; // 20 right, 6 down, 16 closer
 
 
 //need a separate place to call stuff upon reloading of BSP
-
-
-mdlidx_t weapon_models[9]; //will this work?
 
 void SpawnPlayer();
 
@@ -27,13 +28,13 @@ void SetupPlayer()
 	SpawnPlayer();
 	//load weapon models - mid stuff
 
-	//md2list.Alloc("models/weapons/v_chain/tris.md2", player, &weapon_models[0]);
+	
 
 	//load sounds - footsteps
 	//
 }
 
-//this can be called at any point after a BSP has loaded
+//this can be called at any point -immediately- after a BSP has loaded - do not use for respawning after death
 void SpawnPlayer()
 {
 	ent_c* spawn = FindEntByClassName("playerspawn");
@@ -44,11 +45,43 @@ void SpawnPlayer()
 		in.org.v[1] += playerspawn_vertical_offset;
 	}
 
+
+	md2list.Alloc("models/weapons/v/shotg/tris.md2", player, &player->mdli[0]);
+	player->mdli[0].frame = 3;
+	player->mdli[0].offset = viewmodel_offset;
+	player->mdli[0].rflags |= RF_VIEWMODEL;
 }
 
 void PlayerTick()
 {
+	int model_skiptick = game.maxtps / 16; //how many ticks to skip inbetween model frame updates
+	bool model_updatetick = !(game.tick % model_skiptick);
+
 	//update player ent with in stuff etc.
 	player->origin = in.org;
 
+	player->angles.v[ANGLE_YAW] = in.yaw + 90; //90 degree yaw/forward bug - checkme
+	player->angles.v[ANGLE_PITCH] = in.pitch;
+	player->angles.v[ANGLE_ROLL] = 0;
+
+	player->forward = in.forward;
+
+	//weapon sway
+	//player->mdli[0].offset = viewmodel_offset;
+	//player->mdli[0].offset.v[1] += sin(game.time) * sin(game.time);
+
+	
+
+	//animate weapon
+	if (model_updatetick)
+		WeaponTick(player);
+
+}
+
+
+void PCmdShoot(input_c* in, int key)
+{
+	double wait;
+	wait = FireWeapon(in, player);
+	in->keys[key].time = game.time + wait;
 }

@@ -17,6 +17,8 @@ void PCmdUp(input_c* in, int key);
 void PCmdDown(input_c* in, int key);
 void PCmdFullscreen(input_c* in, int key);
 void PCmdMenu(input_c* in, int key);
+void PCmdShoot(input_c* in, int key); //player.cpp
+
 void PCmdPos(input_c* in, int key);
 void PCmdRmode(input_c* in, int key);
 void PCmdPrintEntlist(input_c* in, int key); //defined in entity.cpp
@@ -25,6 +27,7 @@ void PCmdTMP(input_c* in, int key);
 void PCmdLockPVS(input_c* in, int key);
 void PCmdCmode(input_c* in, int key);
 void PCmdDumpCmds(input_c* in, int key);
+
 void PCmdMapA(input_c* in, int key);
 
 const cmd_t inputcmds[] =
@@ -37,6 +40,8 @@ const cmd_t inputcmds[] =
 	"+movedown",	&PCmdDown,
 	"fullscreen",	&PCmdFullscreen,
 	"menu",			&PCmdMenu,
+	"shoot",		&PCmdShoot,
+
 	"pos",			&PCmdPos,
 	"rmode",		&PCmdRmode,
 	"entlist",		&PCmdPrintEntlist,

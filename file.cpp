@@ -373,7 +373,7 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 }
 
 //mirrors MapGLFWKeyIndex
-char str2keyenum[103][16] =
+char str2keyenum[KEYBOARD_SIZE][16] =
 {
 	"SPACE",
 	"'",
@@ -386,7 +386,9 @@ char str2keyenum[103][16] =
 	"CAPSLOCK", "SCRLLOCK", "NUMLOCK", "PRINTSCRN", "PAUSE",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"NUM0", "NUM1", "NUM2", "NUM3", "NUM4", "NUM5", "NUM6", "NUM7", "NUM8", "NUM9", "NUMPERIOD", "NUMSLASH", "NUMSTAR", "NUMMINUS", "NUMPLUS", "NUMENTER", "NUMEQUAL",
-	"LSHIFT", "LCTRL", "LALT", "LFUNC", "RSHIFT", "RCTRL", "RALT"
+	"LSHIFT", "LCTRL", "LALT", "LFUNC", "RSHIFT", "RCTRL", "RALT",
+
+	"MOUSE1", "MOUSE2", "MOUSE3", "MOUSE4", "MOUSE5", "MOUSE6", "MOUSE7", "MOUSE8"
 };
 
 void ReadCFGFile(const char* name, input_c* in)

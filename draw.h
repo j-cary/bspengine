@@ -80,7 +80,7 @@ void SetupSky(const char* name);
 void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h);
 
 void SetupText();
-void DrawText(winfo_t* winfo);
+void DrawText(winfo_t* winfo, menuflags_t menu);
 
 void SetupModels(char* ent_str, int ent_len);
-void DrawModels(float* model, float* view, float* proj);
+void DrawModels(float* model, float* view, float* iview, float* proj);

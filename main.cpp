@@ -26,13 +26,13 @@ gamestate_c game;
 winfo_t winfo;
 
 //PRIORITY LIST FOR FINAL
-//Check changemap stuff out
-//Check spawning stuff out
+//Check changemap stuff out - thoroughly...
 //weapons
 //	Bullet clipping
+//	held weapon models - good enough?
 //Monsters
 //	movement
-//	ai
+//	ai - nodes - drop to floor on spawn
 //	models
 //Mouse speed/accel
 //Game logic
@@ -70,6 +70,7 @@ winfo_t winfo;
 //	get args working for winmain. set default map, too. Can't run PCmd. All out of order here
 //	start caching stuff
 //	gl error checking
+//	bsp leaf/bsp model/regular model mins/maxs frustum culling
 
 
 
@@ -186,4 +187,5 @@ void SetupWindow(winfo_t* winfo, int width, int height)
 	glfwSetFramebufferSizeCallback(winfo->win, ResizeWindow);
 	glfwSetCursorPosCallback(winfo->win, CursorMove);
 	glfwSetKeyCallback(winfo->win, KeyPress);
+	glfwSetMouseButtonCallback(winfo->win, MouseButtonPress);
 }

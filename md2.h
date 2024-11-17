@@ -144,7 +144,8 @@ typedef unsigned short achunk_t[6];
 
 #define MODELS_MAX			16
 #define MODELS_MAX_VERTICES	(MODELS_MAX * MD2_VERTICES_MAX)
-#define MODELS_MAX_SKINS	(MODELS_MAX * MD2_SKINS_MAX)
+#define MODELS_MAX_SKINS	(MODELS_MAX * MD2_SKINS_MAX) //NOTE: this CANNOT use the highest bit. This bit is used in vertexinfo to tell openGL whether or not the model is a view model.
+#define VIEWMODEL_GL_VAL	(0x80000000) //Anything above this value is treated as a viewmodel by GL. 
 
 typedef struct md2header_s
 {
@@ -209,7 +210,12 @@ struct md2vertexinfo_t
 {//do NOT rearrange these! GL expects them in this order
 	float v[MODELS_MAX_VERTICES][3];
 	float st[MODELS_MAX_VERTICES][2]; //this is easier to pass to GL than a separate float for each coordinate
-	unsigned u[MODELS_MAX_VERTICES]; //index into 2d texture array; skin index. Wasteful! This will only change when changing model, not vertex!
+
+	unsigned u[MODELS_MAX_VERTICES]; 
+	//index into 2d texture array; skin index. Wasteful! This will only change when changing model, not vertex!
+	//note: the highest bit here is set to indicate a weapon model.
+
+
 	vec3_t norm[MODELS_MAX_VERTICES]; //Calculated at runtime. Quake2's normal hack is not used here
 };
 
@@ -224,6 +230,17 @@ private:
 	int cur_glcmd_cnt;
 
 	void Alloc(void* mem, int cur_cnt, int size, int new_cnt);
+	void Clear()
+	{
+		skins = NULL;
+		tcoords = NULL;
+		tris = NULL;
+		frames = NULL;
+		glcmds = NULL;
+		cur_skin_cnt = cur_tcoord_cnt = cur_tri_cnt = cur_frame_cnt = cur_glcmd_cnt = 0;
+		memset(&hdr, 0, sizeof(hdr));
+		strcpy(name, "");
+	}
 
 public:
 	char name[FILENAME_MAX];
@@ -236,14 +253,7 @@ public:
 
 	md2_c()
 	{
-		skins = NULL;
-		tcoords = NULL;
-		tris = NULL;
-		frames = NULL;
-		glcmds = NULL;
-		cur_skin_cnt = cur_tcoord_cnt = cur_tri_cnt = cur_frame_cnt = cur_glcmd_cnt = 0;
-		memset(&hdr, 0, sizeof(hdr));
-		strcpy(name, "");
+		Clear();
 	}
 
 	md2_c(const char* name)
@@ -302,6 +312,8 @@ public:
 
 	void LoadMD2(const char* name); //This loads the model info into mem. May be unused.
 	void UnloadMD2(); 
+
+	int Frames() { return cur_frame_cnt; }
 };
 
 //Ideal system: Load ALL frames of ALL models in use. Have a list of ents with models, including their origins, skins, and frame number. This can then be used to determine what data to send to GL.
@@ -370,6 +382,10 @@ public:
 	//to be called ONCE after setting up the skin texture array
 	void FillSkinArray();
 
+	//Set a model's frame. would be nice if this was a friend
+	void SetFrameGroup(mdlidx_t* m, const char* group, int offset);
+	bool InFrameGroup(mdlidx_t* m, const char* group);
+	//IncrementInGroup
 
 	void Clear();
 

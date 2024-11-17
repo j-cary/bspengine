@@ -1,5 +1,6 @@
 #include "pmove.h"
 
+extern bsp_t bsp;
 extern  physent_t physents[MAX_PHYSENTS];
 extern	int num_physents;
 
@@ -15,12 +16,16 @@ hull_t* HullForBox(vec3_c mins, vec3_c maxs);
 //player collision 
 bool ptrace_c::Trace(vec3_c start, vec3_c _end)
 {
-	//Default(_end);
-	//return R_HullCheck(0, 0, 1, start, end, this);
+	hull_t* hull = &bsp.models[0].hulls[HULL_POINT];
+
+	Default(_end);
+	allsolid = true;
+
+	return R_HullCheck( hull, hull->firstclipnode, 0, 1, start, end, this);
 	
 
-	PlayerMove(start, _end);
-	return fraction > 1.0;
+	//PlayerMove(start, _end);
+	//return fraction > 1.0f;
 }
 
 void ptrace_c::Dump()
@@ -86,14 +91,7 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 
 	}
 
-	this->allsolid = total.allsolid;
-	this->initsolid = total.initsolid;
-	this->inempty = total.inempty;
-	this->inwater = total.inwater;
-	this->fraction = total.fraction;
-	this->end = total.end;
-	this->plane = total.plane;
-	this->physent = total.physent;
+	*this = total;
 }
 
 
@@ -112,7 +110,6 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 
 
 
-extern bsp_t bsp;
 
 static hull_t		box_hull;
 static bspclip_t	box_clips[6];
@@ -396,7 +393,8 @@ bool TestPlayerPosition(vec3_c p)
 
 #include "md2.h" //MODELS_MAX
 //extern ent_c entlist[MAX_ENTITIES];
-extern entlist_c entlist;
+extern entlist_c	entlist;
+extern ent_c*		player;
 
 void BuildPhysentList(physent_t* p, int* i)
 {
@@ -414,7 +412,7 @@ void BuildPhysentList(physent_t* p, int* i)
 
 		ent_c* e = entlist[ei];
 
-		if (!e->inuse)
+		if (!e->inuse || e == player) //don't add anything the the player is holding 
 			continue;
 
 		if (e->bmodel)

@@ -50,7 +50,7 @@ void SetupModels(char* ent_str, int ent_len)
 
 	//Need to fill in skin data here, but ent list must already be loaded!
 	LoadHammerEntities(ent_str, ent_len);
-
+	BuildNodeList();
 
 	glGenVertexArrays(1, &md2_vao);
 	glGenBuffers(1, &md2_vbo);
@@ -75,13 +75,14 @@ void SetupModels(char* ent_str, int ent_len)
 	md2shader.SetI("skinarray", TUtoI(MODEL_TEXTURE_UNIT));
 }
 
-void DrawModels(float* model, float* view, float* proj)
+void DrawModels(float* model, float* view, float* iview, float* proj)
 {
 	glDisable(GL_CULL_FACE);
 	md2shader.Use();
 
 	md2shader.SetM4F("md2_model", model);
 	md2shader.SetM4F("md2_view", view);
+	md2shader.SetM4F("md2_inv_view", iview);
 	md2shader.SetM4F("md2_projection", proj);
 
 	glActiveTexture(MODEL_TEXTURE_UNIT);

@@ -156,10 +156,10 @@ typedef struct chull_s
 	vec3_c		clip_maxs;
 } hull_t;
 
-#define HULL_FACE	0
+#define HULL_POINT	0 
 #define HULL_CLIP	1
-#define HULL_BIG	2 //apparently this is the point hull? - check bspfile.h
-#define HULL_POINT	3
+#define HULL_BIG	2 
+#define HULL_CROUCH	3
 
 typedef struct bspmodel_s
 {

@@ -84,6 +84,8 @@ public:
 
 const vec3_c zerovec = { 0, 0, 0 };
 const vec3_c upvec = { 0, 1, 0 };
+const vec3_c xvec = { 1, 0, 0 };
+const vec3_c zvec = { 0, 0, 1 };
 
 void SYS_Exit(const char* fmt, ...);
 
@@ -91,6 +93,7 @@ void SYS_Exit(const char* fmt, ...);
 
 //this is only to be called when reading a bsp. Adding other ents can be done later.
 void LoadHammerEntities(char* str, int len);
+void BuildNodeList();
 
 //Input structs
 typedef struct keyvalue_s
@@ -130,12 +133,16 @@ enum MOVETYPES
 	MOVETYPE_WALK 
 };
 
+#define NUM_KEYS	(103)
+#define NUM_MBUTS	(8)
+#define KEYBOARD_SIZE	NUM_KEYS + NUM_MBUTS
+
 class input_c
 {
 
 public:
 	keyvalue_t binds[256];
-	key_t keys[104]; //fullsize keyboard
+	key_t keys[KEYBOARD_SIZE]; //fullsize keyboard
 	mousebuttonflags_t mouseflags;
 
 	float yaw, pitch;
@@ -156,6 +163,7 @@ public:
 	float fov;
 
 	int MapGLFWKeyIndex(int in);
+	int MapGLFWMouseButtonIndex(int in);
 
 	input_c();
 };

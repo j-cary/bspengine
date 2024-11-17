@@ -599,7 +599,7 @@ void NoClipMove()
 	wishvel.v[1] = 0;
 	wishvel.v[2] = fwd.v[2] * in.moveforward + right.v[2] * in.movesideways;
 
-	printf("%i - %s\n", in.moveforward, in.vel.str());
+	//printf("%i - %s\n", in.moveforward, in.vel.str());
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);
