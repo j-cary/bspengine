@@ -2,6 +2,7 @@
 #include "math.h"
 #include "sound.h"
 #include "md2.h" //md2list
+#include "pmove.h" //droptofloor
 
 entlist_c entlist;
 extern md2list_c md2list;
@@ -20,7 +21,7 @@ typedef struct classname_hash_s
 	entfunc_t	tickfunc;
 } classname_hash_t;
 
-
+//#define CLS_HASH(x,y,z)		
 
 //Spawn functions
 classname_hash_t classname_hash[] =
@@ -32,7 +33,10 @@ classname_hash_t classname_hash[] =
 	"info_texlights",		&ent_c::SP_Info_Texlights,		NULL,
 	"light",				&ent_c::SP_Light,				NULL,
 	"light_environment",	&ent_c::SP_Light_Environment, 	NULL,
+	"spawner_particle",		&ent_c::SP_Spawner_Particle,	&ent_c::TK_Spawner_Particle,
+
 	"ai_node",				&ent_c::SP_Ai_Node,				NULL,
+	"npc_white_bot",		&ent_c::SP_Npc_White_Bot,		&ent_c::TK_Npc_White_Bot,
 	"", NULL
 };
 
@@ -65,8 +69,19 @@ void EntTick(gamestate_c* gs)
 
 		//need to set forward here
 
-		if (ent->tickfunc)
-			(ent->*ent->tickfunc)(); //this syntax looks a little ridiculous...
+		if (ent->thinkfunc && ent->nextthink < game.time)
+		{
+			vec3_c tmp;
+			GetAngleVectors(ent->angles.v[ANGLE_PITCH], ent->angles.v[ANGLE_YAW], ent->forward, tmp);
+			(ent->*ent->thinkfunc)(); //this syntax looks a little ridiculous...
+			GetAngleVectors(ent->angles.v[ANGLE_PITCH], ent->angles.v[ANGLE_YAW], ent->forward, tmp);
+		}
+
+		if (ent->run_speed)
+		{//run PMove every single tick
+			SetMoveVars(ent);
+			PMove();
+		}
 		
 	}
 }
@@ -80,7 +95,7 @@ void ent_c::AddHammerEntity()
 	{
 		for (int i = 0; ; i++)
 		{
-			if (!*classname_hash[i].name)
+			if (!*classname_hash[i].name) //null terminator
 			{
 				spawn = SP_Default();
 				break;
@@ -90,11 +105,13 @@ void ent_c::AddHammerEntity()
 			{
 				spawn = (this->*classname_hash[i].spawnfunc)();
 
-				tickfunc = classname_hash[i].tickfunc; //can be NULL. Fixme: Should be able to be set in the spawn function.
+				thinkfunc = classname_hash[i].tickfunc; //can be NULL. Fixme: Should be able to be set in the spawn function.
 				break;
 			}
 		}
 	}
+	else
+		SYS_Exit("Found entity with no classname!\n");
 
 	if (!spawn)
 	{//no spawn function or something like a light
@@ -121,6 +138,31 @@ void ent_c::AddHammerEntity()
 
 }
 
+void ent_c::DropToFloor(int hull)
+{//testme with different hull sizes
+	trace_c tr;
+	vec3_c bottom(origin);
+	bottom.v[1] -= 2048;
+
+	tr.Trace(origin, bottom, hull);
+
+	if (tr.fraction == 1.0f)
+	{
+		printf("couldn't drop %s to floor\n", classname);
+		return;
+	}
+
+	if (tr.allsolid || tr.initsolid)
+	{
+		printf("%s is stuck in a wall!\n", classname);
+		return;
+	}
+
+	origin = tr.end;
+	origin.v[1] += 1;
+
+}
+
 void ent_c::DelEnt()
 {
 	inuse = 0;
@@ -128,12 +170,12 @@ void ent_c::DelEnt()
 
 void ent_c::Clear()
 {
-	velocity = accel = 0;
+	velocity = accel = zerovec;
 	health = 0;
 
 	enemy = NULL;
 
-	aiflags = AI_NOACTION;
+	aiflags = AI_CLUELESS;
 
 	memset(classname, 0, 64);
 	memset(name, 0, 64);
@@ -153,20 +195,26 @@ void ent_c::Clear()
 
 	bmodel = NULL;
 
-	tickfunc = NULL;
+	thinkfunc = NULL;
+	nextthink = -1;
 
 	light[0] = light[1] = light[2] = light[3] = 0;
 
 	VecSet(origin.v, 0, 0, 0);
 	VecSet(forward.v, 1, 0, 0);
 	VecSet(angles.v, 0, 0, 0);
+	chase_angle = 0;
+	run_speed = sidestep_speed = 0;
+	eyes = zerovec;
 
 	flags = 0;
+
+	onground = -1;
 
 	inuse = false;
 }
 
-void ent_c::MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped)
+void ent_c::MakeNoise(const char* name, const vec3_c ofs, float gain, int pitch, bool looped)
 {
 	//printf("trying to play %s\n", name);
 	//FIXME!!! need some way of stopping looping sounds
@@ -206,25 +254,33 @@ ent_c* AllocEnt()
 
 ent_c* FindEntByClassName(const char* name)
 {
-	ent_c*	e = NULL;
+	ent_c* e = NULL;
+	FindEntByClassName(e, name, 0);
+	return e;
+}
+
+int FindEntByClassName(ent_c*& e, const char* name, int start)
+{
+	ent_c*	ent = NULL;
 	ent_c*	r = NULL;
 	int		i = 0;
 
-	for (int i = 0; i < MAX_ENTITIES; i++)
+	for (i = start; i < MAX_ENTITIES; i++)
 	{
-		e = entlist[i];
+		ent = entlist[i];
 
-		if (!e->inuse)
+		if (!ent->inuse)
 			continue;
 
-		if (!strcmp(name, e->classname))
+		if (!strcmp(name, ent->classname))
 		{
-			r = e;
+			r = ent;
 			break;
 		}
 	}
 
-	return r;
+	e = ent;
+	return i;
 }
 
 void ClearEntlist()
@@ -343,15 +399,16 @@ void LgtTranslate(ent_c* ent, char* val, int ofs)
 
 keytranslate_t spawnkeys[] =
 {
-	"classname", &StrTranslate, offsetof(ent_c, classname),
-	"origin", &VecTranslate, offsetof(ent_c, origin),
-	"_light", &LgtTranslate, offsetof(ent_c, light),
-	"angles", &VecTranslate, offsetof(ent_c, angles),	//the first? ent loaded has weird angles for some reason
-	"spawnflags", &IntTranslate, offsetof(ent_c, flags),
-	"model", &StrTranslate, offsetof(ent_c, modelname),
-	"noise", &StrTranslate, offsetof(ent_c, noise),
-	"frame", &IntTranslate, offsetof(ent_c, mdli[0].frame),
-	NULL, NULL, 0,
+	"classname",	&StrTranslate,	offsetof(ent_c, classname),
+	"name",			&StrTranslate,	offsetof(ent_c, name),
+	"origin",		&VecTranslate,	offsetof(ent_c, origin),
+	"_light",		&LgtTranslate,	offsetof(ent_c, light),
+	"angles",		&VecTranslate,	offsetof(ent_c, angles),	//the first? ent loaded has weird angles for some reason
+	"spawnflags",	&IntTranslate,	offsetof(ent_c, flags),
+	"model",		&StrTranslate,	offsetof(ent_c, modelname),
+	"noise",		&StrTranslate,	offsetof(ent_c, noise),
+	"frame",		&IntTranslate,	offsetof(ent_c, mdli[0].frame),
+	NULL,			NULL,			0,
 };
 
 void VarKV(ent_c* ent, char* key, char* val)

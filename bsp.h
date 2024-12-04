@@ -197,6 +197,8 @@ typedef struct bsp_s
 	bspmodel_t models[MAX_MODELS];
 	int num_models;
 	char name[FILENAME_MAX];
+
+	bspclip_t hull0[MAX_CLIP]; //...
 } bsp_t;
 
 void ReadBSPFile(const char file[], bsp_t* bsp);

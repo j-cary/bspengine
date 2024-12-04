@@ -58,7 +58,8 @@ void PlayerTick()
 	bool model_updatetick = !(game.tick % model_skiptick);
 
 	//update player ent with in stuff etc.
-	player->origin = in.org;
+	player->eyes = player->origin = in.org;
+	player->eyes.v[1] += playerspawn_vertical_offset; //this kind of isn't the right name for the offset here...
 
 	player->angles.v[ANGLE_YAW] = in.yaw + 90; //90 degree yaw/forward bug - checkme
 	player->angles.v[ANGLE_PITCH] = in.pitch;
@@ -82,6 +83,11 @@ void PlayerTick()
 void PCmdShoot(input_c* in, int key)
 {
 	double wait;
+	static double nextfire = -1.;
+
+	if (game.time < nextfire)
+		return; //stop the player from spamming this button
+
 	wait = FireWeapon(in, player);
-	in->keys[key].time = game.time + wait;
+	nextfire = in->keys[key].time = game.time + wait;
 }

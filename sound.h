@@ -3,6 +3,9 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
+//Stereo sounds are special
+//todo: cache sounds
+
 enum SNDACTIONS
 {
 	SND_STOP = 0,
@@ -32,4 +35,4 @@ void SoundTick();
 void CleanupSound();
 
 
-void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loop);
+void PlaySound(const char* name, const vec3_c org, float gain, int pitch, bool loop);

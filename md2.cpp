@@ -342,6 +342,7 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 
 
 	//todo: calculate forward vector for ents somewhere
+	//fixme: rotation appears to not be occuring at the origin of the model
 
 	if (midx->rflags & RF_VIEWMODEL)
 	{
@@ -353,8 +354,6 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 		vec3_c right = ent->forward.crs(upvec);
 
 		//FIXME: actually use roll - swap out upvec
-		//gonna have to set forward in ents here I think.
-		//right won't be set i think
 		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_YAW]), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
 		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_PITCH]), glm::vec3(right.v[0], right.v[1], right.v[2])); //pitch
 
@@ -393,7 +392,7 @@ void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
 			//scale & translate
 			if (midx->rflags & RF_VIEWMODEL)
 			{
-				vi.u[vertices] |= 0x80000000; //set the highest bit. (check: Is MODELS_MAX_SKINS less than this?)
+				vi.u[vertices] |= 0x80000000; //set the highest bit. (sanity check: Is MODELS_MAX_SKINS less than this?)
 
 				vi.v[vertices][0] = rotated[0] + frame->translate[0];
 				vi.v[vertices][1] = rotated[1] + frame->translate[1];

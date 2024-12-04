@@ -1,6 +1,7 @@
 #include "entity.h"
 
 //todo: make an entity folder and split these between different hammer ents
+extern gamestate_c game;
 
 int ent_c::SP_Default()
 {
@@ -28,6 +29,12 @@ int ent_c::SP_Playerspawn()
 	return 1;
 }
 
+int ent_c::SP_Spawner_Particle()
+{
+	nextthink = game.time + 0.5;
+	return 1;
+}
+
 
 
 
@@ -51,8 +58,7 @@ int ent_c::SP_Light_Environment()
 
 
 //tick funcs
-const int model_hz = 16; //need a whole different system for this shit
-extern gamestate_c game;
+const int model_hz = 16; //need a whole different system for this
 
 
 int ent_c::TK_Model()
@@ -72,5 +78,25 @@ int ent_c::TK_Model()
 int ent_c::TK_Solid()
 {
 	//printf("solid is ticking...\n");
+	return 1;
+}
+
+#include "particles.h"
+
+int ent_c::TK_Spawner_Particle()
+{
+	for (int i = 0; i < 2; i++)
+	{
+		vec3_c vel;
+
+		vel[0] = frand(-80, 80);
+		vel[1] = frand(-50, 50);
+		vel[2] = frand(-80, 80);
+
+		SpawnParticle(origin, vel, {1,1,1}, 1.5, 4, 0.2, PF_FADEOUT | PF_NOCLIP);
+
+	}
+
+	nextthink = game.time + 0.1;
 	return 1;
 }

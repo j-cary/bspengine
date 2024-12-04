@@ -340,7 +340,7 @@ private:
 	md2_c mdls[MODELS_MAX] = {}; //an entity's 'mid' is an index in this list, ll, or skins.
 	entll_t* ll[MODELS_MAX]; 
 	unsigned skins[MODELS_MAX][MD2_SKINS_MAX]; //record of what index into the texture array each models' skins' are in. obviously can hold the maximum number of skins for each model
-	unsigned layers_used[MODELS_MAX]; //record what indices in the texture array have been used. Work on this later for atlas stuff.... sigh.... fuuuuuuckkkkk....
+	unsigned layers_used[MODELS_MAX]; //record what indices in the texture array have been used. Work on this later for atlas stuff.... sigh.... 
 	//this is techincally a redundant array
 
 	//for building the list that gets sent to GL every frame

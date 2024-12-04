@@ -5,6 +5,10 @@
 extern gamestate_c game;
 extern input_c in;
 
+#define PRESS_NO		0
+#define PRESS_YES		1
+#define PRESS_RELEASE	2
+
 void PKeys()
 {
 	for (int i = 0; i < sizeof(in.keys) / sizeof(key_t); i++)

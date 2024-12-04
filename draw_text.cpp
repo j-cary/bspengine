@@ -1,5 +1,7 @@
 #include "draw_text.h"
 
+extern input_c in;
+
 ftchar_t ch[128];
 shader_c textshader;
 
@@ -104,6 +106,23 @@ void DrawText(winfo_t* winfo, menuflags_t menu)
 	vec3_c color2(0.2f, 1.0f, 0.0f);
 	if(menu == MENU_NONE)
 		DrawString("+", winfo->w / 2.0f, winfo->h / 2.0f, 0.5, &color2);
+
+	vec3_c scolor(0.0f, 1.0f, 0.0f);
+	char speedo[16];
+	vec3_c projvel = in.vel;
+	itoa(projvel[1], speedo, 10);
+	DrawString(speedo, winfo->w / 2.0f, 50, 0.5f, &scolor); //y vel speedo
+
+	projvel[1] = 0;
+	itoa((int)projvel.len(), speedo, 10);
+
+	if (projvel.len() > 320.0f)
+	{
+		scolor[0] = ( projvel.len() - 320.0f) / (600.0f - 320.0f);
+		scolor[1] = 1.0f - scolor[0];
+	}
+
+	DrawString(speedo, winfo->w / 2.0f, 25, 0.5f, &scolor);
 
 	glEnable(GL_CULL_FACE);
 }

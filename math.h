@@ -1,11 +1,6 @@
 #pragma once
 #include "common.h"
 
-#define PI 3.14159265359
-
-#define DEGTORADS(d)	((d) * (PI / 180))
-#define RADSTODEG(r)	((r) * (180 / PI))
-
 inline void VecSet(vec3_t vec, float x, float y, float z);
 inline void VecAdd(vec3_t accumulator, const vec3_t addend);
 inline void VecNegate(vec3_t vec);

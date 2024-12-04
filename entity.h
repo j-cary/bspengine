@@ -2,17 +2,20 @@
 #include "common.h"
 #include "bsp.h" //bmodel
 
-enum AIFLAGS
-{
-	AI_NOACTION = 0,
-	AI_ATTK_MELEE = 1,
-	AI_ATTK_RANGED = 2,
-	AI_JUMP = 4,
-	AI_FLEE = 8,
-	AI_COVER = 16
-};
+//aiflags
+#define AI_CLUELESS			0x0
+#define AI_SEEPLAYER		0x1 
+#define AI_PLAYER_INRANGE	0x2 //close enough to attack
+#define AI_PLAYER_TOOCLOSE	0x4 
+#define AI_HAVEPATH			0x8
+
+
+#define AI_TOOCLOSE_DIST	80
+#define AI_INRANGE_DIST		256
+
 typedef flag_t aiflags_t;
 
+//rflags
 #define RF_NONE			0
 #define RF_VIEWMODEL	1
 
@@ -37,7 +40,7 @@ private:
 public:
 	bool inuse; //if false, we can use this ent's place in the entlist
 	float health;
-	float velocity, accel;
+	vec3_c velocity, accel;
 	ent_c* enemy;
 	aiflags_t aiflags;//state machine for ai
 
@@ -46,22 +49,30 @@ public:
 	char name[64];
 	float light[4]; //RGB, intensity
 	vec3_c origin, forward;
+	vec3_c eyes;
 	vec3_c angles;
+	float chase_angle; //moronic 90 degree offset
+	float run_speed, sidestep_speed;
 	flag_t flags;
 	char modelname[64];
 	char noise[64]; //for constant sounds
 	bool playing; //keep track of status
+
+	int onground;
 	
 	mdlidx_t mdli[3]; //3 models can belong to an ent. 0th is used as the collision model
 	struct bspmodel_s* bmodel;
 
-	int (ent_c::*tickfunc)();
+	int (ent_c::*thinkfunc)();
+	double nextthink;
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
-	void MakeNoise(const char* name, const vec3_c ofs, int gain, int pitch, bool looped);
+	void MakeNoise(const char* name, const vec3_c ofs, float gain, int pitch, bool looped);
 
 	void AddHammerEntity();
 	void DelEnt();
+
+	void DropToFloor(int hull);
 	
 	void Clear();
 
@@ -74,11 +85,17 @@ public:
 	int SP_Info_Texlights();
 	int SP_Light();
 	int SP_Light_Environment();
+	int SP_Spawner_Particle();
+
 	int SP_Ai_Node();
+	int SP_Npc_White_Bot();
 
 	//Tick functions - ditto above
 	int TK_Model();
 	int TK_Solid();
+	int TK_Spawner_Particle();
+
+	int TK_Npc_White_Bot();
 
 	ent_c();
 	//ent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);
@@ -109,6 +126,7 @@ public:
 //should be friend stuff - functions for interacting with the entlist
 ent_c* AllocEnt();
 ent_c* FindEntByClassName(const char* name); //will need list versions of these functions
+int FindEntByClassName(ent_c*& e, const char* name, int start);
 ent_c* FindEntByName(const char* name);
 void ClearEntlist();
 

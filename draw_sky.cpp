@@ -109,7 +109,7 @@ void SetupSky(const char* name)
 	shader_c tmp("shaders/vsky2d.glsl", "shaders/fsky2d.glsl");
 	img_c* img;
 
-	char skyname[] = "env/desertday_xx.bmp";
+	char skyname[] = "env/snow2_xx.bmp";
 	int tex_i = 0;
 	int poststart = 0;
 

@@ -4,19 +4,36 @@ extern bsp_t bsp;
 extern  physent_t physents[MAX_PHYSENTS];
 extern	int num_physents;
 
+#include "md2.h" //MODELS_MAX
+extern entlist_c	entlist;
+extern ent_c* player;
+
 //these are just used for colliding with regular models, not a huge deal
 //half life has 4 different mins/maxs per hull...
 const vec3_c player_mins = { -16, -36, -16 };
 const vec3_c player_maxs = { 16, 36, 16 };
+
+//basically shifting this up 36 units to be able to hit the upper body of monsters
+const vec3_c tmp_monster_mins = { -16, -72, -16 };
+const vec3_c tmp_monster_maxs = { 16, 0, 16 };
 
 hull_t* HullForBox(vec3_c mins, vec3_c maxs);
 
 //TODO: somehow need to handle translation of world models. idk how tho
 
 //player collision 
-bool ptrace_c::Trace(vec3_c start, vec3_c _end)
+bool trace_c::Trace(vec3_c start, vec3_c _end, int _hull)
 {
-	hull_t* hull = &bsp.models[0].hulls[HULL_POINT];
+	hull_t* hull;
+
+	if (_hull < HULL_POINT || _hull > HULL_CROUCH)
+	{
+		Default(start);
+		printf("bad hull %i\n", _hull);
+		return false;
+	}
+
+	hull = &bsp.models[0].hulls[_hull];
 
 	Default(_end);
 	allsolid = true;
@@ -28,7 +45,83 @@ bool ptrace_c::Trace(vec3_c start, vec3_c _end)
 	//return fraction > 1.0f;
 }
 
-void ptrace_c::Dump()
+ent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY)
+{
+	//just uh ignore bmodels besides the world for the time being. Need to properly build hull0 for everything - water and other contents, too
+	
+	//trace against point hull, get new end.
+	//use this new end to collide with and ents with (studio) models
+
+	vec3_c _end = start + dir * dist;
+	ent_c* e;
+	hull_t* hull;
+	vec3_c mins, maxs;
+	vec3_c start_l, end_l, offset;
+	trace_c total(_end);
+	int i;
+	ent_c* save_ent = NULL;
+
+	//this is giving worldspawn too often...
+
+	Trace(start, _end, HULL_POINT); 
+
+	if (fraction < 1.0f)
+		save_ent = FindEntByClassName("worldspawn"); //also entlist[0]
+
+	for (i = 1; i < MAX_ENTITIES; i++) //1 since we already took care of the world
+	{
+		e = entlist[i];
+
+		if (!e->inuse || e == player)
+			continue;
+
+		// get the clipping hull
+		//if (pe->mdl)
+		//	hull = &physents[i].mdl->hulls[HULL_POINT];
+		//else
+		if (e->mdli[0].mid <= MODELS_MAX)
+		{ //non world model
+			//0 - mins/maxs
+			mins = -tmp_monster_maxs; //mins = pe->mins - player_maxs; 
+			maxs = -tmp_monster_mins; //maxs = pe->maxs - player_mins;
+
+			hull = HullForBox(mins, maxs);
+		}
+		else
+			continue;
+
+		offset = e->origin;
+
+
+		start_l = start - offset; 
+		end_l = end - offset; 
+
+		Default(end);
+		allsolid = true;
+
+		// trace a line through the apropriate clipping hull
+		R_HullCheck(hull, hull->firstclipnode, 0, 1, start_l, end_l, this);
+
+		if (allsolid)
+			initsolid = true;
+		if (initsolid)
+			fraction = 0.0;
+
+		// did we clip the move?
+		if (fraction < total.fraction)
+		{
+			// fix trace up by the offset
+			end = end + offset; 
+			total = *this;
+			save_ent = e;
+		}
+	}
+
+	*this = total;
+	return save_ent;
+}
+
+void trace_c::Dump()
 {
 	printf("allsolid: %i initsolid: %i frac: %.5f norm: %.2f %.2f %.2f end: %s\n",
 		allsolid,
@@ -38,7 +131,7 @@ void ptrace_c::Dump()
 		end.str());
 }
 
-void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
+void trace_c::PlayerMove(vec3_c start, vec3_c _end)
 {
 	int			i;
 	physent_t*	pe;
@@ -46,7 +139,7 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 	vec3_c		mins, maxs;
 	vec3_c		offset;
 	vec3_c		start_l, end_l;
-	ptrace_c	total(_end); //fill out a default trace
+	trace_c		total(_end); //fill out a default trace
 
 	//TODO: explain this loop here
 	for (i = 0; i < num_physents; i++)
@@ -72,7 +165,7 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 		Default(_end);
 		allsolid = true;
 
-		// trace a line through the apropriate clipping hull
+		// trace a line through the appropriate clipping hull
 		R_HullCheck(hull, hull->firstclipnode, 0, 1, start_l, end_l, this);
 
 		if (allsolid)
@@ -88,7 +181,6 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 			total = *this;
 			total.physent = i;
 		}
-
 	}
 
 	*this = total;
@@ -105,7 +197,7 @@ void ptrace_c::PlayerMove(vec3_c start, vec3_c _end)
 //return the hull
 
 //cl_setsolidents - 
-//figure out a way to get a general area to search in first
+//figure out a way to get a general area to search in first - use player org + vel with model's bbox's
 //go through all these ents and add them to the physent list
 
 
@@ -234,7 +326,7 @@ int HullPointContents(hull_t* hull, int num, vec3_c p)
 //nice floating point-compatible epsilon
 #define DIST_EPSILON	(0.03125f)
 
-bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace)
+bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, trace_c* trace)
 {
 	bspclip_t*	node;
 	bspplane_t* plane;
@@ -357,6 +449,7 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 	return false;
 }
 
+
 //used in nudgeplayerposition
 bool TestPlayerPosition(vec3_c p)
 {
@@ -391,12 +484,9 @@ bool TestPlayerPosition(vec3_c p)
 	return true;
 }
 
-#include "md2.h" //MODELS_MAX
-//extern ent_c entlist[MAX_ENTITIES];
-extern entlist_c	entlist;
-extern ent_c*		player;
 
-void BuildPhysentList(physent_t* p, int* i)
+
+void BuildPhysentList(physent_t* p, int* i, ent_c* ent)
 {
 	p[0].org = bsp.models[0].origin;
 	p[0].mdl = &bsp.models[0];
@@ -412,7 +502,7 @@ void BuildPhysentList(physent_t* p, int* i)
 
 		ent_c* e = entlist[ei];
 
-		if (!e->inuse || e == player) //don't add anything the the player is holding 
+		if (!e->inuse || e == ent) //don't add anything the the player is holding 
 			continue;
 
 		if (e->bmodel)

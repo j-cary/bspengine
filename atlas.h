@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 
-#define ATLAS_LEVELS 15 //todo: make this dynamic
+#define ATLAS_LEVELS 32 //todo: make this dynamic
 #define ATLAS_SIZE	128 /*16384*/ //ditto
 
 class atlas_c

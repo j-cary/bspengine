@@ -2,6 +2,81 @@
 #include "file.h"
 #include "math.h"
 
+//duplicate regular bsp nodes for use in clipping
+void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
+{
+#if 1
+	bspnode_t*	in, * child; //mnode_t* in, * child;
+	bspclip_t*	out; //dclipnode_t* out;
+	int			i, j, count;
+	hull_t*		hull;
+
+	//This is a pretty poor function. Really, really needs to be fixed. Oh well!
+	//This also only works for the world at the moment.
+
+
+	hull = &b->hulls[0];//hull = &loadmodel->hulls[0];
+
+	in = &bsp->nodes[b->headnodes_index[0]]; //in = loadmodel->nodes;
+	//count = loadmodel->numnodes; //Quake loads model by model...
+	out = bsp->hull0; //out = Hunk_AllocName(count * sizeof(*out), loadname);
+
+	hull->clipnodes = out;
+	hull->firstclipnode = 0;
+	//hull->lastclipnode = count - 1;
+	hull->planes = bsp->planes; //hull->planes = loadmodel->planes;
+
+	for (i = 0; i < MAX_CLIP /*i < count*/; i++, out++, in++)
+	{
+		out->plane = &bsp->planes[in->plane_ofs] - bsp->planes; //out->planenum = in->plane - loadmodel->planes;
+
+		if (!in->children[0] && !in->children[1])
+			break; //no way to tell how many nodes there are, so just quit out this way
+
+		for (j = 0; j < 2; j++)
+		{
+			child = &bsp->nodes[in->children[j]]; //child = in->children[j];
+
+			/*
+			if (child->contents < 0)
+				out->children[j] = child->contents;
+			else
+				out->children[j] = child - loadmodel->nodes;
+			*/
+
+
+
+			if (in->children[j] < 0) //leaf
+			{
+				//out->children[j] = in->children[j];
+			
+				if (in->children[j] == -1)
+					out->children[j] = -2;
+				else
+					out->children[j] = -1;
+				
+				//~of out's child -> 0 = outside world, ow in world
+				//out's child -> -1 = outside world, ow in world
+
+				//only -1 or -2 (or -3 for water)....
+
+			}
+			else //regular node
+				out->children[j] = child - &bsp->nodes[b->headnodes_index[0]]; //wrong!
+			
+
+			/*
+			printf("cl:%2i - dr:%2i", out->children[j], in->children[j]);
+
+			if (out->children[j] < 0)
+				printf("  leaf");
+			printf("\n");
+			*/
+		}
+	}
+#endif
+}
+
 void ReadBSPFile(const char file[], bsp_t* bsp)
 {
 	FILE* f;
@@ -162,7 +237,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 		{//this is a superfluous structure to make collision with bmodels and regular bbox entities more uniform
 			//FIXME!!!
 			mod->hulls[j].firstclipnode = mod->headnodes_index[j];
-			//line 1190 in model.c - no fucking clue here
+			//line 1190 in model.c - no clue here
 			//mod->hulls[j].clipnodes = &bsp->clips[mod->headnodes_index[j]];
 			//mod->hulls[j].planes = &bsp->planes[mod->hulls[j].clipnodes->plane];
 			mod->hulls[j].clipnodes = bsp->clips;
@@ -172,6 +247,9 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 			//mod->hulls[j].lastclipnode = mod->headnodes_index[j] + mod->
 		}
 	}
+
+	MakePointHull(bsp->models, bsp); //This is actually pretty close to working with other bmodels, too. 
+	//Placing this in the above outer for loop will make the last model the only on with a point hull
 
 	//for (unsigned i = 1; i < bsp->header.lump[LMP_MODELS].len / sizeof(*bsp->models); i++) //skip world
 		//UpdateBModelOrg(&bsp->models[i]);
@@ -249,7 +327,6 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	}
 
 
-#endif
 	printf("\nModel report\n");
 	for (unsigned i = 0; i < bsp->num_models; i++)
 	{
@@ -262,6 +339,7 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 
 		
 	}
+#endif
 
 	fclose(f);
 }
@@ -288,16 +366,19 @@ int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node)
 
 byte* DecompressVis(bsp_t* _bsp, int leafidx)
 {
-	static byte pvs[10000]; //use num_visleafs to make this dynamic. Just once!
+	static byte pvs[MAX_LEAVES / 8]; //use num_visleafs to make this dynamic. Just once!
 	int v = _bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
 	//int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
-	int numleaves = _bsp->models[0].num_visleafs;
+	//int numleaves = _bsp->models[0].num_visleafs;
+	int numleaves = 500; //TMPTMPTMP!!!
+
+	//FIXME: this is not working in some areas in research - numleaves isn't quite right...
 
 	if (leafidx > 1) //if there is just one leaf make everything visible
-		memset(pvs, 0, 10000);
+		memset(pvs, 0, MAX_LEAVES / 8);
 	else
 	{ //outside world
-		memset(pvs, 1, 10000);
+		memset(pvs, 1, MAX_LEAVES / 8);
 		return pvs;
 	}
 
@@ -325,6 +406,7 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	}
 	//printf("\n");
 	//free(pvs);
+	//return pvs;
 	return pvs;
 }
 

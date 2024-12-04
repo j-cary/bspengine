@@ -19,6 +19,12 @@
     <Filter Include="Header Files\entities">
       <UniqueIdentifier>{f4df1b4a-7307-4274-9c11-994077541081}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\draw">
+      <UniqueIdentifier>{7d463d81-8e7b-4dfa-8ed3-a9a443fd9702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\draw">
+      <UniqueIdentifier>{9a89359c-4417-486e-8156-519e46c9c1b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -36,9 +42,6 @@
     <ClCompile Include="console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="draw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -49,9 +52,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="bsp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sound.cpp">
@@ -66,16 +66,7 @@
     <ClCompile Include="pmove.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="draw_sky.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="draw_text.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="md2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="draw_models.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="clip.cpp">
@@ -84,13 +75,40 @@
     <ClCompile Include="player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="entity_spawn.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="weapons.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ainode.cpp">
+      <Filter>Source Files\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="npc_white_bot.cpp">
+      <Filter>Source Files\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="npc.cpp">
+      <Filter>Source Files\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="draw.cpp">
+      <Filter>Source Files\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_models.cpp">
+      <Filter>Source Files\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_sky.cpp">
+      <Filter>Source Files\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_text.cpp">
+      <Filter>Source Files\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="draw_particles.cpp">
+      <Filter>Source Files\draw</Filter>
+    </ClCompile>
+    <ClCompile Include="particles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entity.cpp">
+      <Filter>Source Files\entities</Filter>
+    </ClCompile>
+    <ClCompile Include="entity_spawn.cpp">
       <Filter>Source Files\entities</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,9 +119,6 @@
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="entity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -111,9 +126,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pcmd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="draw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="glinc.h">
@@ -137,19 +149,10 @@
     <ClInclude Include="math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="draw_sky.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="draw_text.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="md2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="anorms.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="draw_models.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="player.h">
@@ -159,6 +162,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ainode.h">
+      <Filter>Header Files\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="npc.h">
+      <Filter>Header Files\entities</Filter>
+    </ClInclude>
+    <ClInclude Include="draw.h">
+      <Filter>Header Files\draw</Filter>
+    </ClInclude>
+    <ClInclude Include="draw_models.h">
+      <Filter>Header Files\draw</Filter>
+    </ClInclude>
+    <ClInclude Include="draw_sky.h">
+      <Filter>Header Files\draw</Filter>
+    </ClInclude>
+    <ClInclude Include="draw_text.h">
+      <Filter>Header Files\draw</Filter>
+    </ClInclude>
+    <ClInclude Include="particles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="entity.h">
       <Filter>Header Files\entities</Filter>
     </ClInclude>
   </ItemGroup>

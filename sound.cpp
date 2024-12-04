@@ -25,19 +25,15 @@ void SetupSound()
 	}
 	if (!alcMakeContextCurrent(context))
 	{
-		printf("could make ALcontext current!\n");
+		printf("couldn't make ALcontext current!\n");
 		return;
 	}
 
 	alGenBuffers(SND_MAX, sounds.buf);
 	alGenSources(SND_MAX, sounds.src);
 
-	vec3_c org;
-	//negate x and z components
-	VecSet(org.v, 320, 96, -64);
-	//PlaySound("sound/wind.wav", org, 10, 1, 0);
-	VecSet(org.v, -256, 96, -384);
-	//PlaySound("sound/cicadas.wav", org, 10, 1, 1);
+	//vec3_c org(96, 0, 192);
+	//PlaySound("sound/streammono.wav", org, 10, 1, 1);
 
 	//really need to check if enumeration is supported here
 	//ListAudioDevices(alcGetString(NULL, ALC_DEVICE_SPECIFIER));
@@ -85,26 +81,20 @@ void ListAudioDevices(const ALCchar* devname)
 void SoundTick()
 {
 	ALfloat orientation[6];
-	vec3_c fixedvel;
-	vec3_c fixedorg;
+	vec3_c	fixedvel;
 
-	int srcstate;
+	int		srcstate;
 
-	orientation[0] = in.forward.v[0];
-	orientation[1] = in.forward.v[1];
-	orientation[2] = in.forward.v[2];
+	orientation[0] = -in.forward.v[0]; //sigh...
+	orientation[1] =  in.forward.v[1];
+	orientation[2] = -in.forward.v[2]; //sigh...
 	orientation[3] = in.up.v[0];
 	orientation[4] = in.up.v[1];
 	orientation[5] = in.up.v[2];
 
-	//AAAVEC
-	VecScale(fixedvel.v, in.vel, 1.0f / (float)game.maxtps);
-	fixedorg = in.org;
-	//fixedorg.v[0] = -fixedorg.v[0];
-	//fixedorg.v[2] = -fixedorg.v[2];
-	//this mostly works...
+	fixedvel = in.vel * game.tickdelta; //change u/s to u/t
 	
-	alListenerfv(AL_POSITION, fixedorg);
+	alListenerfv(AL_POSITION, in.org);
 	alListenerfv(AL_VELOCITY, fixedvel);
 	alListenerfv(AL_ORIENTATION, orientation);
 
@@ -118,7 +108,7 @@ void SoundTick()
 		alGetSourcei(sounds.src[i], AL_SOURCE_STATE, &srcstate);
 		if (srcstate == AL_STOPPED)
 		{
-			printf("stopping %i\n", i);
+			//printf("stopping %i\n", i);
 			sounds.state[i] = SND_STOP;
 		}
 	}
@@ -134,7 +124,7 @@ void SoundTick()
 	*/
 }
 
-void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loop)
+void PlaySound(const char* name, const vec3_c org, float gain, int pitch, bool loop)
 {
 	int first = 0;
 	wavinfo_t wi;
@@ -149,11 +139,12 @@ void PlaySound(const char* name, const vec3_c org, int gain, int pitch, bool loo
 	}
 
 	ReadWAVFile(name, &wi, false);
+	//printf("loading %i - %i\n", first, *(int*)wi.data);
 	alBufferData(sounds.buf[first], wi.fmt, wi.data, wi.size, wi.rate);
 	free(wi.data);
 
 	alSourcef(sounds.src[first], AL_PITCH, (GLfloat)pitch);
-	alSourcef(sounds.src[first], AL_GAIN, (GLfloat)gain);
+	alSourcef(sounds.src[first], AL_GAIN, gain);
 	alSourcefv(sounds.src[first], AL_POSITION, org.v);
 	//alSourcefv(sounds.src[first], AL_VELOCITY, srcvel);
 	alSourcei(sounds.src[first], AL_LOOPING, loop);

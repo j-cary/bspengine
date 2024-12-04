@@ -1,6 +1,8 @@
 #include "weapons.h"
 #include "pmove.h" //shooting
 #include "md2.h" //animating
+#include "particles.h"
+#include "sound.h"
 
 extern md2list_c md2list;
 
@@ -31,21 +33,23 @@ void WeaponTick(ent_c* p)
 
 double FireWeapon(input_c* in, ent_c* p)
 {
-	ptrace_c tr;
-	vec3_c end;
-	vec3_c dir = in->forward.nml();
+	trace_c tr;
+	ent_c* ent;
 
-	end = in->org + dir * 256;
-	end.v[1] += 1;
+	PlaySound("sound/weps/shotg/~f1.wav", p->origin, 0.25, 1, 0);
 
-	tr.Trace(in->org, end);
-
-	//printf("shooting\n");
-	//printf("%s | %s | %s\n", player->origin.str(), in->forward.nml().str(), end.str());
-	printf("%s\n", in->org.str());
-	tr.Dump();
-	//printf("%i  %s\n", !!tr.fraction, in->forward.nml().str());
-
+	//need to check out model rotates...
+	//NOTE - hammer sets the origin of monsters to be basically 0. Need to shift the bbox up some amount. Just gonna hack it for now.
+	if ((ent = tr.TraceBullet(p->eyes, in->forward.nml(), 1024, 0, 0)))
+	{//hit the world or another (studio) model
+		//printf("hit a %s - %s\n", ent->classname, ent->origin.str());
+		SpawnOil(tr.end, 100);
+		
+	}
+	else
+	{//whiffed
+		//printf("miss\n");
+	}
 
 	//animation stuff
 	md2list.SetFrameGroup(&p->mdli[0], "fire", 0);

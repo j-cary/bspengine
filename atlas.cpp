@@ -101,7 +101,8 @@ atlas_c::~atlas_c()
 
 bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t, int& _depth)
 {
-	bool ret;
+#if 0
+	bool ret = true;
 
 	for (int i = 0; i < ATLAS_LEVELS; i++)
 	{
@@ -117,6 +118,20 @@ bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t,
 	}
 
 	return ret; //1 if there's no more space
+#else
+	for (int i = depth; i < ATLAS_LEVELS; i++)
+	{
+		if (!layer[depth].AddBlock(w, h, block, s, t))
+		{//successful write
+			_depth = depth;
+			return false;
+		}
+
+		depth++; //save this increment for other maps
+	}
+
+	return true;
+#endif
 }
 
 void atlas3_c::Clear()

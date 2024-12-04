@@ -140,6 +140,7 @@
     <ClCompile Include="console.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="draw_models.cpp" />
+    <ClCompile Include="draw_particles.cpp" />
     <ClCompile Include="draw_sky.cpp" />
     <ClCompile Include="draw_text.cpp" />
     <ClCompile Include="entity.cpp" />
@@ -151,6 +152,9 @@
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="npc.cpp" />
+    <ClCompile Include="npc_white_bot.cpp" />
+    <ClCompile Include="particles.cpp" />
     <ClCompile Include="pcmd.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="pmove.cpp" />
@@ -175,6 +179,8 @@
     <ClInclude Include="md2.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="math.h" />
+    <ClInclude Include="npc.h" />
+    <ClInclude Include="particles.h" />
     <ClInclude Include="pcmd.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="pmove.h" />

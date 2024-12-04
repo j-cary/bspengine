@@ -4,7 +4,7 @@
 #include "bsp.h"
 
 
-class ptrace_c
+class trace_c
 {
 private:
 	void Default()
@@ -33,11 +33,16 @@ public:
 	bspplane_t plane;
 	int physent; //entity that the surface belongs to
 
-	//ptrace_c(vec3_c start, vec3_c end) { Trace(start, end); };
-	ptrace_c(vec3_c _end) { Default(_end); };
-	ptrace_c() { Default(); }
-	bool Trace(vec3_c start, vec3_c end);
-	void PlayerMove(vec3_c start, vec3_c end);
+	//trace_c(vec3_c start, vec3_c end) { Trace(start, end); };
+	trace_c(vec3_c _end) { Default(_end); };
+	trace_c() { Default(); }
+
+	//Todo: these could probably all be simplified 
+	ent_c* TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY);
+	bool Trace(vec3_c start, vec3_c end, int hull);
+	void PlayerMove(vec3_c start, vec3_c end); //requires the physent list to be set up
+
+
 	void Dump();
 };
 
@@ -51,10 +56,22 @@ typedef struct physent_s
 
 } physent_t;
 
-bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, ptrace_c* trace);
+typedef struct pmove_s
+{
+	int movetype;
+	int moveup, moveforward, moveright;
+	float pitch, yaw;
+	int* onground;
+	vec3_c* org, * vel;
+	ent_c* ent;
+} pmove_t;
+
+bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, trace_c* trace);
 
 
 void SetupPMove();
+void SetMoveVars(input_c* in);
+void SetMoveVars(ent_c* e);
 void PMove();
 
-void BuildPhysentList(physent_t* p, int* i);
+void BuildPhysentList(physent_t* p, int* i, ent_c* ent);

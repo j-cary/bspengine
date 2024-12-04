@@ -23,10 +23,12 @@ void PCmdPos(input_c* in, int key);
 void PCmdRmode(input_c* in, int key);
 void PCmdPrintEntlist(input_c* in, int key); //defined in entity.cpp
 void PCmdPrintMD2list(input_c* in, int key); //defined in entity.cpp
+void PCmdPrintPartlist(input_c* in, int key); //defined in particle.cpp
 void PCmdTMP(input_c* in, int key);
 void PCmdLockPVS(input_c* in, int key);
 void PCmdCmode(input_c* in, int key);
 void PCmdDumpCmds(input_c* in, int key);
+void PCmdDumpNodes(input_c* in, int key);
 
 void PCmdMapA(input_c* in, int key);
 
@@ -46,10 +48,12 @@ const cmd_t inputcmds[] =
 	"rmode",		&PCmdRmode,
 	"entlist",		&PCmdPrintEntlist,
 	"mdllist",		&PCmdPrintMD2list,
+	"partlist",		&PCmdPrintPartlist,
 	"tmp",			&PCmdTMP,
 	"lockpvs",		&PCmdLockPVS,
 	"clip",			&PCmdCmode,
 	"dumpcmds",		&PCmdDumpCmds,
+	"dumpnodes",	&PCmdDumpNodes,
 
 	"*map",			&PCmdMapA,
 };

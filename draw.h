@@ -84,3 +84,6 @@ void DrawText(winfo_t* winfo, menuflags_t menu);
 
 void SetupModels(char* ent_str, int ent_len);
 void DrawModels(float* model, float* view, float* iview, float* proj);
+
+void SetupParticles();
+void DrawParticles(float* model, float* view, float* proj, vec3_c up, vec3_c right);

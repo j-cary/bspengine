@@ -45,8 +45,10 @@ void SetupArgs(char* args)
 #include "player.h"
 #include "draw.h"
 #include "md2.h"
+#include "ainode.h"
 
 extern md2list_c md2list;
+extern aigraph_c graph;
 
 //TODO: this really needs to be thoroughly tested
 void ChangeMap(const char* mapname)
@@ -55,6 +57,7 @@ void ChangeMap(const char* mapname)
 	
 	md2list.Clear(); //empty md2 list
 	ClearEntlist(); //empty ent list
+	graph.Clear();
 	
 	//stop sounds
 

@@ -195,6 +195,7 @@ input_c::input_c()
 	movetype = MOVETYPE_WALK;
 
 	fov = 105;
+	onground = -1;
 }
 
 void ToggleMouseCursor()

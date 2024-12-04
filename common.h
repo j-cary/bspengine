@@ -18,10 +18,16 @@
 
 //macro defs 
 
+#define PI 3.1415926535897931
+#define FPI (float)PI
+#define DEGTORADS(d)	((d) * (PI / 180.0))
+#define RADSTODEG(r)	((r) * (180.0 / PI))
+
 //random between x and y. x should be less than y
 #define frand(x,y) (((float)((y)-(x)) * ((rand () & 0x7fff) / ((float)0x7fff))) + (float)(x))
 
 typedef float vec3_t[3];
+typedef float vec4_t[4];
 typedef unsigned int flag_t;
 typedef unsigned int uint;
 typedef unsigned char byte;
@@ -47,6 +53,9 @@ public:
 	inline vec3_c operator- (const vec3_c& vec) { return vec3_c(v[0] - vec.v[0], v[1] - vec.v[1], v[2] - vec.v[2]); }
 	inline vec3_c operator* (float f) { return vec3_c(v[0] * f, v[1] * f, v[2] * f); }
 	inline vec3_c operator/ (float f) { return vec3_c(v[0] / f, v[1] / f, v[2] / f); }
+
+	inline float operator[] (int index) const { return v[index]; }
+	inline float& operator[] (int index) { return v[index]; }
 
 	//direct copy of vec3_t
 	inline void operator= (vec3_t& typevec) { v[0] = typevec[0]; v[1] = typevec[1]; v[2] = typevec[2]; }
@@ -81,6 +90,8 @@ public:
 
 };
 //inline vec3_c operator*(float f, const vec3_c& vec) { return vec * f; }
+
+inline vec3_c Proj_Vec3(vec3_c vec) { return { vec[0], 0, vec[2]}; }
 
 const vec3_c zerovec = { 0, 0, 0 };
 const vec3_c upvec = { 0, 1, 0 };
@@ -159,6 +170,7 @@ public:
 	bool pvslock;
 	bool fullscreen;
 	int movetype;
+	int onground;
 
 	float fov;
 

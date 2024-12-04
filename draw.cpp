@@ -4,6 +4,8 @@
 #include "atlas.h"
 #include "math.h"
 
+//todo: figure out aspect ratio scaling
+
 extern gamestate_c game;
 extern input_c in;
 extern winfo_t winfo;
@@ -31,8 +33,8 @@ char alphalist[16][MAX_TEXTURES] = {};
 int num_textures = 0, num_atextures = 0;
 
 //these should really be dynamic
-int startfans[65536]; //offset of each fan into verts
-int countfans[65536]; //number of edges in each face
+int startfans[131072]; //offset of each fan into verts
+int countfans[131072]; //number of edges in each face
 int numfans = 0; //total fans
 
 extern atlas3_c atlas;
@@ -54,11 +56,12 @@ void SetupView(GLFWwindow* win)
 
 	if (!bsp.name[0])
 	{
-		SetupBSP("maps/complex.bsp");
-		SetupSky("maps/complex.bsp");
+		SetupBSP("maps/research.bsp");
+		SetupSky("maps/snow.bsp");
 	}
 
 	SetupText();
+	SetupParticles();
 	//This MUST be called after BSP load, and entities MUST be loaded after the model shader is setup. (Skins are loaded during entity loading)
 	//Pretty intertwined system here, not good!
 	SetupModels(bsp.ents, bsp.header.lump[LMP_ENTS].len);
@@ -172,9 +175,13 @@ void DrawView(GLFWwindow* win)
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
 	glm::mat4 iview = glm::inverse(view); //for weapon models
-	DrawModels(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(iview), glm::value_ptr(proj));
-	DrawSky(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
-	DrawText(&winfo, in.menu);
+	glm::mat4 sproj = glm::perspective(glm::radians(in.fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
+	sproj = glm::scale(sproj, glm::vec3(-1.0, 1.0, 1.0));
+
+	DrawModels		(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(iview), glm::value_ptr(proj));
+	DrawParticles	(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(sproj), in.up, in.right);
+	DrawSky			(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
+	DrawText		(&winfo, in.menu);
 
 	glfwSwapBuffers(win);
 	glfwPollEvents();
@@ -487,14 +494,14 @@ void BuildVertexList(vertexinfo_c* vi)
 	byte* lmap;
 	unsigned depth = atlas.GetDepth();
 
-	char name[] = "textures/atlas00.bmp";
+	char name[] = "textures/atlas/00.bmp";
 	//printf("writing ");
 	for (int i = 0; i <= depth; i++)
 	{
 		//printf("%i ", i + 1);
 		lmap = atlas.GetBlock(i);
 		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, true);
-		name[15]++;
+		name[16]++;
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, (GLint)ofs.v[0], (GLint)ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}
 	//printf("lightmap(s)\n");
@@ -537,13 +544,17 @@ void R_BuildFanArrays(int model, int node, byte* pvs)
 	R_BuildFanArrays(model, bsp.nodes[node].children[1], pvs);
 }
 
+//extern const float playerspawn_vertical_offset;
+
 void BuildFanArrays()
 {
 	static byte* pvs = 0;
+	vec3_c eyes = in.org;
+	eyes[1] += 36.0f;
 
 	//find leaf, then render the pvs at that leaf
 	if (!in.pvslock)
-		pvs = DecompressVis(&bsp, RecursiveBSPNodeSearch(in.org, &bsp, 0));
+		pvs = DecompressVis(&bsp, RecursiveBSPNodeSearch(eyes, &bsp, 0));
 	//non world model leaves don't have any vis data.
 	//why can world leaves see bmodels in enttest but not in other maps?
 	

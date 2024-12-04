@@ -14,6 +14,7 @@
 #include "game.h"
 #include "md2.h"
 #include "player.h"
+#include "particles.h"
 
 
 /*
@@ -24,15 +25,20 @@
 
 gamestate_c game;
 winfo_t winfo;
+extern input_c in;
+
+//todo:
+//fps is wrecked because of the pvs hack...
+//figure out ai logic
 
 //PRIORITY LIST FOR FINAL
-//Check changemap stuff out - thoroughly...
+//Check changemap stuff out - this was? crashing.
 //weapons
-//	Bullet clipping
-//	held weapon models - good enough?
+//	Bullet clipping - Check
+//	multiple weapon models
 //Monsters
 //	movement
-//	ai - nodes - drop to floor on spawn
+//	ai - nodes
 //	models
 //Mouse speed/accel
 //Game logic
@@ -118,16 +124,18 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		game.timedelta = game.time - game.lasttime;
 		game.lasttime = game.time;
 
-		PKeys(); //get key input as frequently as possible
 		
 		if (game.nexttick < game.time)
 		{
+			PKeys();
 			game.tickdelta = (game.time - game.lasttick);
 			game.lasttick = game.time;
 			//printf("%f\n", game.tickdelta);
-			PMove();
 			EntTick(&game);
 			PlayerTick();
+			SetMoveVars(&in);
+			PMove();
+			ParticleTick();
 			SoundTick();
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;
@@ -144,6 +152,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 			//this gets more innaccurate the higher maxfps is
 			//printf("%i, %f\n", game.fps, game.startframe - game.endframe);
+			//printf("%i\n", game.fps);
 
 			game.endframe = glfwGetTime();
 			game.frame++;
