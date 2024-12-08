@@ -93,7 +93,7 @@ int ent_c::TK_Spawner_Particle()
 		vel[1] = frand(-50, 50);
 		vel[2] = frand(-80, 80);
 
-		SpawnParticle(origin, vel, {1,1,1}, 1.5, 4, 0.2, PF_FADEOUT | PF_NOCLIP);
+		SpawnParticle(origin, vel, {1,1,1}, 2, 4, 0.1, PF_FADEOUT);
 
 	}
 

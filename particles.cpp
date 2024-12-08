@@ -31,9 +31,25 @@ void particle_c::Update()
 	wishpos = origin + velocity;
 
 	if (!(flags & PF_NOCLIP))
-	{
+	{//collision
+		vec3_c dir = wishpos - origin;
 		tr.Trace(origin, wishpos, HULL_POINT);
-		wishpos = tr.end;
+
+		if (tr.fraction < 1.0f)
+		{//hit something
+			velocity[0] = velocity[2] = 0.0f;
+
+			if (tr.plane.normal[1] > 0.7f)
+			{//landed on the floor. Stop tracing
+				flags |= PF_NOCLIP;
+				velocity[1] = 0.0f;
+				weight = 0.0f;
+			}
+
+			wishpos = origin + dir * (tr.fraction - .1f); //back up a little bit
+		}
+		else
+			wishpos = tr.end;
 	}
 
 	origin = wishpos;

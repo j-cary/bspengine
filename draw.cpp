@@ -133,7 +133,7 @@ void ReloadBSP(const char* name)
 
 void DrawView(GLFWwindow* win)
 {
-	glClearColor(1.0f, 0.55f, 0.0f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	
@@ -179,8 +179,8 @@ void DrawView(GLFWwindow* win)
 	sproj = glm::scale(sproj, glm::vec3(-1.0, 1.0, 1.0));
 
 	DrawModels		(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(iview), glm::value_ptr(proj));
-	DrawParticles	(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(sproj), in.up, in.right);
 	DrawSky			(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
+	DrawParticles	(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(sproj), in.up, in.right);
 	DrawText		(&winfo, in.menu);
 
 	glfwSwapBuffers(win);
