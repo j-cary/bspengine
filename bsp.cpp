@@ -382,6 +382,7 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 		return pvs;
 	}
 
+
 	//printf("Leaf %i with ofs %i can see ", leafidx, v);
 	for (int l = 1; l < numleaves; v++)
 	{
@@ -410,7 +411,7 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	return pvs;
 }
 
-//extern ent_c entlist[MAX_ENTITIES];
+//extern baseent_c entlist[MAX_ENTITIES];
 extern entlist_c entlist;
 
 void UpdateBModelOrg(bspmodel_t* mod)
@@ -419,7 +420,7 @@ void UpdateBModelOrg(bspmodel_t* mod)
 
 	for (; last < MAX_ENTITIES; last++)
 	{
-		ent_c* e = entlist[last];
+		baseent_c* e = entlist[last];
 
 		if(e->modelname[0] == '*') //if (entlist[last].modelname[0] == '*')
 		{//assume this is a bmodel

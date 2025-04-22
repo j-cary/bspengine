@@ -6,7 +6,7 @@ extern md2list_c md2list;
 extern input_c in;
 extern gamestate_c game;
 
-ent_c* player;
+baseent_c* player;
 
 const float playerspawn_vertical_offset = 36.0f; //the origin of "playerspawn" sits on the ground
 const vec3_c viewmodel_offset = { -20, -6, 16 }; // 20 right, 6 down, 16 closer
@@ -37,7 +37,7 @@ void SetupPlayer()
 //this can be called at any point -immediately- after a BSP has loaded - do not use for respawning after death
 void SpawnPlayer()
 {
-	ent_c* spawn = FindEntByClassName("playerspawn");
+	baseent_c* spawn = FindEntByClassName("playerspawn");
 
 	if (spawn)
 	{

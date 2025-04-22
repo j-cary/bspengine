@@ -34,14 +34,14 @@ typedef struct mdlidx_s
 #define ANGLE_ROLL	1 //head tilt
 
 
-class ent_c
+class baseent_c
 {
 private:
 public:
 	bool inuse; //if false, we can use this ent's place in the entlist
 	float health;
 	vec3_c velocity, accel;
-	ent_c* enemy;
+	baseent_c* enemy;
 	aiflags_t aiflags;//state machine for ai
 
 	//Set in WorldEdit
@@ -63,7 +63,7 @@ public:
 	mdlidx_t mdli[3]; //3 models can belong to an ent. 0th is used as the collision model
 	struct bspmodel_s* bmodel;
 
-	int (ent_c::*thinkfunc)();
+	int (baseent_c::*thinkfunc)();
 	double nextthink;
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
@@ -97,10 +97,21 @@ public:
 
 	int TK_Npc_White_Bot();
 
-	ent_c();
-	//ent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);
-	~ent_c();
+	baseent_c();
+	//baseent_c(char* name, char* classname, float hp, vec3_t org, flag_t flags, char* model);
+	~baseent_c();
 };
+
+namespace ent
+{
+
+
+class worldspawn_c : public baseent_c
+{
+
+};
+
+}
 
 class entlist_c
 {
@@ -108,10 +119,10 @@ private:
 	int highest_used = 0; //highest index currently used in the entlist
 	//TODO: implement this - used for quicker searching
 
-	ent_c l[MAX_ENTITIES];
+	baseent_c l[MAX_ENTITIES];
 public:
 
-	ent_c* operator[](int index)
+	baseent_c* operator[](int index)
 	{
 		if (index < 0 || index >= MAX_ENTITIES)
 			return NULL;
@@ -124,10 +135,10 @@ public:
 };
 
 //should be friend stuff - functions for interacting with the entlist
-ent_c* AllocEnt();
-ent_c* FindEntByClassName(const char* name); //will need list versions of these functions
-int FindEntByClassName(ent_c*& e, const char* name, int start);
-ent_c* FindEntByName(const char* name);
+baseent_c* AllocEnt();
+baseent_c* FindEntByClassName(const char* name); //will need list versions of these functions
+int FindEntByClassName(baseent_c*& e, const char* name, int start);
+baseent_c* FindEntByName(const char* name);
 void ClearEntlist();
 
 

@@ -12,7 +12,7 @@ extern bsp_t bsp;
 
 
 //todo: clean this whole hash mess up
-typedef int (ent_c::* entfunc_t) ();
+typedef int (baseent_c::* entfunc_t) ();
 
 typedef struct classname_hash_s
 {
@@ -26,17 +26,17 @@ typedef struct classname_hash_s
 //Spawn functions
 classname_hash_t classname_hash[] =
 {
-	"worldspawn",			&ent_c::SP_Worldspawn,			NULL,		
-	"playerspawn",			&ent_c::SP_Playerspawn,			NULL,
-	"solid",				&ent_c::SP_Solid,				&ent_c::TK_Solid,
-	"model",				&ent_c::SP_Model,				&ent_c::TK_Model,
-	"info_texlights",		&ent_c::SP_Info_Texlights,		NULL,
-	"light",				&ent_c::SP_Light,				NULL,
-	"light_environment",	&ent_c::SP_Light_Environment, 	NULL,
-	"spawner_particle",		&ent_c::SP_Spawner_Particle,	&ent_c::TK_Spawner_Particle,
+	"worldspawn",			&baseent_c::SP_Worldspawn,			NULL,		
+	"playerspawn",			&baseent_c::SP_Playerspawn,			NULL,
+	"solid",				&baseent_c::SP_Solid,				&baseent_c::TK_Solid,
+	"model",				&baseent_c::SP_Model,				&baseent_c::TK_Model,
+	"info_texlights",		&baseent_c::SP_Info_Texlights,		NULL,
+	"light",				&baseent_c::SP_Light,				NULL,
+	"light_environment",	&baseent_c::SP_Light_Environment, 	NULL,
+	"spawner_particle",		&baseent_c::SP_Spawner_Particle,	&baseent_c::TK_Spawner_Particle,
 
-	"ai_node",				&ent_c::SP_Ai_Node,				NULL,
-	"npc_white_bot",		&ent_c::SP_Npc_White_Bot,		&ent_c::TK_Npc_White_Bot,
+	"ai_node",				&baseent_c::SP_Ai_Node,				NULL,
+	"npc_white_bot",		&baseent_c::SP_Npc_White_Bot,		&baseent_c::TK_Npc_White_Bot,
 	"", NULL
 };
 
@@ -47,7 +47,7 @@ void EntTick(gamestate_c* gs)
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		ent_c* ent = entlist[i];
+		baseent_c* ent = entlist[i];
 		if (!ent->inuse)
 			continue;
 
@@ -86,7 +86,7 @@ void EntTick(gamestate_c* gs)
 	}
 }
 
-void ent_c::AddHammerEntity()
+void baseent_c::AddHammerEntity()
 {
 	int spawn = 0;
 	inuse = true;
@@ -138,7 +138,7 @@ void ent_c::AddHammerEntity()
 
 }
 
-void ent_c::DropToFloor(int hull)
+void baseent_c::DropToFloor(int hull)
 {//testme with different hull sizes
 	trace_c tr;
 	vec3_c bottom(origin);
@@ -163,12 +163,12 @@ void ent_c::DropToFloor(int hull)
 
 }
 
-void ent_c::DelEnt()
+void baseent_c::DelEnt()
 {
 	inuse = 0;
 }
 
-void ent_c::Clear()
+void baseent_c::Clear()
 {
 	velocity = accel = zerovec;
 	health = 0;
@@ -214,26 +214,26 @@ void ent_c::Clear()
 	inuse = false;
 }
 
-void ent_c::MakeNoise(const char* name, const vec3_c ofs, float gain, int pitch, bool looped)
+void baseent_c::MakeNoise(const char* name, const vec3_c ofs, float gain, int pitch, bool looped)
 {
 	//printf("trying to play %s\n", name);
 	//FIXME!!! need some way of stopping looping sounds
 	PlaySound(name, ofs, gain, pitch, looped);
 }
 
-ent_c::ent_c()
+baseent_c::baseent_c()
 {
 	Clear();
 }
 
-ent_c::~ent_c()
+baseent_c::~baseent_c()
 {
 
 }
 
-ent_c* AllocEnt()
+baseent_c* AllocEnt()
 {
-	ent_c* e = NULL;
+	baseent_c* e = NULL;
 
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
@@ -252,17 +252,17 @@ ent_c* AllocEnt()
 	return e;
 }
 
-ent_c* FindEntByClassName(const char* name)
+baseent_c* FindEntByClassName(const char* name)
 {
-	ent_c* e = NULL;
+	baseent_c* e = NULL;
 	FindEntByClassName(e, name, 0);
 	return e;
 }
 
-int FindEntByClassName(ent_c*& e, const char* name, int start)
+int FindEntByClassName(baseent_c*& e, const char* name, int start)
 {
-	ent_c*	ent = NULL;
-	ent_c*	r = NULL;
+	baseent_c*	ent = NULL;
+	baseent_c*	r = NULL;
 	int		i = 0;
 
 	for (i = start; i < MAX_ENTITIES; i++)
@@ -287,7 +287,7 @@ void ClearEntlist()
 {
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		ent_c* e = entlist[i];
+		baseent_c* e = entlist[i];
 		e->Clear();
 	}
 }
@@ -308,11 +308,11 @@ void ClearEntlist()
 typedef struct keytranslate_s
 {
 	char name[KEYLEN];
-	void (*translatefunc)(ent_c* ent, char* val, int ofs); //type of value. int, vec, float, string
+	void (*translatefunc)(baseent_c* ent, char* val, int ofs); //type of value. int, vec, float, string
 	int ofs; //passed into translatefunc
 } keytranslate_t;
 
-void IntTranslate(ent_c* ent, char* val, int ofs)
+void IntTranslate(baseent_c* ent, char* val, int ofs)
 {
 	int* var = (int*)(ent)+ofs / sizeof(int);
 	//printf("ent %p is calling inttranslate with val %s and ofs %i\n", ent, val, ofs);
@@ -320,7 +320,7 @@ void IntTranslate(ent_c* ent, char* val, int ofs)
 	*var = atoi(val);
 }
 
-void VecTranslate(ent_c* ent, char* val, int ofs)
+void VecTranslate(baseent_c* ent, char* val, int ofs)
 {
 	float* var = (float*)(ent)+ofs / sizeof(float);
 	char read[16] = {};
@@ -351,7 +351,7 @@ void VecTranslate(ent_c* ent, char* val, int ofs)
 	*(var - 1) = (float)atof(read); //this isn't caught by the space check
 }
 
-void FltTranslate(ent_c* ent, char* val, int ofs)
+void FltTranslate(baseent_c* ent, char* val, int ofs)
 {
 	float* var = (float*)(ent)+ofs / sizeof(float);
 	//printf("ent %p is calling flttranslate with val %s and ofs %i\n", ent, val, ofs);
@@ -360,7 +360,7 @@ void FltTranslate(ent_c* ent, char* val, int ofs)
 	*var = (float)atof(val);
 }
 
-void StrTranslate(ent_c* ent, char* val, int ofs)
+void StrTranslate(baseent_c* ent, char* val, int ofs)
 {
 	char* var = (char*)(ent)+ofs;
 	//printf("ent %p is calling strtranslate with val %s and ofs %i\n", ent, val, ofs);
@@ -368,7 +368,7 @@ void StrTranslate(ent_c* ent, char* val, int ofs)
 	strcpy(var, val);
 }
 
-void LgtTranslate(ent_c* ent, char* val, int ofs)
+void LgtTranslate(baseent_c* ent, char* val, int ofs)
 {
 	float* var = (float*)(ent)+ofs / sizeof(float);
 	char read[16] = {};
@@ -399,19 +399,19 @@ void LgtTranslate(ent_c* ent, char* val, int ofs)
 
 keytranslate_t spawnkeys[] =
 {
-	"classname",	&StrTranslate,	offsetof(ent_c, classname),
-	"name",			&StrTranslate,	offsetof(ent_c, name),
-	"origin",		&VecTranslate,	offsetof(ent_c, origin),
-	"_light",		&LgtTranslate,	offsetof(ent_c, light),
-	"angles",		&VecTranslate,	offsetof(ent_c, angles),	//the first? ent loaded has weird angles for some reason
-	"spawnflags",	&IntTranslate,	offsetof(ent_c, flags),
-	"model",		&StrTranslate,	offsetof(ent_c, modelname),
-	"noise",		&StrTranslate,	offsetof(ent_c, noise),
-	"frame",		&IntTranslate,	offsetof(ent_c, mdli[0].frame),
+	"classname",	&StrTranslate,	offsetof(baseent_c, classname),
+	"name",			&StrTranslate,	offsetof(baseent_c, name),
+	"origin",		&VecTranslate,	offsetof(baseent_c, origin),
+	"_light",		&LgtTranslate,	offsetof(baseent_c, light),
+	"angles",		&VecTranslate,	offsetof(baseent_c, angles),	//the first? ent loaded has weird angles for some reason
+	"spawnflags",	&IntTranslate,	offsetof(baseent_c, flags),
+	"model",		&StrTranslate,	offsetof(baseent_c, modelname),
+	"noise",		&StrTranslate,	offsetof(baseent_c, noise),
+	"frame",		&IntTranslate,	offsetof(baseent_c, mdli[0].frame),
 	NULL,			NULL,			0,
 };
 
-void VarKV(ent_c* ent, char* key, char* val)
+void VarKV(baseent_c* ent, char* key, char* val)
 {
 	for (int i = 0; i < sizeof(spawnkeys) / sizeof(keytranslate_t); i++)
 	{
@@ -430,7 +430,7 @@ void ParseHammerEntity(char* start, int len)
 	char	val[128];
 	char*	k;
 	char*	v;
-	ent_c*	e;
+	baseent_c*	e;
 
 	e = AllocEnt();
 
@@ -574,7 +574,7 @@ void PCmdPrintEntlist(input_c* in, int key)
 {
 	for (int i = 0; i < MAX_ENTITIES; i++)
 	{
-		ent_c* e = entlist[i];
+		baseent_c* e = entlist[i];
 
 		if (!e->inuse)
 			continue;

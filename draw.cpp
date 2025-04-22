@@ -56,7 +56,7 @@ void SetupView(GLFWwindow* win)
 
 	if (!bsp.name[0])
 	{
-		SetupBSP("maps/research.bsp");
+		SetupBSP("maps/complex.bsp");
 		SetupSky("maps/snow.bsp");
 	}
 
@@ -137,6 +137,7 @@ void DrawView(GLFWwindow* win)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	
+	
 	cam[0] = in.org.v[0];
 	cam[1] = in.org.v[1] + in.camera_vertical_offset;
 	cam[2] = in.org.v[2];
@@ -146,8 +147,7 @@ void DrawView(GLFWwindow* win)
 	up[0] = in.up.v[0];
 	up[1] = in.up.v[1];
 	up[2] = in.up.v[2];
-
-
+	
 	bspshader.Use();
 
 	glm::mat4 mdl = glm::mat4(1); //model transform / rotation

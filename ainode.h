@@ -11,7 +11,7 @@ private:
 	short		num_links;
 	ainode_c*	links[LINKS_MAX];
 public:
-	ent_c*		ent;
+	baseent_c*		ent;
 
 	void Clear();
 	bool AddLink(ainode_c* l); //false if out of space
@@ -82,5 +82,5 @@ typedef struct aipath_s
 
 //interface
 ainode_c* FindNearestNode(vec3_c point, bool visible);
-void MakePath(ent_c* e, ent_c* target, aipath_t* path);
+void MakePath(baseent_c* e, baseent_c* target, aipath_t* path);
 void DrawPath(aipath_t* path); //debug

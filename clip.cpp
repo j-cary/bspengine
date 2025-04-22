@@ -6,7 +6,7 @@ extern	int num_physents;
 
 #include "md2.h" //MODELS_MAX
 extern entlist_c	entlist;
-extern ent_c* player;
+extern baseent_c* player;
 
 //these are just used for colliding with regular models, not a huge deal
 //half life has 4 different mins/maxs per hull...
@@ -45,7 +45,7 @@ bool trace_c::Trace(vec3_c start, vec3_c _end, int _hull)
 	//return fraction > 1.0f;
 }
 
-ent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY)
+baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY)
 {
 	//just uh ignore bmodels besides the world for the time being. Need to properly build hull0 for everything - water and other contents, too
 	
@@ -53,13 +53,13 @@ ent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX,
 	//use this new end to collide with and ents with (studio) models
 
 	vec3_c _end = start + dir * dist;
-	ent_c* e;
+	baseent_c* e;
 	hull_t* hull;
 	vec3_c mins, maxs;
 	vec3_c start_l, end_l, offset;
 	trace_c total(_end);
 	int i;
-	ent_c* save_ent = NULL;
+	baseent_c* save_ent = NULL;
 
 	//this is giving worldspawn too often...
 
@@ -486,7 +486,7 @@ bool TestPlayerPosition(vec3_c p)
 
 
 
-void BuildPhysentList(physent_t* p, int* i, ent_c* ent)
+void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 {
 	p[0].org = bsp.models[0].origin;
 	p[0].mdl = &bsp.models[0];
@@ -500,7 +500,7 @@ void BuildPhysentList(physent_t* p, int* i, ent_c* ent)
 		if (*i >= MAX_PHYSENTS)
 			break;
 
-		ent_c* e = entlist[ei];
+		baseent_c* e = entlist[ei];
 
 		if (!e->inuse || e == ent) //don't add anything the the player is holding 
 			continue;

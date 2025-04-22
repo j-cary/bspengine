@@ -6,7 +6,7 @@
 
 extern md2list_c md2list;
 
-void WeaponTick(ent_c* p)
+void WeaponTick(baseent_c* p)
 {
 	mdlidx_t* m = &p->mdli[0];
 	static int idle_offset = 0;
@@ -31,10 +31,10 @@ void WeaponTick(ent_c* p)
 	}
 }
 
-double FireWeapon(input_c* in, ent_c* p)
+double FireWeapon(input_c* in, baseent_c* p)
 {
 	trace_c tr;
-	ent_c* ent;
+	baseent_c* ent;
 
 	PlaySound("sound/weps/shotg/~f1.wav", p->origin, 0.25, 1, 0);
 

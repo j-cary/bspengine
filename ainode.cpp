@@ -5,7 +5,7 @@ extern entlist_c entlist;
 
 aigraph_c graph;
 
-int ent_c::SP_Ai_Node()
+int baseent_c::SP_Ai_Node()
 {
 	DropToFloor(HULL_POINT);
 
@@ -56,7 +56,7 @@ bool ainode_c::AddLink(ainode_c* l)
 int aigraph_c::Initialize()
 {
 	int		start = 0;
-	ent_c*	ent = NULL;
+	baseent_c*	ent = NULL;
 	trace_c tr;
 	int		connections = 0;
 
@@ -239,7 +239,7 @@ int MinDist(float* dist, bool* seen)
 }
 
 //Dijkstra's
-void MakePath(ent_c* e, ent_c* target, aipath_t* aipath)
+void MakePath(baseent_c* e, baseent_c* target, aipath_t* aipath)
 {
 	float*		dist;
 	bool*		seen;

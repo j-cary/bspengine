@@ -34,7 +34,7 @@ inline int PointOnLineSide(float a[2], float b[2], float p[2])
 	return -1; //RHS
 }
 
-bool CanSee(ent_c* ent, ent_c* target, float fov, float dist)
+bool CanSee(baseent_c* ent, baseent_c* target, float fov, float dist)
 {//ignore y axis. define an isosceles triangle with theta = fov and h = dist 
 	vec3_c	side;
 	vec3_c	point;

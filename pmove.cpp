@@ -650,7 +650,7 @@ void SetMoveVars(input_c* i)
 	pm.ent = FindEntByClassName("player");
 }
 
-void SetMoveVars(ent_c* e)
+void SetMoveVars(baseent_c* e)
 {
 	pm.movetype = MOVETYPE_WALK;
 	pm.moveforward = e->run_speed;

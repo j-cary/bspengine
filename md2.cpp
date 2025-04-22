@@ -200,7 +200,7 @@ void md2list_c::Dump()
 }
 
 
-unsigned md2list_c::Alloc(const char* name, ent_c* ent, mdlidx_t* _midx)
+unsigned md2list_c::Alloc(const char* name, baseent_c* ent, mdlidx_t* _midx)
 {
 	unsigned ofs;
 	entll_t* end = NULL;
@@ -268,7 +268,7 @@ unsigned md2list_c::Alloc(const char* name, ent_c* ent, mdlidx_t* _midx)
 	return ofs; //give the calling ent the mid
 }
 
-void md2list_c::Free(mdlidx_t* midx, ent_c* ent)
+void md2list_c::Free(mdlidx_t* midx, baseent_c* ent)
 {
 	//find the end of the list
 	entll_t* curs, *prev;
@@ -320,7 +320,7 @@ void md2list_c::Free(mdlidx_t* midx, ent_c* ent)
 	midx->mid = 0xFFFFFFFF; //reset the ent's stored id
 }
 
-void md2list_c::AddMDLtoList(ent_c* ent, mdlidx_t* midx)
+void md2list_c::AddMDLtoList(baseent_c* ent, mdlidx_t* midx)
 {
 	md2_c* md2 = &mdls[midx->mid];
 	unsigned depth = 0;
@@ -501,7 +501,7 @@ bool md2list_c::InFrameGroup(mdlidx_t* m, const char* group)
 	return false;
 }
 
-//extern ent_c entlist[MAX_ENTITIES];
+//extern baseent_c entlist[MAX_ENTITIES];
 extern entlist_c entlist;
 
 void md2list_c::TMP()
@@ -509,7 +509,7 @@ void md2list_c::TMP()
 	static int i = 4;
 
 	//todo: check that this really works
-	ent_c* e = entlist[i];
+	baseent_c* e = entlist[i];
 	Free(&e->mdli[0], e);
 	i++;
 }

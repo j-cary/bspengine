@@ -20,7 +20,7 @@ void particle_c::Update()
 
 	}
 
-	velocity.v[1] -= PARTICLE_GRAVITY * weight * (float)game.tickdelta;
+	velocity[1] -= PARTICLE_GRAVITY * weight * (float)game.tickdelta;
 
 
 	if (!(flags & PF_NOFRICTION))
@@ -48,8 +48,6 @@ void particle_c::Update()
 
 			wishpos = origin + dir * (tr.fraction - .1f); //back up a little bit
 		}
-		else
-			wishpos = tr.end;
 	}
 
 	origin = wishpos;
@@ -74,6 +72,9 @@ void particlelist_c::Clear()
 
 void particlelist_c::Dump()
 {
+	int count = 0;
+	int highest = 0;
+
 	for (int i = 0; i < PARTICLES_MAX; i++)
 	{
 		particle_c* p = &pl[i];
@@ -81,8 +82,11 @@ void particlelist_c::Dump()
 		if (p->lifetime < game.time)
 			continue;
 
-		printf("%i,\n", i);
+		count++;
+		highest = i;
 	}
+
+	printf("%i particles, %i is the highest used index\n", count, highest);
 }
 
 //rebuilt every frame
@@ -106,9 +110,9 @@ void particlelist_c::AddParticleToList(particle_c* p)
 
 	for (int i = 0; i < 3; i++)
 	{
-		pvi.origin[particles][i] = p->origin.v[i];
+		pvi.origin[particles][i] = p->origin[i];
 		//pvi.color[particles][i] = p->color.v[i];
-		pvi.color[particles][i] = p->color.v[i];
+		pvi.color[particles][i] = p->color[i];
 		if (p->flags & PF_FADECOLOR)
 			pvi.color[particles][i] *= time_factor;
 	}

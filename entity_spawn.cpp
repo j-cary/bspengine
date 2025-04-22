@@ -3,33 +3,33 @@
 //todo: make an entity folder and split these between different hammer ents
 extern gamestate_c game;
 
-int ent_c::SP_Default()
+int baseent_c::SP_Default()
 {
 	printf("%s has no spawn function!\n", classname);
 	return 0;
 }
 
-int ent_c::SP_Solid()
+int baseent_c::SP_Solid()
 {
 	return 1;
 }
 
-int ent_c::SP_Model()
+int baseent_c::SP_Model()
 {
 	return 1;
 }
 
-int ent_c::SP_Worldspawn()
+int baseent_c::SP_Worldspawn()
 {
 	return 1;
 }
 
-int ent_c::SP_Playerspawn()
+int baseent_c::SP_Playerspawn()
 {
 	return 1;
 }
 
-int ent_c::SP_Spawner_Particle()
+int baseent_c::SP_Spawner_Particle()
 {
 	nextthink = game.time + 0.5;
 	return 1;
@@ -41,17 +41,17 @@ int ent_c::SP_Spawner_Particle()
 
 
 //not used ingame
-int ent_c::SP_Info_Texlights()
+int baseent_c::SP_Info_Texlights()
 {
 	return 0;
 }
 
-int ent_c::SP_Light()
+int baseent_c::SP_Light()
 {
 	return 0;
 }
 
-int ent_c::SP_Light_Environment()
+int baseent_c::SP_Light_Environment()
 {
 	return 0;
 }
@@ -61,7 +61,7 @@ int ent_c::SP_Light_Environment()
 const int model_hz = 16; //need a whole different system for this
 
 
-int ent_c::TK_Model()
+int baseent_c::TK_Model()
 {
 	int model_skiptick = game.maxtps / model_hz; //how many ticks to skip inbetween model frame updates
 	bool animtick= !(game.tick % model_skiptick);
@@ -75,7 +75,7 @@ int ent_c::TK_Model()
 	return 1;
 }
 
-int ent_c::TK_Solid()
+int baseent_c::TK_Solid()
 {
 	//printf("solid is ticking...\n");
 	return 1;
@@ -83,7 +83,7 @@ int ent_c::TK_Solid()
 
 #include "particles.h"
 
-int ent_c::TK_Spawner_Particle()
+int baseent_c::TK_Spawner_Particle()
 {
 	for (int i = 0; i < 2; i++)
 	{

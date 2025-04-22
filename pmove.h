@@ -38,7 +38,7 @@ public:
 	trace_c() { Default(); }
 
 	//Todo: these could probably all be simplified 
-	ent_c* TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY);
+	baseent_c* TraceBullet(vec3_c start, vec3_c dir, float dist, float spreadX, float spreadY);
 	bool Trace(vec3_c start, vec3_c end, int hull);
 	void PlayerMove(vec3_c start, vec3_c end); //requires the physent list to be set up
 
@@ -63,7 +63,7 @@ typedef struct pmove_s
 	float pitch, yaw;
 	int* onground;
 	vec3_c* org, * vel;
-	ent_c* ent;
+	baseent_c* ent;
 } pmove_t;
 
 bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, trace_c* trace);
@@ -71,7 +71,7 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 
 void SetupPMove();
 void SetMoveVars(input_c* in);
-void SetMoveVars(ent_c* e);
+void SetMoveVars(baseent_c* e);
 void PMove();
 
-void BuildPhysentList(physent_t* p, int* i, ent_c* ent);
+void BuildPhysentList(physent_t* p, int* i, baseent_c* ent);

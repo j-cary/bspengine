@@ -8,6 +8,7 @@ class shader_c
 {
 private:
 	void Initialize(FILE* v, FILE* f, FILE* g);
+	unsigned LoadShader(FILE* s, int type); //returns shader id
 public:
 	unsigned id;
 

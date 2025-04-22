@@ -5,7 +5,7 @@
 
 extern gamestate_c game;
 
-int ent_c::SP_Npc_White_Bot()
+int baseent_c::SP_Npc_White_Bot()
 {
 	strcpy(modelname, "models/npcs/white_bot/tris.md2"); //this will get alloc-ed in a second
 
@@ -17,7 +17,7 @@ int ent_c::SP_Npc_White_Bot()
 
 //sv_move / sv_phys
 
-void FollowPath(ent_c* e, aipath_t* path)
+void FollowPath(baseent_c* e, aipath_t* path)
 {
 	float beeline_yaw;
 	vec3_c delta;
@@ -43,10 +43,10 @@ void FollowPath(ent_c* e, aipath_t* path)
 	}
 }
 
-int ent_c::TK_Npc_White_Bot()
+int baseent_c::TK_Npc_White_Bot()
 {
 	
-	ent_c			*p, * n;
+	baseent_c			*p, * n;
 	vec3_c			delta;
 	float			newrunspeed = 0;
 	float			beeline_yaw;
