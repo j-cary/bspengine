@@ -27,9 +27,13 @@ gamestate_c game;
 winfo_t winfo;
 extern input_c in;
 
-//todo:
-//fps is wrecked because of the pvs hack...
-//figure out ai logic
+/* New priority list:
+* Restructure program!!!
+* Make program more resilient - change maps, unload maps, etc.
+* Fix text drawing
+* Fix annoying mysterious lighting bug
+* 
+*/
 
 //PRIORITY LIST FOR FINAL
 //Check changemap stuff out - this was? crashing.
@@ -64,6 +68,7 @@ extern input_c in;
 //	pvs bug
 //  bad pvs with single leaf
 //	fix PVS for models - fat pvs?
+//	fps is wrecked because of the pvs hack... in snow
 //VERTICES:
 //	a considerable amount of fans have co-linear but unnecesary vertices!
 //	this appears to be a totally separate issue from the lightmap coordinates
