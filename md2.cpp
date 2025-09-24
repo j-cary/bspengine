@@ -200,7 +200,7 @@ void md2list_c::Dump()
 }
 
 
-unsigned md2list_c::Alloc(const char* name, baseent_c* ent, mdlidx_t* _midx)
+unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 {
 	unsigned ofs;
 	entll_t* end = NULL;
@@ -208,7 +208,7 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, mdlidx_t* _midx)
 	bool loaded = false;
 
 	if (!*name)
-		return NULL;
+		return NULL; //fixme
 
 	//determine if the model is in use
 	for (ofs = 0; ofs < MODELS_MAX; ofs++)
@@ -268,7 +268,7 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, mdlidx_t* _midx)
 	return ofs; //give the calling ent the mid
 }
 
-void md2list_c::Free(mdlidx_t* midx, baseent_c* ent)
+void md2list_c::Free(model_t* midx, baseent_c* ent)
 {
 	//find the end of the list
 	entll_t* curs, *prev;
@@ -320,13 +320,13 @@ void md2list_c::Free(mdlidx_t* midx, baseent_c* ent)
 	midx->mid = 0xFFFFFFFF; //reset the ent's stored id
 }
 
-void md2list_c::AddMDLtoList(baseent_c* ent, mdlidx_t* midx)
+void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 {
 	md2_c* md2 = &mdls[midx->mid];
 	unsigned depth = 0;
 	glm::mat4 rotate(1.0f);
 
-	if (midx->frame >= md2->hdr.frame_cnt)
+	if (midx->frame >= (unsigned)md2->hdr.frame_cnt)
 	{
 		printf("oob frame %i for model %s. Max is %i\n", midx->frame, md2->name, md2->hdr.frame_cnt);
 		midx->frame = 0;
@@ -424,13 +424,13 @@ void md2list_c::BuildList()
 
 		while (curs)
 		{//linked list loop
-			AddMDLtoList(curs->ent, &curs->ent->mdli[0]);
+			AddMDLtoList(curs->ent, &curs->ent->models[0]);
 			curs = curs->next;
 		}
 	}
 }
 
-void md2list_c::SetFrameGroup(mdlidx_t* m, const char* group, int offset)
+void md2list_c::SetFrameGroup(model_t* m, const char* group, int offset)
 {
 	md2_c* mdl;
 	md2frame_t* f;
@@ -471,7 +471,7 @@ void md2list_c::SetFrameGroup(mdlidx_t* m, const char* group, int offset)
 	m->frame = 0;
 }
 
-bool md2list_c::InFrameGroup(mdlidx_t* m, const char* group)
+bool md2list_c::InFrameGroup(model_t* m, const char* group)
 {
 	md2_c* mdl;
 	md2frame_t* f;
@@ -501,7 +501,21 @@ bool md2list_c::InFrameGroup(mdlidx_t* m, const char* group)
 	return false;
 }
 
-//extern baseent_c entlist[MAX_ENTITIES];
+void baseent_c::AllocModel(const char* modelname, model_t* model)
+{
+	md2list.Alloc(modelname, this, model);
+}
+
+void model_t::SetFrameGroup(const char* group, int offset)
+{
+	md2list.SetFrameGroup(this, group, offset);
+}
+
+bool model_t::InFrameGroup(const char* group)
+{
+	return md2list.InFrameGroup(this, group);
+}
+
 extern entlist_c entlist;
 
 void md2list_c::TMP()
@@ -510,7 +524,7 @@ void md2list_c::TMP()
 
 	//todo: check that this really works
 	baseent_c* e = entlist[i];
-	Free(&e->mdli[0], e);
+	Free(&e->models[0], e);
 	i++;
 }
 

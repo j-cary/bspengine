@@ -1,17 +1,16 @@
 #include "ainode.h"
 #include "pmove.h"
 
-extern entlist_c entlist;
-
 aigraph_c graph;
 
-int baseent_c::SP_Ai_Node()
+void ent::ai_node_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 {
+	baseent_c::HammerSpawn(keyvals);
 	DropToFloor(HULL_POINT);
 
 	graph.num_nodes++;
-	return 1;
 }
+
 
 //Called after map load
 void BuildNodeList()
@@ -142,7 +141,6 @@ void PCmdDumpNodes(input_c* in, int key)
 	int link_cnt = 0;
 	int links_per_node;
 	const int particles = 10;
-	float particle_dist;
 
 	//fixme: nodes will draw 2 lines between each other
 	//12 connections, should just draw 5 lines
@@ -154,7 +152,6 @@ void PCmdDumpNodes(input_c* in, int key)
 
 		for (int j = 0; j < links_per_node; j++, link_cnt++)
 		{
-			float dist;
 			vec3_c delta, color;
 
 			l = n->Link(j);
@@ -364,6 +361,6 @@ void DrawPath(aipath_t* path)
 		return; //either a bad path or we're already where we want to be
 
 	for (int i = 0; i < path->cnt - 1; i++)
-		DrawPathLine(path->nodes[i], path->nodes[i + 1], 4, { 0,1,0 }, 0.1);
+		DrawPathLine(path->nodes[i], path->nodes[i + 1], 4, { 0,1,0 }, 0.1f);
 
 }

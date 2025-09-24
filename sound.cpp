@@ -92,7 +92,7 @@ void SoundTick()
 	orientation[4] = in.up.v[1];
 	orientation[5] = in.up.v[2];
 
-	fixedvel = in.vel * game.tickdelta; //change u/s to u/t
+	fixedvel = in.vel * (float)game.tickdelta; //change u/s to u/t
 	
 	alListenerfv(AL_POSITION, in.org);
 	alListenerfv(AL_VELOCITY, fixedvel);

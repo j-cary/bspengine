@@ -154,6 +154,7 @@
     <ClCompile Include="math.cpp" />
     <ClCompile Include="npc.cpp" />
     <ClCompile Include="npc_white_bot.cpp" />
+    <ClCompile Include="parse_entity.cpp" />
     <ClCompile Include="particles.cpp" />
     <ClCompile Include="pcmd.cpp" />
     <ClCompile Include="player.cpp" />

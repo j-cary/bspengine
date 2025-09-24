@@ -72,14 +72,15 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 	{
 		e = entlist[i];
 
-		if (!e->inuse || e == player)
+		//if (!e->inuse || e == player)
+		if(!e || e == player)
 			continue;
 
 		// get the clipping hull
 		//if (pe->mdl)
 		//	hull = &physents[i].mdl->hulls[HULL_POINT];
 		//else
-		if (e->mdli[0].mid <= MODELS_MAX)
+		if (e->models[0].mid <= MODELS_MAX)
 		{ //non world model
 			//0 - mins/maxs
 			mins = -tmp_monster_maxs; //mins = pe->mins - player_maxs; 
@@ -502,7 +503,8 @@ void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 
 		baseent_c* e = entlist[ei];
 
-		if (!e->inuse || e == ent) //don't add anything the the player is holding 
+		//if (!e->inuse || e == ent) //don't add anything the the player is holding 
+		if(!e || e == ent)
 			continue;
 
 		if (e->bmodel)
@@ -512,7 +514,7 @@ void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 			(*i)++;
 			continue;
 		}
-		else if (e->mdli[0].mid < MODELS_MAX)
+		else if (e->models[0].mid < MODELS_MAX)
 		{
 			// need to find a way to determine a model's mins/maxs
 			p[*i].mins = player_mins;

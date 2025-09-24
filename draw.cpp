@@ -14,7 +14,8 @@ shader_c bspshader;
 
 
 glid texarray, alphaarray, lmaparray;
-glid VAO, VBO;
+glid VAO, VBO, FBO;
+glid colorBufs[4];
 
 //todo: maybe implement this without glm
 glm::vec3 cam = glm::vec3(0.0f, 64.0f, 0.0f);
@@ -57,7 +58,7 @@ void SetupView(GLFWwindow* win)
 	if (!bsp.name[0])
 	{
 		SetupBSP("maps/complex.bsp");
-		SetupSky("maps/snow.bsp");
+		SetupSky("maps/complex.bsp");
 	}
 
 	SetupText();
@@ -137,16 +138,18 @@ void DrawView(GLFWwindow* win)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glClear(GL_COLOR_BUFFER_BIT);
 	
+	if (!winfo.w || !winfo.h)
+		return; //FIXME: cannot tab back in after tabbing out of fullscreen
 	
-	cam[0] = in.org.v[0];
-	cam[1] = in.org.v[1] + in.camera_vertical_offset;
-	cam[2] = in.org.v[2];
-	forward[0] = in.forward.v[0];
-	forward[1] = in.forward.v[1];
-	forward[2] = in.forward.v[2];
-	up[0] = in.up.v[0];
-	up[1] = in.up.v[1];
-	up[2] = in.up.v[2];
+	cam[0] = in.org[0];
+	cam[1] = in.org[1] + in.camera_vertical_offset;
+	cam[2] = in.org[2];
+	forward[0] = in.forward[0];
+	forward[1] = in.forward[1];
+	forward[2] = in.forward[2];
+	up[0] = in.up[0];
+	up[1] = in.up[1];
+	up[2] = in.up[2];
 	
 	bspshader.Use();
 
@@ -386,6 +389,12 @@ void BuildTextureList()
 
 	printf("%i texture(s) and %i alpha texture(s)\n", num_textures, num_atextures);
 
+	//bloom
+	//glGenFramebuffers(1, &FBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	//glGenTextures(4, colorBufs);
+	//bloom
+	
 	glGenTextures(1, &texarray);
 	glActiveTexture(WORLD_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
@@ -405,8 +414,9 @@ void BuildTextureList()
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	
 
-	//FIXME: texture 0 is somehow swallowing surrounding textures in some cases
+	//FIXME: texture 0 is somehow swallowing surrounding textures in some cases - fixed?
 	int tex_i = 0, alpha_i = 0;
 	for (int i = 0; i < num_textures + num_atextures; i++)
 	{
@@ -481,8 +491,8 @@ void InitLmapList()
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, texsize, texsize, arraydepth, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 void BuildVertexList(vertexinfo_c* vi)
@@ -496,13 +506,13 @@ void BuildVertexList(vertexinfo_c* vi)
 
 	char name[] = "textures/atlas/00.bmp";
 	//printf("writing ");
-	for (int i = 0; i <= depth; i++)
+	for (unsigned i = 0; i <= depth; i++)
 	{
 		//printf("%i ", i + 1);
 		lmap = atlas.GetBlock(i);
 		WriteBMPFile(name, ATLAS_SIZE, ATLAS_SIZE, lmap, true, true);
 		name[16]++;
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, (GLint)ofs.v[0], (GLint)ofs.v[1], i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, (GLint)ofs.v[0], (GLint)ofs.v[1], (int)i, ATLAS_SIZE, ATLAS_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, lmap);
 	}
 	//printf("lightmap(s)\n");
 }

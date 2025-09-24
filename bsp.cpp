@@ -8,7 +8,7 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 #if 1
 	bspnode_t*	in, * child; //mnode_t* in, * child;
 	bspclip_t*	out; //dclipnode_t* out;
-	int			i, j, count;
+	int			i, j;
 	hull_t*		hull;
 
 	//This is a pretty poor function. Really, really needs to be fixed. Oh well!
@@ -28,7 +28,7 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 
 	for (i = 0; i < MAX_CLIP /*i < count*/; i++, out++, in++)
 	{
-		out->plane = &bsp->planes[in->plane_ofs] - bsp->planes; //out->planenum = in->plane - loadmodel->planes;
+		out->plane = (int)(&bsp->planes[in->plane_ofs] - bsp->planes); //out->planenum = in->plane - loadmodel->planes;
 
 		if (!in->children[0] && !in->children[1])
 			break; //no way to tell how many nodes there are, so just quit out this way
@@ -62,7 +62,7 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 
 			}
 			else //regular node
-				out->children[j] = child - &bsp->nodes[b->headnodes_index[0]]; //wrong!
+				out->children[j] = (short)(child - &bsp->nodes[b->headnodes_index[0]]); //wrong!
 			
 
 			/*

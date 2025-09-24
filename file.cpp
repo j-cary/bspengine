@@ -268,7 +268,7 @@ img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio
 		for (int nx = 0; nx < new_w * pxlen; nx += pxlen, ox += pxlen * xs)
 		{
 			int dsti = ny * new_w * pxlen + nx;
-			int srci = (int)(floor(oy) * src->width * pxlen) + (floor(ox / pxlen) * pxlen);
+			int srci = (int)(floor(oy) * src->width * pxlen) + (int)(floor(ox / pxlen) * pxlen);
 
 			int y, x;
 			y = (int)floor(oy);
@@ -349,7 +349,7 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 		//buf = (byte*)malloc(w * 3 + pad);
 		byte buf[TEXTURE_SIZE];
 
-		for (int i = 0; i < h; i++)
+		for (unsigned i = 0; i < h; i++)
 		{
 			memcpy(buf, &data[i * w], w * 3);
 

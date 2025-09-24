@@ -135,10 +135,10 @@ void particlelist_c::AddParticle(vec3_c _origin, vec3_c vel, vec3_c _color, floa
 		if (p->lifetime < game.time)
 		{//dead
 			p->origin = _origin;
-			p->velocity = vel * game.tickdelta; //we are given this in units/second not units/tick
+			p->velocity = vel * (float)game.tickdelta; //we are given this in units/second not units/tick
 			p->color = _color;
-			p->lifetime = game.time + _lifetime;
-			p->birthtime = game.time;
+			p->lifetime = (float)game.time + _lifetime;
+			p->birthtime = (float)game.time;
 			p->size = _size;
 			p->weight = _weight;
 			//fixme: check for weird lighten/darken flags here
@@ -182,7 +182,7 @@ void SpawnParticle(vec3_c _origin, vec3_c vel, vec3_c _color, float _lifetime, f
 void SpawnOil(vec3_c origin, float damage)
 {
 	//vec3_c bloodred = { 0.4, 0.02, 0.02 };
-	vec3_c color = { 0.2, 0.2, 0.2 };
+	vec3_c color = { 0.2f, 0.2f, 0.2f };
 	vec3_c vel;
 	float life;
 
@@ -191,9 +191,9 @@ void SpawnOil(vec3_c origin, float damage)
 		vel.v[0] = frand(-80, 80);
 		vel.v[1] = frand(-50, 0);
 		vel.v[2] = frand(-80, 80);
-		life = 0.7 + frand(-0.2, 0.2);
+		life = 0.7f + frand(-0.2, 0.2);
 
-		SpawnParticle(origin, vel, color, life, 0.5, 0.3, PF_FADEOUT);
+		SpawnParticle(origin, vel, color, life, 0.5f, 0.3f, PF_FADEOUT);
 	}
 }
 

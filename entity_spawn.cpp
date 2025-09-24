@@ -1,5 +1,5 @@
 #include "entity.h"
-
+/*
 //todo: make an entity folder and split these between different hammer ents
 extern gamestate_c game;
 
@@ -68,7 +68,7 @@ int baseent_c::TK_Model()
 
 	if (animtick)
 	{
-		mdli[0].frame = (++mdli[0].frame) % mdli[0].frame_max;
+		models[0].frame = (++models[0].frame) % models[0].frame_max;
 	}
 
 	//printf("model is ticking...\n");
@@ -100,3 +100,4 @@ int baseent_c::TK_Spawner_Particle()
 	nextthink = game.time + 0.1;
 	return 1;
 }
+*/

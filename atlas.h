@@ -25,7 +25,7 @@ private:
 	unsigned depth; //of the current layer
 public:
 	bool AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t, int& _depth);
-	byte* GetBlock(int _depth) { return layer[_depth].GetBlock(); }
+	byte* GetBlock(unsigned _depth) { return layer[_depth].GetBlock(); }
 	void Clear();
 	unsigned GetDepth() { return depth; }
 

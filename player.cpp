@@ -19,7 +19,7 @@ void SpawnPlayer();
 void SetupPlayer()
 {
 	//load a player ent
-	player = AllocEnt();
+	player = AllocEnt("player");
 
 	strcpy(player->classname, "player");
 	player->origin = in.org;
@@ -46,10 +46,12 @@ void SpawnPlayer()
 	}
 
 
-	md2list.Alloc("models/weapons/v/shotg/tris.md2", player, &player->mdli[0]);
-	player->mdli[0].frame = 3;
-	player->mdli[0].offset = viewmodel_offset;
-	player->mdli[0].rflags |= RF_VIEWMODEL;
+	//md2list.Alloc("models/weapons/v/shotg/tris.md2", player, &player->models[0]);
+	//player->models[0].Alloc(player, "models/weapons/v/shotg/tris.md2");
+	player->AllocModel("models/weapons/v/shotg/tris.md2", &player->models[0]);
+	player->models[0].frame = 3;
+	player->models[0].offset = viewmodel_offset;
+	player->models[0].rflags |= RF_VIEWMODEL;
 }
 
 void PlayerTick()
@@ -68,8 +70,8 @@ void PlayerTick()
 	player->forward = in.forward;
 
 	//weapon sway
-	//player->mdli[0].offset = viewmodel_offset;
-	//player->mdli[0].offset.v[1] += sin(game.time) * sin(game.time);
+	//player->models[0].offset = viewmodel_offset;
+	//player->models[0].offset.v[1] += sin(game.time) * sin(game.time);
 
 	
 

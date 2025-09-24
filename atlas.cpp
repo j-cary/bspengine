@@ -12,8 +12,8 @@ atlas_c::atlas_c()
 bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 {
 	int bestx = 99999, nextbest = 99999; 
-	int bestdepth;
-	int dpth;
+	unsigned bestdepth;
+	unsigned dpth;
 
 	//find a valid spot
 	for (unsigned x = 0; x < ATLAS_SIZE; x++)
@@ -68,14 +68,14 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 	t = initialdepth / (float)ATLAS_SIZE;
 
 	//add the block
-	for (int y = 0; y < h; y++)
+	for (unsigned y = 0; y < h; y++)
 	{
 		int blockidx = ((initialdepth + y) * ATLAS_SIZE * 3) + (bestx * 3);
 		memcpy(&this->block[blockidx], &block[y * w * 3], w * 3);
 	}
 
 	//update depth
-	for (int x = bestx; x < w + bestx; x++)
+	for (unsigned x = bestx; x < w + bestx; x++)
 	{
 		depth[x] = initialdepth + h;
 	}

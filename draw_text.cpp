@@ -110,7 +110,7 @@ void DrawText(winfo_t* winfo, menuflags_t menu)
 	vec3_c scolor(0.0f, 1.0f, 0.0f);
 	char speedo[16];
 	vec3_c projvel = in.vel;
-	itoa(projvel[1], speedo, 10);
+	itoa((int)projvel[1], speedo, 10);
 	DrawString(speedo, winfo->w / 2.0f, 50, 0.5f, &scolor); //y vel speedo
 
 	projvel[1] = 0;

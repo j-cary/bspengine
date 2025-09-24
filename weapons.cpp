@@ -8,7 +8,7 @@ extern md2list_c md2list;
 
 void WeaponTick(baseent_c* p)
 {
-	mdlidx_t* m = &p->mdli[0];
+	model_t* m = &p->models[0];
 	static int idle_offset = 0;
 
 	//temporary. Not very efficient.
@@ -52,7 +52,7 @@ double FireWeapon(input_c* in, baseent_c* p)
 	}
 
 	//animation stuff
-	md2list.SetFrameGroup(&p->mdli[0], "fire", 0);
+	md2list.SetFrameGroup(&p->models[0], "fire", 0);
 
 	return 0.5; //wait before next
 }

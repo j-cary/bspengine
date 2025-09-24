@@ -8,7 +8,7 @@
 #define VERSION "WORKING VERSION"
 
 #define GAMEDIR "C:/T045T/Overlord/"
-
+ 
 //maxes
 #define MAX_ENTITIES 4096
 #define TEXTURE_SIZE 128
@@ -19,9 +19,10 @@
 //macro defs 
 
 #define PI 3.1415926535897931
-#define FPI (float)PI
+#define FPI ((float)PI)
 #define DEGTORADS(d)	((d) * (PI / 180.0))
 #define RADSTODEG(r)	((r) * (180.0 / PI))
+#define FRADSTODEG(r)	((float)(r * (180.0f / FPI)))
 
 //random between x and y. x should be less than y
 #define frand(x,y) (((float)((y)-(x)) * ((rand () & 0x7fff) / ((float)0x7fff))) + (float)(x))
@@ -51,7 +52,9 @@ public:
 	inline int operator!= (const vec3_c& vec) { return (v[0] != vec.v[0] || v[1] != vec.v[1] || v[2] != vec.v[2]); }
 	inline vec3_c operator+ (const vec3_c& vec) { return vec3_c(v[0] + vec.v[0], v[1] + vec.v[1], v[2] + vec.v[2]); }
 	inline vec3_c operator- (const vec3_c& vec) { return vec3_c(v[0] - vec.v[0], v[1] - vec.v[1], v[2] - vec.v[2]); }
+
 	inline vec3_c operator* (float f) { return vec3_c(v[0] * f, v[1] * f, v[2] * f); }
+
 	inline vec3_c operator/ (float f) { return vec3_c(v[0] / f, v[1] / f, v[2] / f); }
 
 	inline float operator[] (int index) const { return v[index]; }

@@ -3,16 +3,24 @@
 #include "ainode.h"
 #include "pmove.h"
 
-extern gamestate_c game;
 
-int baseent_c::SP_Npc_White_Bot()
+extern gamestate_c game;
+#include "md2.h" //tmp
+extern md2list_c md2list; //tmp
+
+void ent::npc_white_bot_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 {
+	baseent_c::HammerSpawn(keyvals);
+
 	strcpy(modelname, "models/npcs/white_bot/tris.md2"); //this will get alloc-ed in a second
+	//models[0].mid = md2list.Alloc(modelname, this, &models[0]);
+	AllocModel(modelname, &models[0]);
+
 
 	DropToFloor(HULL_CLIP);
 
+	callbackflags = CFF_THINK1;
 	nextthink = game.time + 0.5;
-	return 1;
 }
 
 //sv_move / sv_phys
@@ -34,7 +42,7 @@ void FollowPath(baseent_c* e, aipath_t* path)
 	else
 	{
 		beeline_yaw = atan2(delta[0], -delta[2]);
-		beeline_yaw = RADSTODEG(beeline_yaw);
+		beeline_yaw = FRADSTODEG(beeline_yaw);
 
 		e->angles[ANGLE_YAW] = beeline_yaw + 90.0f;
 		e->chase_angle = beeline_yaw;
@@ -43,10 +51,9 @@ void FollowPath(baseent_c* e, aipath_t* path)
 	}
 }
 
-int baseent_c::TK_Npc_White_Bot()
+void ent::npc_white_bot_c::Think1()
 {
-	
-	baseent_c			*p, * n;
+	baseent_c*		p;
 	vec3_c			delta;
 	float			newrunspeed = 0;
 	float			beeline_yaw;
@@ -98,7 +105,7 @@ int baseent_c::TK_Npc_White_Bot()
 	if (aiflags & AI_SEEPLAYER)
 	{
 		beeline_yaw = atan2(delta[0], -delta[2]);
-		beeline_yaw = RADSTODEG(beeline_yaw);
+		beeline_yaw = FRADSTODEG(beeline_yaw);
 
 		angles[ANGLE_YAW] = beeline_yaw + 90.0f;
 		chase_angle = beeline_yaw;
@@ -114,7 +121,7 @@ int baseent_c::TK_Npc_White_Bot()
 	}
 	else if (aiflags & AI_HAVEPATH)
 	{//can't see player, follow the path
-		
+
 		FollowPath(this, &path);
 
 	}
@@ -167,7 +174,7 @@ int baseent_c::TK_Npc_White_Bot()
 	DrawPath(&path);
 
 	run_speed = newrunspeed;
-	
+
 	//split
 
 	p = FindEntByClassName("player");
@@ -200,10 +207,10 @@ int baseent_c::TK_Npc_White_Bot()
 	{//go to the nearest node
 		delta = origin - n->origin;
 
-		if(delta.len() < 1)
+		if (delta.len() < 1)
 
 
-		newrunspeed = 100;
+			newrunspeed = 100;
 
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = RADSTODEG(beeline_yaw);
@@ -225,5 +232,4 @@ int baseent_c::TK_Npc_White_Bot()
 #endif
 
 	nextthink = game.time + 0.1;
-	return 0;
 }

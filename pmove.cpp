@@ -118,7 +118,7 @@ void ClipMove()
 		pm.vel->v[1] = 0;
 		PAccelerate(wishdir, wishspd, pAccelRate);
 		
-		pm.vel->v[1] -= pGravity * game.tickdelta;
+		pm.vel->v[1] -= pGravity * (float)game.tickdelta;
 		PGroundMove();
 	}
 	else
@@ -127,7 +127,7 @@ void ClipMove()
 		PAirAccelerate(wishdir, wishspd, pAccelRate);
 
 		// add gravity
-		pm.vel->v[1] -= pGravity * game.tickdelta; //pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
+		pm.vel->v[1] -= pGravity * (float)game.tickdelta; //pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
 		PFlyMove();
 
 	}
@@ -399,8 +399,8 @@ void PGroundMove()
 		return; //stationary
 
 	dest = *pm.org;
-	dest[0] += pm.vel->v[0] * game.tickdelta;
-	dest[2] += pm.vel->v[2] * game.tickdelta;
+	dest[0] += pm.vel->v[0] * (float)game.tickdelta;
+	dest[2] += pm.vel->v[2] * (float)game.tickdelta; //warning C4244 is moronic and I loathe it
 
 	// first try moving directly to the next spot
 	trace.PlayerMove(*pm.org, dest);
@@ -653,8 +653,8 @@ void SetMoveVars(input_c* i)
 void SetMoveVars(baseent_c* e)
 {
 	pm.movetype = MOVETYPE_WALK;
-	pm.moveforward = e->run_speed;
-	pm.moveright = e->sidestep_speed;
+	pm.moveforward = (int)e->run_speed;
+	pm.moveright = (int)e->sidestep_speed;
 	pm.moveup = 0;
 	//pm.yaw = e->angles.v[ANGLE_YAW];
 	pm.yaw = e->chase_angle;
