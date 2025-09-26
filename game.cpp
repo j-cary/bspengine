@@ -65,7 +65,7 @@ void ChangeMap(const char* mapname)
 	ReloadBSP(mapname); //reload bsp & sky
 
 	glActiveTexture(MODEL_TEXTURE_UNIT); //md2 skins are loaded in the next function
-	LoadHammerEntities(bsp.ents, bsp.header.lump[LMP_ENTS].len); //entities and md2s'
+	LoadHammerEntities(bsp.ents, bsp.header.lump[LMP::ENTS].len); //entities and md2s'
 	BuildNodeList();
 	
 	//should have a skybox kv in JACK... 

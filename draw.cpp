@@ -6,39 +6,35 @@
 
 //todo: figure out aspect ratio scaling
 
-extern gamestate_c game;
-extern input_c in;
-extern winfo_t winfo;
-bsp_t bsp;
-shader_c bspshader;
+extern gamestate_c game; // XXX - global
+extern input_c in; // XXX - global
+extern winfo_t winfo; // XXX - global
+bsp_t bsp; // XXX - global 
+static shader_c bspshader;
 
 
-glid texarray, alphaarray, lmaparray;
-glid VAO, VBO, FBO;
-glid colorBufs[4];
+static glid texarray, alphaarray, lmaparray;
+static glid VAO, VBO, FBO;
+static glid colorBufs[4];
 
-//todo: maybe implement this without glm
-glm::vec3 cam = glm::vec3(0.0f, 64.0f, 0.0f);
-glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+static vertexinfo_c vi;
 
-vertexinfo_c vi;
-//char texlist[16][MAX_TEXTURES] = {};
 typedef struct texlist_s
 {
 	char name[16] = {};
 	float xscale, yscale; //ex: 0.5 for a tex half the size of the max
 } texlist_t;
-texlist_t texlist[MAX_TEXTURES] = {};
-char alphalist[16][MAX_TEXTURES] = {};
-int num_textures = 0, num_atextures = 0;
 
-//these should really be dynamic
-int startfans[131072]; //offset of each fan into verts
-int countfans[131072]; //number of edges in each face
-int numfans = 0; //total fans
+static texlist_t texlist[BMAX::TEXTURES] = {};
+static char alphalist[16][BMAX::TEXTURES] = {};
+static int num_textures = 0, num_atextures = 0;
 
-extern atlas3_c atlas;
+// XXX - hard coded size
+static int startfans[131072]; //offset of each fan into verts
+static int countfans[131072]; //number of edges in each face
+static int numfans = 0; //total fans
+
+extern atlas3_c atlas; // XXX- global
 
 void ResizeWindow(GLFWwindow* win, int width, int height)
 {
@@ -65,7 +61,7 @@ void SetupView(GLFWwindow* win)
 	SetupParticles();
 	//This MUST be called after BSP load, and entities MUST be loaded after the model shader is setup. (Skins are loaded during entity loading)
 	//Pretty intertwined system here, not good!
-	SetupModels(bsp.ents, bsp.header.lump[LMP_ENTS].len);
+	SetupModels(bsp.ents, bsp.header.lump[LMP::ENTS].len);
 
 
 	tmp.Use();
@@ -88,7 +84,7 @@ void SetupBSP(const char* name)
 	memset(&bsp, 0, sizeof(bsp_t));
 	memset(&vi, 0, sizeof(vertexinfo_c));
 	atlas.Clear();
-	ReadBSPFile(name, &bsp);
+	bsp.ReadBSPFile(name);
 	BuildTextureList();
 	InitLmapList();
 	BuildVertexList(&vi);
@@ -119,7 +115,7 @@ void ReloadBSP(const char* name)
 	memset(&bsp, 0, sizeof(bsp_t));
 	memset(&vi, 0, sizeof(vertexinfo_c));
 	atlas.Clear();
-	ReadBSPFile(name, &bsp);
+	bsp.ReadBSPFile(name);
 	BuildTextureList();
 	InitLmapList();
 
@@ -134,6 +130,11 @@ void ReloadBSP(const char* name)
 
 void DrawView(GLFWwindow* win)
 {
+	//todo: maybe implement this without glm
+	glm::vec3 cam;
+	glm::vec3 forward;
+	glm::vec3 up;
+
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glClear(GL_COLOR_BUFFER_BIT);
@@ -360,7 +361,7 @@ void BuildTextureList()
 
 	num_textures = num_atextures = 0;
 
-	for (int i = 0; i < bsp.header.lump[LMP_TEXTURES].len / sizeof(bspmiptex_t); i++)
+	for (int i = 0; i < bsp.header.lump[LMP::TEXTURES].len / sizeof(bmiptex_t); i++)
 	{
 		strcpy(filename, "textures/");
 		strcat(filename, bsp.miptex[i].name);
@@ -479,7 +480,7 @@ void InitLmapList()
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texsize);
 
 	//not final check since lightmaps won't be tightly packed
-	if ((arraysize * texsize) < bsp.header.lump[LMP_LIGHT].len / sizeof(*bsp.lightmap))
+	if ((arraysize * texsize) < bsp.header.lump[LMP::LIGHT].len / sizeof(*bsp.lightmap))
 		SYS_Exit("GL 2D array cannot possibly hold lightmap data");
 	//printf("can hold a lightmap of size %i\n", arraysize * texsize);
 
@@ -501,7 +502,7 @@ void BuildVertexList(vertexinfo_c* vi)
 		R_BuildVertexList(vi, mdlidx, bsp.models[mdlidx].headnodes_index[0]);
 	
 	vec3_c ofs(0, 0, 0);
-	byte* lmap;
+	const byte* lmap;
 	unsigned depth = atlas.GetDepth();
 
 	char name[] = "textures/atlas/00.bmp";
@@ -558,13 +559,13 @@ void R_BuildFanArrays(int model, int node, byte* pvs)
 
 void BuildFanArrays()
 {
-	static byte* pvs = 0;
+	static byte* pvs = NULL;
 	vec3_c eyes = in.org;
 	eyes[1] += 36.0f;
 
 	//find leaf, then render the pvs at that leaf
 	if (!in.pvslock)
-		pvs = DecompressVis(&bsp, RecursiveBSPNodeSearch(eyes, &bsp, 0));
+		pvs = bsp.DecompressVis(bsp.R_NodeSearch(eyes, 0));
 	//non world model leaves don't have any vis data.
 	//why can world leaves see bmodels in enttest but not in other maps?
 	

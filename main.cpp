@@ -29,9 +29,18 @@ extern input_c in;
 
 /* New priority list:
 * Restructure program!!!
+* BSP:
+*	PVS restructure is getting pushed back into the PVS bug fix
+*	Structures need to be unpacked and proper reading has to happen
 * Make program more resilient - change maps, unload maps, etc.
 * Fix text drawing
 * Fix annoying mysterious lighting bug
+*/
+
+/* Program restructure
+*	Concerns:
+* Startup is incredibly tangled together
+* Globals are everywhere
 * 
 */
 

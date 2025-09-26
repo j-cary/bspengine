@@ -514,23 +514,23 @@ void PCategorizePosition()
 	//
 #if 0
 	waterlevel = 0;
-	watertype = CONTENTS_EMPTY;
+	watertype = CONTENTS::EMPTY;
 
 	point[2] = pmove.origin[2] + player_mins[2] + 1;
 	cont = PM_PointContents(point);
 
-	if (cont <= CONTENTS_WATER)
+	if (cont <= CONTENTS::WATER)
 	{
 		watertype = cont;
 		waterlevel = 1;
 		point[2] = pmove.origin[2] + (player_mins[2] + player_maxs[2]) * 0.5;
 		cont = PM_PointContents(point);
-		if (cont <= CONTENTS_WATER)
+		if (cont <= CONTENTS::WATER)
 		{
 			waterlevel = 2;
 			point[2] = pmove.origin[2] + 22;
 			cont = PM_PointContents(point);
-			if (cont <= CONTENTS_WATER)
+			if (cont <= CONTENTS::WATER)
 				waterlevel = 3;
 		}
 	}
@@ -560,9 +560,9 @@ void PJump()
 	{	// swimming, not jumping
 		onground = -1;
 
-		if (watertype == CONTENTS_WATER)
+		if (watertype == CONTENTS::WATER)
 			pmove.velocity[2] = 100;
-		else if (watertype == CONTENTS_SLIME)
+		else if (watertype == CONTENTS::SLIME)
 			pmove.velocity[2] = 80;
 		else
 			pmove.velocity[2] = 50;

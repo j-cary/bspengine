@@ -26,7 +26,7 @@ bool trace_c::Trace(vec3_c start, vec3_c _end, int _hull)
 {
 	hull_t* hull;
 
-	if (_hull < HULL_POINT || _hull > HULL_CROUCH)
+	if (_hull < HULL::POINT || _hull > HULL::CROUCH)
 	{
 		Default(start);
 		printf("bad hull %i\n", _hull);
@@ -63,7 +63,7 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 
 	//this is giving worldspawn too often...
 
-	Trace(start, _end, HULL_POINT); 
+	Trace(start, _end, HULL::POINT); 
 
 	if (fraction < 1.0f)
 		save_ent = FindEntByClassName("worldspawn"); //also entlist[0]
@@ -78,7 +78,7 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 
 		// get the clipping hull
 		//if (pe->mdl)
-		//	hull = &physents[i].mdl->hulls[HULL_POINT];
+		//	hull = &physents[i].mdl->hulls[HULL::POINT];
 		//else
 		if (e->models[0].mid <= MODELS_MAX)
 		{ //non world model
@@ -148,7 +148,7 @@ void trace_c::PlayerMove(vec3_c start, vec3_c _end)
 		pe = &physents[i];
 		// get the clipping hull
 		if (pe->mdl)
-			hull = &physents[i].mdl->hulls[HULL_CLIP];
+			hull = &physents[i].mdl->hulls[HULL::CLIP];
 		else
 		{ //non world model
 			mins = pe->mins - player_maxs; //VectorSubtract(pe->mins, player_maxs, mins);
@@ -205,8 +205,8 @@ void trace_c::PlayerMove(vec3_c start, vec3_c _end)
 
 
 static hull_t		box_hull;
-static bspclip_t	box_clips[6];
-static bspplane_t	box_planes[6];
+static bclip_t	box_clips[6];
+static bplane_t	box_planes[6];
 
 
 void InitBoxHull()
@@ -225,13 +225,13 @@ void InitBoxHull()
 
 		side = i & 1;
 
-		box_clips[i].children[side] = CONTENTS_EMPTY;
+		box_clips[i].children[side] = CONTENTS::EMPTY;
 		if (i != 5)
 			box_clips[i].children[side ^ 1] = i + 1;
 		else
-			box_clips[i].children[side ^ 1] = CONTENTS_SOLID;
+			box_clips[i].children[side ^ 1] = CONTENTS::SOLID;
 
-		box_planes[i].type = i >> 1;
+		box_planes[i].type = (BPLANE::BPLANE)(i >> 1);
 		box_planes[i].normal[i >> 1] = 1;
 	}
 }
@@ -258,8 +258,8 @@ hull_t* HullForBox(vec3_c mins, vec3_c maxs)
 int PointContents(vec3_c p)
 {
 	float		d;
-	bspclip_t*	node;
-	bspplane_t* plane;
+	bclip_t*	node;
+	bplane_t* plane;
 	hull_t*		hull;
 	int			num;
 	vec3_c		pnorm;
@@ -297,8 +297,8 @@ int PointContents(vec3_c p)
 int HullPointContents(hull_t* hull, int num, vec3_c p)
 {
 	float		d;
-	bspclip_t* node;
-	bspplane_t* plane;
+	bclip_t* node;
+	bplane_t* plane;
 	vec3_c pnorm;
 
 	while (num >= 0)
@@ -310,7 +310,7 @@ int HullPointContents(hull_t* hull, int num, vec3_c p)
 		plane = hull->planes + node->plane; //plane = bsp.planes + node->plane; 
 		pnorm = plane->normal;
 
-		if (plane->type < 3) //axially aligned surface
+		if (BPLANE::Aligned(plane->type)) //axially aligned surface
 			d = p.v[plane->type] - plane->dist;
 		else
 			d = pnorm.dot(p) - plane->dist;
@@ -329,8 +329,8 @@ int HullPointContents(hull_t* hull, int num, vec3_c p)
 
 bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, trace_c* trace)
 {
-	bspclip_t*	node;
-	bspplane_t* plane;
+	bclip_t*	node;
+	bplane_t* plane;
 	float		t1, t2;
 	float		frac;
 	int			i;
@@ -342,10 +342,10 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 	// check for empty
 	if (num < 0)
 	{
-		if (num != CONTENTS_SOLID)
+		if (num != CONTENTS::SOLID)
 		{
 			trace->allsolid = false;
-			if (num == CONTENTS_EMPTY)
+			if (num == CONTENTS::EMPTY)
 				trace->inempty = true;
 			else
 				trace->inwater = true;
@@ -366,7 +366,7 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 	plane = hull->planes + node->plane; //plane = bsp.planes + node->plane; 
 	pnorm = plane->normal;
 
-	if (plane->type < 3)
+	if (BPLANE::Aligned(plane->type))
 	{//axis aligned plane
 		t1 = p1.v[plane->type] - plane->dist;
 		t2 = p2.v[plane->type] - plane->dist;
@@ -403,7 +403,7 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 		return false;
 
 
-	if (HullPointContents(hull, node->children[side ^ 1], mid) != CONTENTS_SOLID) // go past the node
+	if (HullPointContents(hull, node->children[side ^ 1], mid) != CONTENTS::SOLID) // go past the node
 		return R_HullCheck(hull, node->children[side ^ 1], midf, p2f, mid, p2, trace);
 
 	if (trace->allsolid)
@@ -429,7 +429,7 @@ bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c 
 		trace->plane.dist = -plane->dist;
 	}
 
-	while (HullPointContents(hull, hull->firstclipnode, mid) == CONTENTS_SOLID)
+	while (HullPointContents(hull, hull->firstclipnode, mid) == CONTENTS::SOLID)
 	{ // shouldn't really happen, but does occasionally
 		frac -= 0.1f;
 		if (frac < 0)
@@ -476,7 +476,7 @@ bool TestPlayerPosition(vec3_c p)
 
 		VectorSubtract(pos, pe->origin, test);
 
-		if (PM_HullPointContents(hull, hull->firstclipnode, test) == CONTENTS_SOLID)
+		if (PM_HullPointContents(hull, hull->firstclipnode, test) == CONTENTS::SOLID)
 			return false;
 	}
 

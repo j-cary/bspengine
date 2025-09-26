@@ -6,7 +6,7 @@ aigraph_c graph;
 void ent::ai_node_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 {
 	baseent_c::HammerSpawn(keyvals);
-	DropToFloor(HULL_POINT);
+	DropToFloor(HULL::POINT);
 
 	graph.num_nodes++;
 }
@@ -78,7 +78,7 @@ int aigraph_c::Initialize()
 			if (i == j)
 				continue; //skip the current node
 
-			tr.Trace(nodes[i].ent->origin, nodes[j].ent->origin, HULL_POINT);
+			tr.Trace(nodes[i].ent->origin, nodes[j].ent->origin, HULL::POINT);
 
 			if(tr.fraction == 1.0f)
 			{//no obstruction

@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>.\3rdparty\inc;$(IncludePath)</IncludePath>
     <LibraryPath>.\3rdparty\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>c:/t045t/overlord</OutDir>
+    <OutDir>c:/t045t/overlord/</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -188,6 +188,7 @@
     <ClInclude Include="shaders.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="weapons.h" />
+    <ClInclude Include="__template.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

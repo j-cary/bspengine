@@ -83,7 +83,7 @@ public:
 	int		onground;
 	
 	model_t models[3]; //3 models can belong to an ent. 0th is used as the collision model
-	struct bspmodel_s* bmodel;
+	struct bmodel_s* bmodel;
 
 	flag_t	callbackflags; //these flags control which (if any) of the callback (touch, think, use, etc.) functions get called by the system
 	double	nextthink;

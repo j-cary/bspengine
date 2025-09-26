@@ -17,7 +17,7 @@ void ent::npc_white_bot_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 	AllocModel(modelname, &models[0]);
 
 
-	DropToFloor(HULL_CLIP);
+	DropToFloor(HULL::CLIP);
 
 	callbackflags = CFF_THINK1;
 	nextthink = game.time + 0.5;

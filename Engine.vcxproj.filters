@@ -188,5 +188,8 @@
     <ClInclude Include="entity.h">
       <Filter>Header Files\entities</Filter>
     </ClInclude>
+    <ClInclude Include="__template.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

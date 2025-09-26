@@ -282,7 +282,7 @@ img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio
 	return &dst;
 }
 
-bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors)
+bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bool flip, bool swapcolors)
 {
 	FILE* f;
 	byte bm[3] = "BM";
@@ -303,6 +303,7 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 	int colors = 0;
 	int important_colors = 0;
 
+	// NOTE: The data -is- technically modified here, but we're nice enough to fix it before returning
 
 	if (!(f = LocalFileOpen(name, "wb")))
 	{
@@ -336,10 +337,10 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 	fwrite(&important_colors, sizeof(int), 1, f); //50
 
 	if(swapcolors)
-		BRG2RGB(data, w, h);
+		BRG2RGB((byte*)data, w, h);
 
 	if(flip)
-		FlipTexture(data, w, h);
+		FlipTexture((byte*)data, w, h);
 
 	if(!pad)
 		fwrite((void*)data, 1, w * h * 3, f);
@@ -363,10 +364,10 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool fli
 	}
 
 	if (swapcolors)
-		BRG2RGB(data, w, h);
+		BRG2RGB((byte*)data, w, h);
 
 	if (flip)
-		FlipTexture(data, w, h);
+		FlipTexture((byte*)data, w, h);
 
 	fclose(f);
 	return false;

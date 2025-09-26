@@ -10,7 +10,7 @@ img_c* ReadBMPFile(const char* filename, bool flip);
 img_c* MakeNullImg(int bpx);
 img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio);
 void FlipTexture(byte* data, unsigned w, unsigned h);
-bool WriteBMPFile(const char* name, unsigned w, unsigned h, byte* data, bool flip, bool swapcolors);
+bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bool flip, bool swapcolors);
 
 //sets up in.keys
 void ReadCFGFile(const char* name, input_c* in);

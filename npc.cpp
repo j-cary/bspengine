@@ -94,10 +94,10 @@ bool CanSee(baseent_c* ent, baseent_c* target, float fov, float dist)
 	if (abs(orientation) != 3)
 		return false; //not inside viewing space
 
-	tr.Trace(ent->eyes, target->eyes, HULL_POINT);
+	tr.Trace(ent->eyes, target->eyes, HULL::POINT);
 	if (tr.fraction != 1.0f)
 	{
-		tr.Trace(ent->eyes, target->origin, HULL_POINT);
+		tr.Trace(ent->eyes, target->origin, HULL::POINT);
 		if (tr.fraction == 1.0f)
 			return true;
 		return false; //something in the way
@@ -155,7 +155,7 @@ bool MoveStep(ent_c* ent, vec3_c move)
 
 		if (trace.fraction == 1)
 		{
-			if (((int)ent->v.flags & FL_SWIM) && SV_PointContents(trace.endpos) == CONTENTS_EMPTY)
+			if (((int)ent->v.flags & FL_SWIM) && SV_PointContents(trace.endpos) == CONTENTS::EMPTY)
 				return false;	// swim monster left water
 
 			VectorCopy(trace.endpos, ent->v.origin);

@@ -33,7 +33,7 @@ void particle_c::Update()
 	if (!(flags & PF_NOCLIP))
 	{//collision
 		vec3_c dir = wishpos - origin;
-		tr.Trace(origin, wishpos, HULL_POINT);
+		tr.Trace(origin, wishpos, HULL::POINT);
 
 		if (tr.fraction < 1.0f)
 		{//hit something

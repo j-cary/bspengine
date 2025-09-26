@@ -1,6 +1,5 @@
 #include "atlas.h"
 
-//atlas_c atlas[ATLAS_LEVELS];
 atlas3_c atlas;
 
 atlas_c::atlas_c()

@@ -2,6 +2,7 @@
 #include "common.h"
 #include "input.h"
 #include "bsp.h"
+#include "entity.h"
 
 
 class trace_c
@@ -16,7 +17,7 @@ private:
 
 		plane.dist = 0;
 		plane.normal[0] = plane.normal[1] = plane.normal[2] = 0;
-		plane.type = 0;
+		plane.type = BPLANE::X;
 		physent = -1; //0 would be the world
 	}
 	void Default(vec3_c _end)
@@ -30,7 +31,7 @@ public:
 	bool inempty, inwater;
 	float fraction; //time completed. 1.0 means nothing was hit
 	vec3_c end;
-	bspplane_t plane;
+	bplane_t plane;
 	int physent; //entity that the surface belongs to
 
 	//trace_c(vec3_c start, vec3_c end) { Trace(start, end); };
@@ -51,7 +52,7 @@ public:
 typedef struct physent_s
 {
 	vec3_c org;
-	bspmodel_t* mdl;//for bsp models
+	bmodel_t* mdl;//for bsp models
 	vec3_c mins, maxs;//for md2 models
 
 } physent_t;

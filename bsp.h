@@ -1,82 +1,129 @@
+/***************************************************************************************************
+Purpose:
+***************************************************************************************************/
 #pragma once
 #include "common.h"
-#include "entity.h" //for updating bmodel orgs from the ent lump
 
-#define LMP_ENTS		0
-#define LMP_PLANES		1
-#define LMP_TEXTURES	2
-#define LMP_VERTS		3
-#define LMP_VIS			4
-#define LMP_NODES		5
-#define LMP_TEXINFO		6
-#define LMP_FACES		7
-#define LMP_LIGHT		8
-#define LMP_CLIP		9
-#define LMP_LEAVES		10
-#define LMP_MARKSURFS	11
-#define LMP_EDGES		12
-#define LMP_SURFEDGES	13
-#define LMP_MODELS		14
-#define TOTAL_LUMPS		15
+/* NOTE: Every occurrence of 'PLANE' in this file has to be BPLANE because some genius who worked at
+microsoft decided to define it in the windows header file */
 
-#define MAX_HULLS		4
-#define MAX_MODELS		400
-#define MAX_BRUSHES		0x1000
-#define MAX_ENTS		0x1000 //ditto MAX_ENTITIES
-#define MAX_ENTSTRING	(128*1024)
-#define MAX_PLANES		0x7fff
-#define MAX_NODES		0x7fff
-#define MAX_CLIP		0x7fff
-#define MAX_LEAVES		0x2000
-#define MAX_VERTS		65536
-#define MAX_FACES		65536
-#define MAX_MARKSURFS	65536
-#define MAX_TEXINFO		0x2000
-#define MAX_EDGES		256000
-#define MAX_SURFEDGES	512000
-#define MAX_TEXTURES	0x200
-#define MAX_MIPTEX		0x200000
-#define MAX_LIGHTING	0x200000
-#define MAX_VIS			0x200000
-#define MAX_PORTALS		0x10000
+// Indices into bspmodel.hull[]
+namespace HULL
+{
+	enum HULL
+	{
+		POINT = 0, CLIP, BIG, CROUCH
+	};
+};
+
+// BSP Lump offsets
+namespace LMP
+{
+enum LMP
+{
+	ENTS = 0, 
+	BPLANES, 
+	TEXTURES, 
+	VERTS, 
+	VIS, 
+	NODES, 
+	TEXINFO, 
+	FACES, 
+	LIGHT, 
+	CLIP, 
+	LEAVES,
+	MARKSURFS, 
+	EDGES, 
+	SURFEDGES, 
+	MODELS,
+
+	TOTAL // This must stay at the end of the enum
+};
+}
+
+// BSP Data maximums
+namespace BMAX
+{
+	constexpr int HULLS =		(int)HULL::CROUCH + 1;
+	constexpr int MODELS =		400;
+	constexpr int BRUSHES =		0x1000;
+	constexpr int ENTS =		0x1000; //ditto MAX_ENTITIES
+	constexpr int ENTSTRING =	(128 * 1024);
+	constexpr int BPLANES =		0x7fff;
+	constexpr int NODES =		0x7fff;
+	constexpr int CLIP =		0x7fff;
+	constexpr int LEAVES =		0x2000;
+	constexpr int VERTS =		0xFFFF;
+	constexpr int FACES =		0xFFFF;
+	constexpr int MARKSURFS =	0xFFFF;
+	constexpr int TEXINFO =		0x2000;
+	constexpr int EDGES =		256000;
+	constexpr int SURFEDGES =	512000;
+	constexpr int TEXTURES =	0x200;
+	constexpr int MIPTEX =		0x200000;
+	constexpr int LIGHTING =	0x200000;
+	constexpr int VIS =			0x200000;
+	constexpr int PORTALS =		0x10000;
+
+	constexpr int TEXNAME = 16;
+	constexpr int MIPLEVELS = 4;
+};
+
+/*
+ TODO: REMOVE THIS
+*/
 
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct bsplump_s
+/*
+ TODO: REMOVE THIS
+*/
+
+typedef struct
 {
 	int ofs, len;
-}bsplump_t;
+}blump_t;
 
-typedef struct bspheader_s
+typedef struct
 {
 	int ver;
-	bsplump_t lump[TOTAL_LUMPS];
-}bspheader_t;
+	blump_t lump[LMP::TOTAL];
+}bheader_t;
 
-#define PLANE_X		0
-#define PLANE_Y		1
-#define PLANE_Z		2
-#define PLANE_ANYX	3 //snap to nearest plane
-#define PLANE_ANYY	4
-#define PLANE_ANYZ	5
+// Axis alignment of BSP Planes
+namespace BPLANE
+{
+	enum BPLANE : int
+	{
+		X = 0, Y, Z,
+		ANYX, ANYY, ANYZ // Snap to nearest plane
+	};
 
-typedef struct bspplane_s
+	// True if the plane is axially aligned
+	bool Aligned(BPLANE plane);
+};
+
+typedef struct
 {
 	vec3_t normal;
 	float dist;
-	int type;
-}bspplane_t;
+	BPLANE::BPLANE type;
+}bplane_t;
 
-typedef struct bspnode_s
+typedef struct
 {
 	int plane_ofs;
-	short children[2]; //if negative, the bitwise inverse is the index into the leaf structure. Otherwise, it is a direct index into the node list
+
+	/* If this is negative, the bitwise inverse is the index into the leaf structure. Otherwise, it
+	is a direct index into the node list. */
+	short children[2]; 
+
 	short mins[3], maxs[3];
 	short firstface, num_faces;
-}bspnode_t;
+}bnode_t;
 
-typedef struct bsptexinfo_s
+typedef struct
 {
 	vec3_t s;
 	float s_shift;
@@ -85,19 +132,19 @@ typedef struct bsptexinfo_s
 	int miptex_index;
 	flag_t flags;
 
-}bsptexinfo_t;
+}btexinfo_t;
 
-#define MAXTEXNAME	16
-#define MIPLEVELS	4
-
-typedef struct bspmiptex_s
+typedef struct
 {
-	char name[MAXTEXNAME];
+	char name[BMAX::TEXNAME];
 	int width, height;
-	int ofs[MIPLEVELS]; //for right now, ignore this. This is used for storing textures in the BSP. Use the name instead to load the files externally
-}bspmiptex_t;
 
-typedef struct bspface_s
+	/* For right now, ignore this. This is used for storing textures in the BSP. Use the name 
+	instead to load the files from the actual files */
+	int ofs[BMAX::MIPLEVELS];
+}bmiptex_t;
+
+typedef struct
 {
 	short plane;
 	short planeside;
@@ -106,109 +153,131 @@ typedef struct bspface_s
 	short texinfo_index;
 	byte styles[4];
 	int lmap_ofs;
-}bspface_t;
+}bface_t;
 
-typedef struct bspclip_s
+typedef struct
 {
 	int plane;
 	short children[2];
-}bspclip_t;
+}bclip_t;
 
-typedef struct bspedge_s
+typedef struct
 {
 	short vidx[2];
-}bspedge_t;
+}bedge_t;
 
-#define CONTENTS_EMPTY        -1
-#define CONTENTS_SOLID        -2
-#define CONTENTS_WATER        -3
-#define CONTENTS_SLIME        -4
-#define CONTENTS_LAVA         -5
-#define CONTENTS_SKY          -6
-#define CONTENTS_ORIGIN       -7
-#define CONTENTS_CLIP         -8
-#define CONTENTS_CURRENT_0    -9
-#define CONTENTS_CURRENT_90   -10
-#define CONTENTS_CURRENT_180  -11
-#define CONTENTS_CURRENT_270  -12
-#define CONTENTS_CURRENT_UP   -13
-#define CONTENTS_CURRENT_DOWN -14
-#define CONTENTS_TRANSLUCENT  -15
-
-typedef struct bspleaf_s
+// Leaf contents
+namespace CONTENTS
 {
-	int contents;
+	enum CONTENTS : int
+	{
+		TRANSLUCENT = -15,
+		CURRENT_DOWN, CURRENT_UP, CURRENT_270, CURRENT_180, CURRENT_90, CURRENT_0, 
+		CLIP, ORIGIN,
+		SKY, LAVA, SLIME, WATER, 
+		SOLID, EMPTY
+	};
+};
+
+typedef CONTENTS::CONTENTS contents_e;
+
+typedef struct
+{
+	contents_e contents;
 	int visofs;
 	short mins[3], maxs[3];
 	unsigned short firstmarksurf, num_marksurfs;
 	byte ambient_levels[4];
-}bspleaf_t;
+}bleaf_t;
 
 
 //clipping hull. used for world models as well as regular entities
-typedef struct chull_s
+typedef struct
 {
-	bspclip_t* clipnodes;
-	bspplane_t* planes;
+	bclip_t*	clipnodes;
+	bplane_t* planes;
 	int			firstclipnode;
 	int			lastclipnode;
 	vec3_c		clip_mins;
 	vec3_c		clip_maxs;
 } hull_t;
 
-#define HULL_POINT	0 
-#define HULL_CLIP	1
-#define HULL_BIG	2 
-#define HULL_CROUCH	3
-
-typedef struct bspmodel_s
+typedef struct bmodel_s
 {
 	float mins[3], maxs[3];
 	vec3_t origin;
-	int headnodes_index[MAX_HULLS]; //0th is the idx into the rendering BSP tree
+	int headnodes_index[BMAX::HULLS]; //0th is the idx into the rendering BSP tree
 	int num_visleafs;
 	int firstface, num_faces; //faces of models are stored sequentially
-	hull_t hulls[MAX_HULLS];
-} bspmodel_t;
+	hull_t hulls[BMAX::HULLS];
+} bmodel_t;
+
+
+/*
+ TODO: REMOVE THIS
+*/
 
 #pragma pack(pop)
 
-
+/*
+ TODO: REMOVE THIS
+*/
 
 typedef struct bsp_s
 {
-	bspheader_t header;
-	char ents[MAX_ENTSTRING];
-	bspplane_t planes[MAX_PLANES];
-	unsigned int num_miptextures;
-	int miptexofs[MAX_TEXTURES];
-	bspmiptex_t miptex[MAX_TEXTURES];
-	vec3_t verts[MAX_VERTS];
-	byte vis[MAX_VIS]; //todo: make this a temp in the bsp function and make a new member here with decoded PVS data
-	bspnode_t nodes[MAX_NODES];
-	bsptexinfo_t texinfo[MAX_TEXINFO];
-	bspface_t faces[MAX_FACES];
-	byte lightmap[MAX_LIGHTING];
-	bspclip_t clips[MAX_CLIP];
-	bspleaf_t leaves[MAX_LEAVES];
-	short marksurfs[MAX_MARKSURFS];
-	bspedge_t edges[MAX_EDGES];
-	int surfedges[MAX_SURFEDGES];
-	bspmodel_t models[MAX_MODELS];
-	int num_models;
-	char name[FILENAME_MAX];
+private:
+	typedef void (bsp_s::* parse_func_t)(FILE* const, const blump_t* const);
 
-	bspclip_t hull0[MAX_CLIP]; //...
+	void MakePointHull(bmodel_t* b);
+
+	// File functions. Should all have the same signature
+	void ParseEnts(FILE* const f, const blump_t* const lump);
+	void ParsePlanes(FILE* const f, const blump_t* const lump);
+	void ParseTex(FILE* const f, const blump_t* const lump);
+	void ParseVerts(FILE* const f, const blump_t* const lump);
+	void ParseVis(FILE* const f, const blump_t* const lump);
+	void ParseNodes(FILE* const f, const blump_t* const lump);
+	void ParseTexinfo(FILE* const f, const blump_t* const lump);
+	void ParseFaces(FILE* const f, const blump_t* const lump);
+	void ParseLightMap(FILE* const f, const blump_t* const lump);
+	void ParseClip(FILE* const f, const blump_t* const lump);
+	void ParseLeaves(FILE* const f, const blump_t* const lump);
+	void ParseMarkSurfs(FILE* const f, const blump_t* const lump);
+	void ParseEdges(FILE* const f, const blump_t* const lump);
+	void ParseSurfEdges(FILE* const f, const blump_t* const lump);
+	void ParseModels(FILE* const f, const blump_t* const lump);
+
+public:
+	bheader_t	header;
+	char		ents	[BMAX::ENTSTRING];
+	bplane_t	planes	[BMAX::BPLANES];
+	unsigned int num_miptextures;
+	int			miptexofs[BMAX::TEXTURES];
+	bmiptex_t	miptex	[BMAX::TEXTURES];
+	vec3_t		verts	[BMAX::VERTS];
+	byte		vis		[BMAX::VIS]; //todo: make this a temp in the bsp function and make a new member here with decoded PVS data
+	bnode_t		nodes	[BMAX::NODES];
+	btexinfo_t	texinfo	[BMAX::TEXINFO];
+	bface_t		faces	[BMAX::FACES];
+	byte		lightmap[BMAX::LIGHTING];
+	bclip_t		clips	[BMAX::CLIP];
+	bleaf_t		leaves	[BMAX::LEAVES];
+	short		marksurfs[BMAX::MARKSURFS];
+	bedge_t		edges	[BMAX::EDGES];
+	int			surfedges[BMAX::SURFEDGES];
+	bmodel_t	models	[BMAX::MODELS];
+	int			num_models;
+	char		name[FILENAME_MAX];
+
+	bclip_t	hull0[BMAX::CLIP]; //...
+
+	void ReadBSPFile(const char file[]);
+
+	//used to check what leaf a point is in
+	int R_NodeSearch(vec3_t point, int node);
+
+	// Leaf idx is temporary for debugging?
+	byte* DecompressVis(int leafidx);
 } bsp_t;
 
-void ReadBSPFile(const char file[], bsp_t* bsp);
-
-void UpdateBModelOrg(bspmodel_t* mod);
-
-//used to check what leaf a point is in
-int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node);
-
-
-
-
-byte* DecompressVis(bsp_t* bsp, int leafidx); //second parm is temporary for debugging
+void UpdateBModelOrg(bmodel_t* mod);

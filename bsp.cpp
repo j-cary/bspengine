@@ -1,13 +1,20 @@
+/***************************************************************************************************
+Operation:
+***************************************************************************************************/
 #include "bsp.h"
 #include "file.h"
 #include "math.h"
 
+/***************************************************************************************************
+										 Local Functions
+***************************************************************************************************/
+
 //duplicate regular bsp nodes for use in clipping
-void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
+void bsp_t::MakePointHull(bmodel_t* b) //makehull0 in Quake
 {
 #if 1
-	bspnode_t*	in, * child; //mnode_t* in, * child;
-	bspclip_t*	out; //dclipnode_t* out;
+	bnode_t*	in, * child; //mnode_t* in, * child;
+	bclip_t*	out; //dclipnode_t* out;
 	int			i, j;
 	hull_t*		hull;
 
@@ -17,25 +24,25 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 
 	hull = &b->hulls[0];//hull = &loadmodel->hulls[0];
 
-	in = &bsp->nodes[b->headnodes_index[0]]; //in = loadmodel->nodes;
+	in = &nodes[b->headnodes_index[0]]; //in = loadmodel->nodes;
 	//count = loadmodel->numnodes; //Quake loads model by model...
-	out = bsp->hull0; //out = Hunk_AllocName(count * sizeof(*out), loadname);
+	out = hull0; //out = Hunk_AllocName(count * sizeof(*out), loadname);
 
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
 	//hull->lastclipnode = count - 1;
-	hull->planes = bsp->planes; //hull->planes = loadmodel->planes;
+	hull->planes = planes; //hull->planes = loadmodel->planes;
 
-	for (i = 0; i < MAX_CLIP /*i < count*/; i++, out++, in++)
+	for (i = 0; i < BMAX::CLIP /*i < count*/; i++, out++, in++)
 	{
-		out->plane = (int)(&bsp->planes[in->plane_ofs] - bsp->planes); //out->planenum = in->plane - loadmodel->planes;
+		out->plane = (int)(&planes[in->plane_ofs] - planes); //out->planenum = in->plane - loadmodel->planes;
 
 		if (!in->children[0] && !in->children[1])
 			break; //no way to tell how many nodes there are, so just quit out this way
 
 		for (j = 0; j < 2; j++)
 		{
-			child = &bsp->nodes[in->children[j]]; //child = in->children[j];
+			child = &nodes[in->children[j]]; //child = in->children[j];
 
 			/*
 			if (child->contents < 0)
@@ -62,7 +69,7 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 
 			}
 			else //regular node
-				out->children[j] = (short)(child - &bsp->nodes[b->headnodes_index[0]]); //wrong!
+				out->children[j] = (short)(child - &nodes[b->headnodes_index[0]]); //wrong!
 			
 
 			/*
@@ -77,265 +84,315 @@ void MakePointHull(bspmodel_t* b, bsp_t* bsp) //makehull0 in Quake
 #endif
 }
 
-void ReadBSPFile(const char file[], bsp_t* bsp)
+void bsp_t::ParseEnts(FILE* const f, const blump_t* const lump)
 {
-	FILE* f;
-	int buf[128];
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&ents, lump->len, 1, f);
+}
 
-	if (!(f = LocalFileOpen(file, "rb")))
-		SYS_Exit("unable to open BSP file %s", file);
-
-	fread(buf, 4, 1, f);
-	bsp->header.ver = buf[0];
-	fread(buf, 4, 30, f);
-	for (int i = 0; i < TOTAL_LUMPS; i++)
-	{
-		bsp->header.lump[i].ofs = buf[2 * i];
-		bsp->header.lump[i].len = buf[2 * i + 1];
-		//printf("Lump: %i Ofs:%i, Len:%i\n", i, bsp->header.lump[i].ofs, bsp->header.lump[i].len);
-	}
-
-	//ents
-	fseek(f, bsp->header.lump[LMP_ENTS].ofs, SEEK_SET);
-	fread((void*)&bsp->ents, bsp->header.lump[LMP_ENTS].len, 1, f);
-
-	//LoadHammerEntities(bsp->ents, bsp->header.lump[LMP_ENTS].len);
-
-	//planes
-	fseek(f, bsp->header.lump[LMP_PLANES].ofs, SEEK_SET);
-	fread((void*)&bsp->planes, bsp->header.lump[LMP_PLANES].len, 1, f);
+void bsp_t::ParsePlanes(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&planes, lump->len, 1, f);
 
 	float tmp;
-	for (unsigned int i = 0; i < bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes); i++)
+	for (unsigned int i = 0; i < lump->len / sizeof(*planes); i++)
 	{
-		tmp = bsp->planes[i].normal[1];
-		bsp->planes[i].normal[1] = bsp->planes[i].normal[2];
-		bsp->planes[i].normal[2] = tmp;
+		tmp = planes[i].normal[1];
+		planes[i].normal[1] = planes[i].normal[2];
+		planes[i].normal[2] = tmp;
 
 		//CHECKME!!!
-		switch (bsp->planes[i].type)
+		switch (planes[i].type)
 		{
-		case 1:
-			bsp->planes[i].type = 2;
+		case BPLANE::Y:
+			planes[i].type = BPLANE::Z;
 			break;
-		case 2:
-			bsp->planes[i].type = 1;
+		case BPLANE::Z:
+			planes[i].type = BPLANE::Y;
 			break;
-		case 4:
-			bsp->planes[i].type = 5;
+		case BPLANE::ANYY:
+			planes[i].type = BPLANE::ANYZ;
 			break;
-		case 5:
-			bsp->planes[i].type = 4;
+		case BPLANE::ANYZ:
+			planes[i].type = BPLANE::ANYY;
 			break;
 
 		default:
 			break;
 		}
-		
+
 	}
+}
 
-	//textures
-	fseek(f, bsp->header.lump[LMP_TEXTURES].ofs, SEEK_SET);
-	fread((void*)&bsp->num_miptextures, 4, 1, f);
-	fread((void*)&bsp->miptexofs, 4, bsp->num_miptextures, f);
-	fread((void*)&bsp->miptex, sizeof(*bsp->miptex), bsp->num_miptextures, f);
+void bsp_t::ParseTex(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&num_miptextures, 4, 1, f);
+	fread((void*)&miptexofs, 4, num_miptextures, f);
+	fread((void*)&miptex, sizeof(*miptex), num_miptextures, f);
+}
 
-	//vertices
-	fseek(f, bsp->header.lump[LMP_VERTS].ofs, SEEK_SET);
-	fread((void*)&bsp->verts, bsp->header.lump[LMP_VERTS].len, 1, f);
-
+void bsp_t::ParseVerts(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&verts, lump->len, 1, f);
 
 	//for right now, this should work. Keep in mind the projection as well as x movement is mirrored to align with hammer.
-	for (unsigned int i = 0; i < bsp->header.lump[LMP_VERTS].len / sizeof(*bsp->verts); i++)
+	for (unsigned int i = 0; i < lump->len / sizeof(*verts); i++)
 	{
+		float tmp = verts[i][1];
+		verts[i][1] = verts[i][2];
+		verts[i][2] = tmp;
 
-		tmp = bsp->verts[i][1];
-		bsp->verts[i][1] = bsp->verts[i][2];
-		bsp->verts[i][2] = tmp;
-
-		//bsp->verts[i][0] = -bsp->verts[i][0];
+		//verts[i][0] = -verts[i][0];
 		//!!!FIXME: bboxes & plane equations should do the same
 	}
+}
 
-	//vis
-	fseek(f, bsp->header.lump[LMP_VIS].ofs, SEEK_SET);
-	fread((void*)&bsp->vis, bsp->header.lump[LMP_VIS].len, 1, f);
+void bsp_t::ParseVis(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&vis, lump->len, 1, f);
+}
 
-	//nodes
-	fseek(f, bsp->header.lump[LMP_NODES].ofs, SEEK_SET);
-	fread((void*)&bsp->nodes, bsp->header.lump[LMP_NODES].len, 1, f);
+void bsp_t::ParseNodes(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&nodes, lump->len, 1, f);
 
 	short stmp;
-	for (unsigned i = 0; i < bsp->header.lump[LMP_NODES].len / sizeof(*bsp->nodes); i++)
+	for (unsigned i = 0; i < lump->len / sizeof(*nodes); i++)
 	{
-		stmp = bsp->nodes[i].mins[1];
-		bsp->nodes[i].mins[1] = bsp->nodes[i].mins[2];
-		bsp->nodes[i].mins[2] = stmp;
+		stmp = nodes[i].mins[1];
+		nodes[i].mins[1] = nodes[i].mins[2];
+		nodes[i].mins[2] = stmp;
 
-		stmp = bsp->nodes[i].maxs[1];
-		bsp->nodes[i].maxs[1] = bsp->nodes[i].maxs[2];
-		bsp->nodes[i].maxs[2] = stmp;
+		stmp = nodes[i].maxs[1];
+		nodes[i].maxs[1] = nodes[i].maxs[2];
+		nodes[i].maxs[2] = stmp;
 	}
+}
 
+void bsp_t::ParseTexinfo(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&texinfo, lump->len, 1, f);
 
-	//texinfo
-	fseek(f, bsp->header.lump[LMP_TEXINFO].ofs, SEEK_SET);
-	fread((void*)&bsp->texinfo, bsp->header.lump[LMP_TEXINFO].len, 1, f);
-
-	for (unsigned int i = 0; i < bsp->header.lump[LMP_TEXINFO].len / sizeof(*bsp->texinfo); i++)
+	for (unsigned int i = 0; i < lump->len / sizeof(*texinfo); i++)
 	{
-		tmp = bsp->texinfo[i].s[1];
-		bsp->texinfo[i].s[1] = bsp->texinfo[i].s[2];
-		bsp->texinfo[i].s[2] = tmp;
+		float tmp = texinfo[i].s[1];
+		texinfo[i].s[1] = texinfo[i].s[2];
+		texinfo[i].s[2] = tmp;
 
-		tmp = bsp->texinfo[i].t[1];
-		bsp->texinfo[i].t[1] = bsp->texinfo[i].t[2];
-		bsp->texinfo[i].t[2] = tmp;
+		tmp = texinfo[i].t[1];
+		texinfo[i].t[1] = texinfo[i].t[2];
+		texinfo[i].t[2] = tmp;
 	}
+}
 
-	//faces
-	fseek(f, bsp->header.lump[LMP_FACES].ofs, SEEK_SET);
-	fread((void*)&bsp->faces, bsp->header.lump[LMP_FACES].len, 1, f);
+void bsp_t::ParseFaces(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&faces, lump->len, 1, f);
+}
 
-	//lightmap
-	fseek(f, bsp->header.lump[LMP_LIGHT].ofs, SEEK_SET);
-	fread((void*)&bsp->lightmap, bsp->header.lump[LMP_LIGHT].len, 1, f);
+void bsp_t::ParseLightMap(FILE* const f, const blump_t* const lump)
+{
 
-	//clip
-	fseek(f, bsp->header.lump[LMP_CLIP].ofs, SEEK_SET);
-	fread((void*)&bsp->clips, bsp->header.lump[LMP_CLIP].len, 1, f);
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&lightmap, lump->len, 1, f);
+}
 
-	//leaves
-	fseek(f, bsp->header.lump[LMP_LEAVES].ofs, SEEK_SET);
-	fread((void*)&bsp->leaves, bsp->header.lump[LMP_LEAVES].len, 1, f);
+void bsp_t::ParseClip(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&clips, lump->len, 1, f);
+}
 
-	//marksurfs
-	fseek(f, bsp->header.lump[LMP_MARKSURFS].ofs, SEEK_SET);
-	fread((void*)&bsp->marksurfs, bsp->header.lump[LMP_MARKSURFS].len, 1, f);
+void bsp_t::ParseLeaves(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&leaves, lump->len, 1, f);
+}
 
-	//edges
-	fseek(f, bsp->header.lump[LMP_EDGES].ofs, SEEK_SET);
-	fread((void*)&bsp->edges, bsp->header.lump[LMP_EDGES].len, 1, f);
+void bsp_t::ParseMarkSurfs(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&marksurfs, lump->len, 1, f);
+}
 
-	//surfedges
-	fseek(f, bsp->header.lump[LMP_SURFEDGES].ofs, SEEK_SET);
-	fread((void*)&bsp->surfedges, bsp->header.lump[LMP_SURFEDGES].len, 1, f);
+void bsp_t::ParseEdges(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&edges, lump->len, 1, f);
+}
 
-	//models
-	fseek(f, bsp->header.lump[LMP_MODELS].ofs, SEEK_SET);
-	//fread((void*)&bsp->models, bsp->header.lump[LMP_MODELS].len, 1, f);
+void bsp_t::ParseSurfEdges(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	fread((void*)&surfedges, lump->len, 1, f);
+}
+
+void bsp_t::ParseModels(FILE* const f, const blump_t* const lump)
+{
+	fseek(f, lump->ofs, SEEK_SET);
+	//fread((void*)&models, header.lump[LMP::MODELS].len, 1, f);
 
 	//the hulls are just there to make collision detection more uniform with regular ents
 	//they are not stored in the BSP
-	bsp->num_models = bsp->header.lump[LMP_MODELS].len / (sizeof(*bsp->models) - sizeof(bsp->models->hulls));
-	for (int i = 0; i < bsp->num_models; i++)
+	num_models = lump->len / (sizeof(*models) - sizeof(models->hulls));
+	for (int i = 0; i < num_models; i++)
 	{
-		bspmodel_t* mod = &bsp->models[i];
-		fread((void*)mod, sizeof(bspmodel_t) - sizeof(bsp->models->hulls), 1, f);
+		bmodel_t* mod = &models[i];
+		fread((void*)mod, sizeof(bmodel_t) - sizeof(models->hulls), 1, f);
 
-		for (int j = 0; j < MAX_HULLS; j++)
+		for (int j = 0; j < BMAX::HULLS; j++)
 		{//this is a superfluous structure to make collision with bmodels and regular bbox entities more uniform
 			//FIXME!!!
 			mod->hulls[j].firstclipnode = mod->headnodes_index[j];
 			//line 1190 in model.c - no clue here
-			//mod->hulls[j].clipnodes = &bsp->clips[mod->headnodes_index[j]];
-			//mod->hulls[j].planes = &bsp->planes[mod->hulls[j].clipnodes->plane];
-			mod->hulls[j].clipnodes = bsp->clips;
-			mod->hulls[j].planes = bsp->planes;
+			//mod->hulls[j].clipnodes = &clips[mod->headnodes_index[j]];
+			//mod->hulls[j].planes = &planes[mod->hulls[j].clipnodes->plane];
+			mod->hulls[j].clipnodes = clips;
+			mod->hulls[j].planes = planes;
 			mod->hulls[j].clip_mins = mod->mins;
 			mod->hulls[j].clip_maxs = mod->maxs;
 			//mod->hulls[j].lastclipnode = mod->headnodes_index[j] + mod->
 		}
 	}
 
-	MakePointHull(bsp->models, bsp); //This is actually pretty close to working with other bmodels, too. 
+	MakePointHull(models); //This is actually pretty close to working with other bmodels, too. 
 	//Placing this in the above outer for loop will make the last model the only on with a point hull
+}
 
-	//for (unsigned i = 1; i < bsp->header.lump[LMP_MODELS].len / sizeof(*bsp->models); i++) //skip world
-		//UpdateBModelOrg(&bsp->models[i]);
+/***************************************************************************************************
+									   Interface Functions
+***************************************************************************************************/
 
-	//printf("\nLightmap report\n");
-	//printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len);
+bool BPLANE::Aligned(BPLANE plane) { return plane < 3; }
+
+void bsp_t::ReadBSPFile(const char file[])
+{
+	FILE* f;
+	int buf[128];
+
+	// These need to mirror the order of the LMP enum
+	constexpr static parse_func_t parse[] =
+	{
+		&bsp_t::ParseEnts,	&bsp_t::ParsePlanes,	&bsp_t::ParseTex,		&bsp_t::ParseVerts,
+		&bsp_t::ParseVis,	&bsp_t::ParseNodes,		&bsp_t::ParseTexinfo,	&bsp_t::ParseFaces,
+		&bsp_t::ParseLightMap, &bsp_t::ParseClip,	&bsp_t::ParseLeaves,	&bsp_t::ParseMarkSurfs,
+		&bsp_t::ParseEdges,	&bsp_t::ParseSurfEdges,	&bsp_t::ParseModels,
+	};
+
+	if (!(f = LocalFileOpen(file, "rb")))
+		SYS_Exit("unable to open BSP file %s", file);
+
+	fread(buf, 4, 1, f);
+	header.ver = buf[0];
+	fread(buf, 4, 30, f);
+	for (int i = 0; i < (int)LMP::TOTAL; i++)
+	{
+		header.lump[i].ofs = buf[2 * i];
+		header.lump[i].len = buf[2 * i + 1];
+		//printf("Lump: %i Ofs:%i, Len:%i\n", i, header.lump[i].ofs, header.lump[i].len);
+	}
+
+	// Parse the lumps
+	for(int i = 0; i < sizeof parse / sizeof parse[0]; ++i)
+		((*this).*parse[i])(f, &header.lump[i]);
+	
+	// This was originally after loading the ent lump...
+	//LoadHammerEntities(ents, header.lump[LMP::ENTS].len);
+
+	//Why is this uncommented?
+	//for (unsigned i = 1; i < header.lump[LMP::MODELS].len / sizeof(*models); i++) //skip world
+		//UpdateBModelOrg(&models[i]);
+
 #if 0
+	//printf("\nLightmap report\n");
+	//printf("Size of lightmaps: %i\n", header.lump[LMP::LIGHT].len);
+
 	printf("\nEntity Report\n");
-	printf("%s\n", bsp->ents);
+	printf("%s\n", ents);
 
 	printf("\nPlane Report\n");
-	printf("Num Planes: %zi\n", bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes));
+	printf("Num Planes: %zi\n", header.lump[LMP::BPLANES].len / sizeof(*planes));
 	
-	for (unsigned i = 0; i < bsp->header.lump[LMP_PLANES].len / sizeof(*bsp->planes); i++)
+	for (unsigned i = 0; i < header.lump[LMP::BPLANES].len / sizeof(*planes); i++)
 		printf("normal: %.2f %.2f %.2f, dist: %.2f, type: %i\n"
-			, bsp->planes[i].normal[0], bsp->planes[i].normal[1], bsp->planes[i].normal[2]
-			, bsp->planes[i].dist
-			, bsp->planes[i].type);
+			, planes[i].normal[0], planes[i].normal[1], planes[i].normal[2]
+			, planes[i].dist
+			, planes[i].type);
 	
 
 	printf("\nTexture report\n");
-	printf("Num textures: %i\n", bsp->num_miptextures);
-	for (unsigned i = 0; i < (bsp->header.lump[LMP_TEXTURES].len - sizeof(int) * bsp->num_miptextures) / sizeof(*bsp->miptex); i++)
-		printf("%s %ix%i\n", bsp->miptex[i].name, bsp->miptex[i].height, bsp->miptex[i].width);
+	printf("Num textures: %i\n", num_miptextures);
+	for (unsigned i = 0; i < (header.lump[LMP::TEXTURES].len - sizeof(int) * num_miptextures) / sizeof(*miptex); i++)
+		printf("%s %ix%i\n", miptex[i].name, miptex[i].height, miptex[i].width);
 
 	printf("\nVertex report\n");
-	printf("Num vertices: %zi\n", bsp->header.lump[LMP_VERTS].len / sizeof(*bsp->verts));
+	printf("Num vertices: %zi\n", header.lump[LMP::VERTS].len / sizeof(*verts));
 	/*
-	for (unsigned i = 0; i < (bsp->header.lump[LMP_VERTS].len / sizeof(*bsp->verts)); i++)
-		printf("%.2f %.2f %.2f\n", bsp->verts[i][0], bsp->verts[i][1], bsp->verts[i][2]);
+	for (unsigned i = 0; i < (header.lump[LMP::VERTS].len / sizeof(*verts)); i++)
+		printf("%.2f %.2f %.2f\n", verts[i][0], verts[i][1], verts[i][2]);
 	*/
 
 	printf("\nFace report\n");
-	printf("Num faces: %zi\n", bsp->header.lump[LMP_FACES].len / sizeof(*bsp->faces));
-	for (unsigned i = 0; i < bsp->header.lump[LMP_FACES].len / sizeof(*bsp->faces); i++)
+	printf("Num faces: %zi\n", header.lump[LMP::FACES].len / sizeof(*faces));
+	for (unsigned i = 0; i < header.lump[LMP::FACES].len / sizeof(*faces); i++)
 	{
-		printf("lmap ofs: %i\n", bsp->faces[i].lmap_ofs);
+		printf("lmap ofs: %i\n", faces[i].lmap_ofs);
 	}
 
 	printf("\nVis report\n");
-	printf("Vis size: %i\n", bsp->header.lump[LMP_VIS].len);
+	printf("Vis size: %i\n", header.lump[LMP::VIS].len);
 	/*
-	for (unsigned i = 4; i < bsp->header.lump[LMP_VIS].len / sizeof(*bsp->vis); i++)
+	for (unsigned i = 4; i < header.lump[LMP::VIS].len / sizeof(*vis); i++)
 	{
-		printf("Vis: %i\n", bsp->vis[i]);
+		printf("Vis: %i\n", vis[i]);
 	}
 	*/
 
 	printf("\nNode report\n");
-	for (unsigned i = 0; i < bsp->header.lump[LMP_NODES].len / sizeof(*bsp->nodes); i++)
+	for (unsigned i = 0; i < header.lump[LMP::NODES].len / sizeof(*nodes); i++)
 	{
 		printf("Plane ofs: %i, children: %i %i, mins: %i %i %i, maxs: %i %i %i, firstface: %i, numfaces: %i\n",
-			bsp->nodes[i].plane_ofs,
-			bsp->nodes[i].children[0], bsp->nodes[i].children[1],
-			bsp->nodes[i].mins[0], bsp->nodes[i].mins[1], bsp->nodes[i].mins[2],
-			bsp->nodes[i].maxs[0], bsp->nodes[i].maxs[1], bsp->nodes[i].maxs[2],
-			bsp->nodes[i].firstface,
-			bsp->nodes[i].num_faces);
+			nodes[i].plane_ofs,
+			nodes[i].children[0], nodes[i].children[1],
+			nodes[i].mins[0], nodes[i].mins[1], nodes[i].mins[2],
+			nodes[i].maxs[0], nodes[i].maxs[1], nodes[i].maxs[2],
+			nodes[i].firstface,
+			nodes[i].num_faces);
 	}
-	printf("Num nodes: %zi\n", bsp->header.lump[LMP_NODES].len / sizeof(*bsp->nodes));
+	printf("Num nodes: %zi\n", header.lump[LMP::NODES].len / sizeof(*nodes));
 
 	printf("\nLeaf report\n");
-	printf("Num leaves: %zi\n", bsp->header.lump[LMP_LEAVES].len / sizeof(*bsp->leaves));
+	printf("Num leaves: %zi\n", header.lump[LMP::LEAVES].len / sizeof(*leaves));
 
 	printf("\nLightmap report\n");
-	printf("Size of lightmaps: %i\n", bsp->header.lump[LMP_LIGHT].len / 3);
+	printf("Size of lightmaps: %i\n", header.lump[LMP::LIGHT].len / 3);
 
 	printf("\nClipnode report\n");
-	printf("Num clipnodes: %zi\n", bsp->header.lump[LMP_CLIP].len / sizeof(*bsp->clips));
-	for (unsigned i = 0; i < bsp->header.lump[LMP_CLIP].len / sizeof(*bsp->clips); i++)
+	printf("Num clipnodes: %zi\n", header.lump[LMP::CLIP].len / sizeof(*clips));
+	for (unsigned i = 0; i < header.lump[LMP::CLIP].len / sizeof(*clips); i++)
 	{
 		printf("Plane ofs: %i, children: %i %i\n",
-			bsp->clips[i].plane,
-			bsp->clips[i].children[0], bsp->clips[i].children[1]);
+			clips[i].plane,
+			clips[i].children[0], clips[i].children[1]);
 	}
 
 
 	printf("\nModel report\n");
-	for (unsigned i = 0; i < bsp->num_models; i++)
+	for (unsigned i = 0; i < num_models; i++)
 	{
 		printf("Org: %i, %i, %i | BBox: %i, %i, %i  %i, %i, %i | Headnodes: %i, %i, %i, %i | Num Faces: %i vis: %i\n",
-			(int)bsp->models[i].origin[0], (int)bsp->models[i].origin[1], (int)bsp->models[i].origin[2],
-			(int)bsp->models[i].mins[0], (int)bsp->models[i].mins[1], (int)bsp->models[i].mins[2], (int)bsp->models[i].maxs[0], (int)bsp->models[i].maxs[1], (int)bsp->models[i].maxs[2],
-			bsp->models[i].headnodes_index[0], bsp->models[i].headnodes_index[1], bsp->models[i].headnodes_index[2], bsp->models[i].headnodes_index[3],
-			bsp->models[i].num_faces,
-			bsp->models[i].num_visleafs);
+			(int)models[i].origin[0], (int)models[i].origin[1], (int)models[i].origin[2],
+			(int)models[i].mins[0], (int)models[i].mins[1], (int)models[i].mins[2], (int)models[i].maxs[0], (int)models[i].maxs[1], (int)models[i].maxs[2],
+			models[i].headnodes_index[0], models[i].headnodes_index[1], models[i].headnodes_index[2], models[i].headnodes_index[3],
+			models[i].num_faces,
+			models[i].num_visleafs);
 
 		
 	}
@@ -344,41 +401,41 @@ void ReadBSPFile(const char file[], bsp_t* bsp)
 	fclose(f);
 }
 
-int RecursiveBSPNodeSearch(vec3_t point, bsp_t* bsp, int node)
+int bsp_t::R_NodeSearch(vec3_t point, int node)
 {
-	bspplane_t plane;
+	bplane_t plane;
 	float res;
 	int nextnode;
 
 	if (node < 0)
 		return ~node;
 
-	plane = bsp->planes[bsp->nodes[node].plane_ofs];
+	plane = planes[nodes[node].plane_ofs];
 	res = DotProduct(plane.normal, point) - plane.dist;
 
 	if (res >= 0)
-		nextnode = bsp->nodes[node].children[0];
+		nextnode = nodes[node].children[0];
 	else
-		nextnode = bsp->nodes[node].children[1]; //back
+		nextnode = nodes[node].children[1]; //back
 
-	return RecursiveBSPNodeSearch(point, bsp, nextnode);
+	return R_NodeSearch(point, nextnode);
 }
 
-byte* DecompressVis(bsp_t* _bsp, int leafidx)
+byte* bsp_t::DecompressVis(int leafidx)
 {
-	static byte pvs[MAX_LEAVES / 8]; //use num_visleafs to make this dynamic. Just once!
-	int v = _bsp->leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
-	//int numleaves = bsp->header.lump[LMP_LEAVES].len / sizeof(bspleaf_t);
-	//int numleaves = _bsp->models[0].num_visleafs;
+	static byte pvs[BMAX::LEAVES / 8]; //use num_visleafs to make this dynamic. Just once!
+	int v = leaves[leafidx].visofs; //start of leaf's visdata. This has no bearing on when the loops end
+	//int numleaves = header.lump[LMP::LEAVES].len / sizeof(bleaf_t);
+	//int numleaves = models[0].num_visleafs;
 	int numleaves = 500; //TMPTMPTMP!!!
 
 	//FIXME: this is not working in some areas in research - numleaves isn't quite right...
 
 	if (leafidx > 1) //if there is just one leaf make everything visible
-		memset(pvs, 0, MAX_LEAVES / 8);
+		memset(pvs, 0, BMAX::LEAVES / 8);
 	else
 	{ //outside world
-		memset(pvs, 1, MAX_LEAVES / 8);
+		memset(pvs, 1, BMAX::LEAVES / 8);
 		return pvs;
 	}
 
@@ -387,17 +444,17 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	for (int l = 1; l < numleaves; v++)
 	{
 #if 1
-		if (_bsp->vis[v] == 0) // all the leaves in this byte are invisible. Redundant check for speed I think
+		if (vis[v] == 0) // all the leaves in this byte are invisible. Redundant check for speed I think
 		{
 			v++;
-			l += 8 * _bsp->vis[v]; // skip some leaves
+			l += 8 * vis[v]; // skip some leaves
 		}
 		else
 #endif
 		{// examine bits right to left
 			for (byte bit = 1; bit != 0; bit = bit * 2, l++)
 			{
-				if (_bsp->vis[v] & bit)
+				if (vis[v] & bit)
 				{
 					pvs[l] = 1;
 					//printf("%i, ", l);
@@ -411,10 +468,11 @@ byte* DecompressVis(bsp_t* _bsp, int leafidx)
 	return pvs;
 }
 
-//extern baseent_c entlist[MAX_ENTITIES];
+#include "entity.h" //for updating bmodel orgs from the ent lump
 extern entlist_c entlist;
 
-void UpdateBModelOrg(bspmodel_t* mod)
+//TODO: Clean this mess up and figure out where it goes
+void UpdateBModelOrg(bmodel_t* mod)
 {
 	static int last = 0; //assume models appear in order in the BSP.
 
