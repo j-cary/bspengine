@@ -2,6 +2,10 @@
 
 atlas3_c atlas;
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                             Atlas                                                *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 atlas_c::atlas_c()
 {
 	block = (byte*)malloc(ATLAS_SIZE * ATLAS_SIZE * 3);
@@ -54,7 +58,7 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 	int initialdepth = depth[bestx];
 
 	if (initialdepth + h > ATLAS_SIZE)
-		return 1; //reached the bottom of the atlas / nothing wide enough to fit this texture
+		return true; //reached the bottom of the atlas / nothing wide enough to fit this texture
 
 
 	//if (!block) //move this up top
@@ -79,7 +83,7 @@ bool atlas_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t)
 		depth[x] = initialdepth + h;
 	}
 
-	return 0;
+	return false;
 }
 
 void atlas_c::Clear()
@@ -94,30 +98,12 @@ atlas_c::~atlas_c()
 		free(block);
 }
 
-//=======================
-// atlas3_c
-//=======================
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                             Atlas3                                               *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t, int& _depth)
 {
-#if 0
-	bool ret = true;
-
-	for (int i = 0; i < ATLAS_LEVELS; i++)
-	{
-		if (!(ret = layer[depth].AddBlock(w, h, block, s, t)))
-		{
-			_depth = depth;
-			break; //successful write
-		}
-
-		//ran out of space, try the next level
-		//printf("Had to increment depth to %i\n", depth);
-		depth++;
-	}
-
-	return ret; //1 if there's no more space
-#else
 	for (int i = depth; i < ATLAS_LEVELS; i++)
 	{
 		if (!layer[depth].AddBlock(w, h, block, s, t))
@@ -130,7 +116,6 @@ bool atlas3_c::AddBlock(unsigned w, unsigned h, byte* block, float& s, float& t,
 	}
 
 	return true;
-#endif
 }
 
 void atlas3_c::Clear()

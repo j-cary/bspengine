@@ -309,7 +309,7 @@ void R_BuildVertexList(vertexinfo_c* vi, int model, int node)
 			
 			float block_s = 0, block_t = 0;
 			int block_z;
-			//atlas[0].AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t);
+			
 			if (atlas.AddBlock(lw, lh, &bsp.lightmap[bsp.faces[faceidx].lmap_ofs], block_s, block_t, block_z))
 				SYS_Exit("Ran out of atlas space!");
 

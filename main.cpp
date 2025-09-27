@@ -32,6 +32,9 @@ extern input_c in;
 * BSP:
 *	PVS restructure is getting pushed back into the PVS bug fix
 *	Structures need to be unpacked and proper reading has to happen
+* Atlas:
+*	Wait for restructure until the lighting issue is fixed
+* 
 * Make program more resilient - change maps, unload maps, etc.
 * Fix text drawing
 * Fix annoying mysterious lighting bug
