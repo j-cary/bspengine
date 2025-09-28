@@ -2,7 +2,6 @@
 #include "file.h"
 #include "math.h"
 
-extern input_c in;
 extern gamestate_c game;
 
 //alid snd1, src;
@@ -78,23 +77,23 @@ void ListAudioDevices(const ALCchar* devname)
 	printf("=================\n");
 }
 
-void SoundTick()
+void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const vec3_c* org)
 {
 	ALfloat orientation[6];
 	vec3_c	fixedvel;
 
 	int		srcstate;
 
-	orientation[0] = -in.forward.v[0]; //sigh...
-	orientation[1] =  in.forward.v[1];
-	orientation[2] = -in.forward.v[2]; //sigh...
-	orientation[3] = in.up.v[0];
-	orientation[4] = in.up.v[1];
-	orientation[5] = in.up.v[2];
+	orientation[0] = -(*forward)[0]; //sigh...
+	orientation[1] = (*forward)[1];
+	orientation[2] = -(*forward)[2]; //sigh...
+	orientation[3] = (*up)[0];
+	orientation[4] = (*up)[1];
+	orientation[5] = (*up)[2];
 
-	fixedvel = in.vel * (float)game.tickdelta; //change u/s to u/t
+	fixedvel = (*vel) * (float)game.tickdelta; //change u/s to u/t
 	
-	alListenerfv(AL_POSITION, in.org);
+	alListenerfv(AL_POSITION, (*org).v);
 	alListenerfv(AL_VELOCITY, fixedvel);
 	alListenerfv(AL_ORIENTATION, orientation);
 

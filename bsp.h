@@ -47,7 +47,7 @@ namespace BMAX
 	constexpr int HULLS =		(int)HULL::CROUCH + 1;
 	constexpr int MODELS =		400;
 	constexpr int BRUSHES =		0x1000;
-	constexpr int ENTS =		0x1000; //ditto MAX_ENTITIES
+	constexpr int ENTS =		0x1000; //ditto ENTITIES_MAX
 	constexpr int ENTSTRING =	(128 * 1024);
 	constexpr int BPLANES =		0x7fff;
 	constexpr int NODES =		0x7fff;

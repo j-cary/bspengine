@@ -59,7 +59,7 @@ typedef struct physent_s
 
 typedef struct pmove_s
 {
-	int movetype;
+	movetype_e movetype;
 	int moveup, moveforward, moveright;
 	float pitch, yaw;
 	int* onground;

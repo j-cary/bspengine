@@ -58,7 +58,7 @@ const cmd_t inputcmds[] =
 	"*map",			&PCmdMapA,
 };
 
-void PKeys();
+void PKeys(input_c* in);
 void PCmd(const char cmd[CMD_LEN], input_c* in, int key);
 
-void ChangeMap(const char* mapname);
+void ChangeMap(const char* mapname, input_c* in);

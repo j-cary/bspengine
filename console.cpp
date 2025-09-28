@@ -1,5 +1,6 @@
 #include <iostream>
 #include "common.h"
+#include "console.h"
 #include "file.h"
 #if STDWINCON
 #include "windows.h"

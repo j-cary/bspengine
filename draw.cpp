@@ -3,11 +3,11 @@
 #include "shaders.h"
 #include "atlas.h"
 #include "math.h"
+#include "input.h"
 
 //todo: figure out aspect ratio scaling
 
 extern gamestate_c game; // XXX - global
-extern input_c in; // XXX - global
 extern winfo_t winfo; // XXX - global
 bsp_t bsp; // XXX - global 
 static shader_c bspshader;
@@ -128,7 +128,7 @@ void ReloadBSP(const char* name)
 	glBufferData(GL_ARRAY_BUFFER, vi.edgecount * VI_SIZE * sizeof(float), vi.verts, GL_STATIC_DRAW);
 }
 
-void DrawView(GLFWwindow* win)
+void DrawView(GLFWwindow* win, const input_c* in)
 {
 	//todo: maybe implement this without glm
 	glm::vec3 cam;
@@ -142,15 +142,15 @@ void DrawView(GLFWwindow* win)
 	if (!winfo.w || !winfo.h)
 		return; //FIXME: cannot tab back in after tabbing out of fullscreen
 	
-	cam[0] = in.org[0];
-	cam[1] = in.org[1] + in.camera_vertical_offset;
-	cam[2] = in.org[2];
-	forward[0] = in.forward[0];
-	forward[1] = in.forward[1];
-	forward[2] = in.forward[2];
-	up[0] = in.up[0];
-	up[1] = in.up[1];
-	up[2] = in.up[2];
+	cam[0] = in->org[0];
+	cam[1] = in->org[1] + in->camera_vertical_offset;
+	cam[2] = in->org[2];
+	forward[0] = in->forward[0];
+	forward[1] = in->forward[1];
+	forward[2] = in->forward[2];
+	up[0] = in->up[0];
+	up[1] = in->up[1];
+	up[2] = in->up[2];
 	
 	bspshader.Use();
 
@@ -161,11 +161,11 @@ void DrawView(GLFWwindow* win)
 	view = glm::lookAt(cam, cam + forward, up);
 	bspshader.SetM4F("view", glm::value_ptr(view));
 
-	glm::mat4 proj = glm::perspective(glm::radians(in.fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
+	glm::mat4 proj = glm::perspective(glm::radians(in->fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
 	proj = glm::scale(proj, glm::vec3(-1.0, 1.0, 1.0));
 	bspshader.SetM4F("projection", glm::value_ptr(proj));
 
-	BuildFanArrays();
+	BuildFanArrays(in);
 	
 	glActiveTexture(WORLD_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texarray);
@@ -179,13 +179,13 @@ void DrawView(GLFWwindow* win)
 	glMultiDrawArrays(GL_TRIANGLE_FAN, startfans, countfans, numfans); 
 	
 	glm::mat4 iview = glm::inverse(view); //for weapon models
-	glm::mat4 sproj = glm::perspective(glm::radians(in.fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
+	glm::mat4 sproj = glm::perspective(glm::radians(in->fov), (float)winfo.w / (float)winfo.h, 0.1f, 2048.0f); //projection
 	sproj = glm::scale(sproj, glm::vec3(-1.0, 1.0, 1.0));
 
 	DrawModels		(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(iview), glm::value_ptr(proj));
-	DrawSky			(glm::value_ptr(mdl), &in.forward, &in.up, winfo.w, winfo.h);
-	DrawParticles	(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(sproj), in.up, in.right);
-	DrawText		(&winfo, in.menu);
+	DrawSky			(glm::value_ptr(mdl), &in->forward, &in->up, winfo.w, winfo.h, in->fov);
+	DrawParticles	(glm::value_ptr(mdl), glm::value_ptr(view), glm::value_ptr(sproj), in->up, in->right);
+	DrawText		(&winfo, in->menu, &in->vel);
 
 	glfwSwapBuffers(win);
 	glfwPollEvents();
@@ -557,14 +557,14 @@ void R_BuildFanArrays(int model, int node, byte* pvs)
 
 //extern const float playerspawn_vertical_offset;
 
-void BuildFanArrays()
+void BuildFanArrays(const input_c* in)
 {
 	static byte* pvs = NULL;
-	vec3_c eyes = in.org;
+	vec3_c eyes = in->org;
 	eyes[1] += 36.0f;
 
 	//find leaf, then render the pvs at that leaf
-	if (!in.pvslock)
+	if (!in->pvslock)
 		pvs = bsp.DecompressVis(bsp.R_NodeSearch(eyes, 0));
 	//non world model leaves don't have any vis data.
 	//why can world leaves see bmodels in enttest but not in other maps?
@@ -572,7 +572,7 @@ void BuildFanArrays()
 	//figuring out bmodel node stuff
 	/*
 	vec3_t tmp, tmp2;
-	VecCopy(tmp, in.org);
+	VecCopy(tmp, in->org);
 	VecCopy(tmp2, bsp.models[1].origin);
 	VecNegate(tmp2);
 	VecAdd(tmp, tmp2);

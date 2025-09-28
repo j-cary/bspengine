@@ -4,6 +4,9 @@ Purpose:
 #pragma once
 #include "common.h"
 
+
+#define TEXTURE_SIZE 128
+
 #define ATLAS_LEVELS 32 //todo: make this dynamic
 #define ATLAS_SIZE	128 /*16384*/ //ditto
 

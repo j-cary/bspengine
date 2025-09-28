@@ -476,7 +476,7 @@ void UpdateBModelOrg(bmodel_t* mod)
 {
 	static int last = 0; //assume models appear in order in the BSP.
 
-	for (; last < MAX_ENTITIES; last++)
+	for (; last < ENTITIES_MAX; last++)
 	{
 		baseent_c* e = entlist[last];
 

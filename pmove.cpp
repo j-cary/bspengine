@@ -42,7 +42,7 @@ pmove_t pm;
 
 void PMove()
 {
-	if (pm.movetype == MOVETYPE_NOCLIP)
+	if (pm.movetype == MOVETYPE::NOCLIP)
 	{//FIXME: moving while walking carries over speed to noclipping
 		NoClipMove();
 		return;
@@ -652,7 +652,7 @@ void SetMoveVars(input_c* i)
 
 void SetMoveVars(baseent_c* e)
 {
-	pm.movetype = MOVETYPE_WALK;
+	pm.movetype = MOVETYPE::WALK;
 	pm.moveforward = (int)e->run_speed;
 	pm.moveright = (int)e->sidestep_speed;
 	pm.moveup = 0;

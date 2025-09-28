@@ -1,9 +1,9 @@
 #include "player.h"
 #include "pcmd.h" //shooting
 #include "weapons.h"
+#include "input.h"
 
 extern md2list_c md2list;
-extern input_c in;
 extern gamestate_c game;
 
 baseent_c* player;
@@ -14,18 +14,16 @@ const vec3_c viewmodel_offset = { -20, -6, 16 }; // 20 right, 6 down, 16 closer
 
 //need a separate place to call stuff upon reloading of BSP
 
-void SpawnPlayer();
-
-void SetupPlayer()
+void SetupPlayer(input_c* in)
 {
 	//load a player ent
 	player = AllocEnt("player");
 
 	strcpy(player->classname, "player");
-	player->origin = in.org;
+	player->origin = in->org;
 	player->health = 100;
 
-	SpawnPlayer();
+	SpawnPlayer(in);
 	//load weapon models - mid stuff
 
 	
@@ -35,14 +33,14 @@ void SetupPlayer()
 }
 
 //this can be called at any point -immediately- after a BSP has loaded - do not use for respawning after death
-void SpawnPlayer()
+void SpawnPlayer(input_c* in)
 {
 	baseent_c* spawn = FindEntByClassName("playerspawn");
 
 	if (spawn)
 	{
-		in.org = spawn->origin;
-		in.org.v[1] += playerspawn_vertical_offset;
+		in->org = spawn->origin;
+		in->org.v[1] += playerspawn_vertical_offset;
 	}
 
 
@@ -54,20 +52,20 @@ void SpawnPlayer()
 	player->models[0].rflags |= RF_VIEWMODEL;
 }
 
-void PlayerTick()
+void PlayerTick(const input_c* in)
 {
 	int model_skiptick = game.maxtps / 16; //how many ticks to skip inbetween model frame updates
 	bool model_updatetick = !(game.tick % model_skiptick);
 
 	//update player ent with in stuff etc.
-	player->eyes = player->origin = in.org;
+	player->eyes = player->origin = in->org;
 	player->eyes.v[1] += playerspawn_vertical_offset; //this kind of isn't the right name for the offset here...
 
-	player->angles.v[ANGLE_YAW] = in.yaw + 90; //90 degree yaw/forward bug - checkme
-	player->angles.v[ANGLE_PITCH] = in.pitch;
+	player->angles.v[ANGLE_YAW] = in->yaw + 90; //90 degree yaw/forward bug - checkme
+	player->angles.v[ANGLE_PITCH] = in->pitch;
 	player->angles.v[ANGLE_ROLL] = 0;
 
-	player->forward = in.forward;
+	player->forward = in->forward;
 
 	//weapon sway
 	//player->models[0].offset = viewmodel_offset;

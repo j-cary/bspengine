@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "file.h" //bsp stuff, change later
+#include "input.h"
 
 #define BASE_TEXTURE_UNIT	GL_TEXTURE0
 #define WORLD_TEXTURE_UNIT	GL_TEXTURE0
@@ -70,17 +71,17 @@ void BuildTextureList();
 void InitLmapList();
 void BuildVertexList(vertexinfo_c* vi);
 //this is called every frame and is based on the PVS
-void BuildFanArrays();
+void BuildFanArrays(const input_c* in);
 
-void DrawView(GLFWwindow* win);
+void DrawView(GLFWwindow* win, const input_c* in);
 void UpdateProjection();
 
 //todo: cleanup shaders here and in draw
 void SetupSky(const char* name);
-void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h);
+void DrawSky(float* model, const vec3_c* f, const vec3_c* u, int win_w, int win_h, float fov);
 
 void SetupText();
-void DrawText(winfo_t* winfo, menuflags_t menu);
+void DrawText(winfo_t* winfo, menu_e menu, const vec3_c* player_vel);
 
 void SetupModels(char* ent_str, int ent_len);
 void DrawModels(float* model, float* view, float* iview, float* proj);

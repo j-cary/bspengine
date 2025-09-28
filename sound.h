@@ -30,7 +30,7 @@ typedef struct alsound_s
 void SetupSound();
 void ListAudioDevices(const ALCchar *devname);
 
-void SoundTick();
+void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const vec3_c* org);
 
 void CleanupSound();
 

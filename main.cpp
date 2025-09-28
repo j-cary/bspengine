@@ -4,6 +4,7 @@
 #include <glfw3.h>
 
 #include "common.h"
+#include "console.h"
 #include "pcmd.h" //keys
 #include "pmove.h" //pmove
 #include "input.h"
@@ -106,7 +107,7 @@ extern input_c in;
 void SetupWindow(winfo_t* win, int width, int height);
 
 
-void Setup(char* cmdargs)
+static void Setup(char* cmdargs)
 {
 	double time = glfwGetTime();
 	SetupArgs(cmdargs);
@@ -115,7 +116,7 @@ void Setup(char* cmdargs)
 	SetupInput(winfo.win);
 	SetupSound();
 	SetupPMove();
-	SetupPlayer();
+	SetupPlayer(&in);
 
 	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
 }
@@ -144,16 +145,16 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		
 		if (game.nexttick < game.time)
 		{
-			PKeys();
+			PKeys(&in);
 			game.tickdelta = (game.time - game.lasttick);
 			game.lasttick = game.time;
 			//printf("%f\n", game.tickdelta);
 			EntTick(&game);
-			PlayerTick();
+			PlayerTick(&in);
 			SetMoveVars(&in);
 			PMove();
 			ParticleTick();
-			SoundTick();
+			SoundTick(&in.forward, &in.up, &in.vel, &in.org);
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;
 		}
@@ -163,7 +164,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		if ((game.nextframe < game.time) || game.maxfps < 0)
 		{
 			game.startframe = glfwGetTime();
-			DrawView(winfo.win);
+			DrawView(winfo.win, &in);
 			game.nextframe = game.startframe + (1.0 / game.maxfps);
 			game.fps = (int)(1.0 / (game.startframe - game.endframe)); 
 

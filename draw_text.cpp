@@ -1,6 +1,5 @@
 #include "draw_text.h"
-
-extern input_c in;
+#include "input.h"
 
 ftchar_t ch[128];
 shader_c textshader;
@@ -90,7 +89,7 @@ void SetupText()
 
 }
 
-void DrawText(winfo_t* winfo, menuflags_t menu)
+void DrawText(winfo_t* winfo, menu_e menu, const vec3_c* player_vel)
 {
 	glDisable(GL_CULL_FACE);
 
@@ -104,12 +103,12 @@ void DrawText(winfo_t* winfo, menuflags_t menu)
 	DrawString("100", 115, 25, 0.5, &color);
 
 	vec3_c color2(0.2f, 1.0f, 0.0f);
-	if(menu == MENU_NONE)
+	if(menu == MENU::NONE)
 		DrawString("+", winfo->w / 2.0f, winfo->h / 2.0f, 0.5, &color2);
 
 	vec3_c scolor(0.0f, 1.0f, 0.0f);
 	char speedo[16];
-	vec3_c projvel = in.vel;
+	vec3_c projvel = *player_vel;
 	itoa((int)projvel[1], speedo, 10);
 	DrawString(speedo, winfo->w / 2.0f, 50, 0.5f, &scolor); //y vel speedo
 

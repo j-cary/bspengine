@@ -3,30 +3,25 @@
 #include "math.h"
 
 extern gamestate_c game;
-extern input_c in;
 
-#define PRESS_NO		0
-#define PRESS_YES		1
-#define PRESS_RELEASE	2
-
-void PKeys()
+void PKeys(input_c* in)
 {
-	for (int i = 0; i < sizeof(in.keys) / sizeof(key_t); i++)
+	for (int i = 0; i < sizeof(in->keys) / sizeof(in->keys[0]); i++)
 	{
-		if (!in.keys[i].pressed)
+		if (in->keys[i].pressed == KEY_STATE::OFF)
 			continue;
 
-		if (!in.keys[i].cmd[0])
+		if (!in->keys[i].cmd[0])
 			continue;
 
-		if (in.keys[i].time > game.time) //note: this check does NOT work while debugging!
+		if (in->keys[i].time > game.time) //note: this check does NOT work while debugging!
 			continue;
 
 		//do the command
-		PCmd(in.keys[i].cmd, &in, i);
+		PCmd(in->keys[i].cmd, in, i);
 
-		if (in.keys[i].pressed == 2)
-			in.keys[i].pressed = 0;
+		if (in->keys[i].pressed == KEY_STATE::LIFTOFF)
+			in->keys[i].pressed = KEY_STATE::OFF;
 	}
 }
 
@@ -73,11 +68,11 @@ void ParseCmdArgs(const char* _cmd, char*& cmd, char*& arg)
 
 void PCmdForward(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 	{
 		in->moveforward = 0;
 	}
@@ -89,11 +84,11 @@ void PCmdForward(input_c* in, int key)
 
 void PCmdBack(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 		in->moveforward = 0;
 	else
 		in->moveforward = -400;
@@ -101,11 +96,11 @@ void PCmdBack(input_c* in, int key)
 
 void PCmdLeft(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 		in->movesideways = 0;
 	else
 		in->movesideways = 400;
@@ -113,11 +108,11 @@ void PCmdLeft(input_c* in, int key)
 
 void PCmdRight(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 		in->movesideways = 0;
 	else
 		in->movesideways = -400;
@@ -125,10 +120,10 @@ void PCmdRight(input_c* in, int key)
 
 void PCmdUp(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 		in->moveup = 0;
 	else
 		in->moveup = 1;
@@ -138,10 +133,10 @@ void PCmdUp(input_c* in, int key)
 
 void PCmdDown(input_c* in, int key)
 {
-	if (in->menu)
+	if (in->menu != MENU::NONE)
 		return;
 
-	if (in->keys[key].pressed == 2) //release cmd
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
 		in->moveup = 0;
 	else
 		in->moveup = -1;
@@ -156,10 +151,10 @@ void PCmdFullscreen(input_c* in, int key)
 
 void PCmdMenu(input_c* in, int key)
 {
-	if ((in->menu == 0))
-		in->menu |= MENU_MAIN;
+	if ((in->menu == MENU::NONE))
+		in->menu = MENU::MAIN;
 	else
-		in->menu = MENU_NONE;
+		in->menu = MENU::NONE;
 	ToggleMouseCursor();
 
 	in->keys[key].time = game.time + 0.5;
@@ -199,24 +194,22 @@ void PCmdCmode(input_c* in, int key)
 {
 	switch (in->movetype)
 	{
-	case MOVETYPE_NOCLIP:
-		printf("Walking\n");
-		in->movetype = MOVETYPE_WALK;
-		break;
-	case MOVETYPE_WALK:
-		printf("Flying\n");
-		in->movetype = MOVETYPE_NOCLIP;
-		break;
 	default:
+	case MOVETYPE::NOCLIP:
 		printf("Walking\n");
-		in->movetype = MOVETYPE_WALK;
+		in->movetype = MOVETYPE::WALK;
+		break;
+	case MOVETYPE::WALK:
+		printf("Flying\n");
+		in->movetype = MOVETYPE::NOCLIP;
+		break;
 	}
 	in->keys[key].time = game.time + 0.5;
 }
 
 void PCmdDumpCmds(input_c* in, int key)
 {
-	for (int i = 0; i < sizeof(in->binds) / sizeof(keyvalue_t); i++)
+	for (int i = 0; i < sizeof(in->binds) / sizeof(in->binds[0]); i++)
 	{
 		if (!in->binds[i].val[0])//empty command
 			continue;
@@ -231,7 +224,7 @@ void PCmdMapA(input_c* in, int key)
 	char* cmd = NULL, * arg = NULL;
 	char name[FILENAME_MAX] = "maps/";
 
-	if (in->keys[key].pressed == 2)
+	if (in->keys[key].pressed == KEY_STATE::LIFTOFF)
 		return;
 
 	ParseCmdArgs(in->keys[key].cmd, cmd, arg);
@@ -240,8 +233,7 @@ void PCmdMapA(input_c* in, int key)
 	strcat(name, arg);
 	strcat(name, ".bsp");
 
-	ChangeMap(name);
-	//SetupBSP(name);
+	ChangeMap(name, in);
 
 
 	in->keys[key].time = game.time + 0.5;

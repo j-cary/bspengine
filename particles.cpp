@@ -205,6 +205,7 @@ void ParticleTick()
 
 
 #include "pcmd.h"
+#include "input.h"
 
 void PCmdPrintPartlist(input_c* in, int key)
 {

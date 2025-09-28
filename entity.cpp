@@ -14,7 +14,7 @@ void EntTick(gamestate_c* gs)
 	//int model_skiptick = gs->maxtps / model_hz; //how many ticks to skip inbetween model frame updates
 	//bool model_updatetick = !(gs->tick % model_skiptick);
 
-	for (int i = 0; i < MAX_ENTITIES; i++)
+	for (int i = 0; i < ENTITIES_MAX; i++)
 	{
 		baseent_c* ent = entlist[i];
 		
@@ -161,7 +161,7 @@ baseent_c* entlist_c::Alloc(const char* classname)
 {
 	baseent_c** e = NULL;
 
-	for (int i = 0; i < MAX_ENTITIES; i++)
+	for (int i = 0; i < ENTITIES_MAX; i++)
 	{
 		e = &list[i];
 
@@ -213,7 +213,7 @@ int FindEntByClassName(baseent_c*& e, const char* name, int start)
 	baseent_c*	r = NULL;
 	int		i = 0;
 
-	for (i = start; i < MAX_ENTITIES; i++)
+	for (i = start; i < ENTITIES_MAX; i++)
 	{
 		ent = entlist[i];
 
@@ -233,7 +233,7 @@ int FindEntByClassName(baseent_c*& e, const char* name, int start)
 
 void ClearEntlist()
 {
-	for (int i = 0; i < MAX_ENTITIES; i++)
+	for (int i = 0; i < ENTITIES_MAX; i++)
 	{
 		baseent_c* e = entlist[i];
 		if (e)
@@ -248,10 +248,10 @@ void ClearEntlist()
 
 
 
-
+#include "input.h"
 void PCmdPrintEntlist(input_c* in, int key)
 {
-	for (int i = 0; i < MAX_ENTITIES; i++)
+	for (int i = 0; i < ENTITIES_MAX; i++)
 	{
 		baseent_c* e = entlist[i];
 
@@ -282,5 +282,5 @@ void PCmdTMP(input_c* in, int key)
 {//temp to test removing entities
 	md2list.TMP();
 	in->keys[key].time = game.time + 0.5;
-	in->keys[key].pressed = 0;
+	in->keys[key].pressed = KEY_STATE::OFF;
 }

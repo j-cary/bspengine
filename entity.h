@@ -4,6 +4,8 @@
 
 #include <vector> //for hammer k/v parsing
 
+#define ENTITIES_MAX 4096
+
 //aiflags
 #define AI_CLUELESS			0x0
 #define AI_SEEPLAYER		0x1 
@@ -253,20 +255,20 @@ private:
 	int highest_used = 0; //highest index currently used in the entlist
 	//TODO: implement this - used for quicker searching
 
-	//baseent_c l[MAX_ENTITIES];
-	baseent_c* list[MAX_ENTITIES];
+	//baseent_c l[ENTITIES_MAX];
+	baseent_c* list[ENTITIES_MAX];
 public:
 
 	baseent_c* operator[](int index)
 	{
 		/*
-		if (index < 0 || index >= MAX_ENTITIES)
+		if (index < 0 || index >= ENTITIES_MAX)
 			return NULL;
 
 		return &l[index];
 		*/
 
-		if (index < 0 || index >= MAX_ENTITIES)
+		if (index < 0 || index >= ENTITIES_MAX)
 			return NULL;
 
 		return list[index];
@@ -281,7 +283,7 @@ public:
 
 	~entlist_c()
 	{
-		for (int i = 0; i < MAX_ENTITIES; i++)
+		for (int i = 0; i < ENTITIES_MAX; i++)
 		{
 			if (list[i])
 				delete list[i];

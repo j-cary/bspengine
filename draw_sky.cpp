@@ -1,7 +1,10 @@
 #include "draw_sky.h"
+#include "input.h"
+
+
+#define SKY_SIZE 256
 
 #define t	32767 //fixme:increase depth buffer for sky rendering
-#define r	1
 vec5_t skybox[] =
 {
 	-t,	-t,	-t, 0,	 0,
@@ -65,8 +68,6 @@ float skybox2d[] =
 	+t, -t, +t, 0, 0, 5,
 };
 #undef t
-
-extern input_c in;
 
 unsigned skyboxpoints[] =
 {
@@ -173,7 +174,7 @@ void SetupSky(const char* name)
 	sky2dshader.SetI("sky2darray", TUtoI(SKY_TEXTURE_UNIT)); //GL_TEXTURE3
 }
 
-void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h)
+void DrawSky(float* model, const vec3_c* f, const vec3_c* u, int win_w, int win_h, float fov)
 {
 	glm::vec3 org, forward, up;
 
@@ -188,7 +189,7 @@ void DrawSky(float* model, vec3_c* f, vec3_c* u, int win_w, int win_h)
 	view = glm::scale(view, glm::vec3(-1.0, 1.0, 1.0));
 	sky2dshader.SetM4F("sky2d_view", glm::value_ptr(view));
 
-	glm::mat4 proj = glm::perspective(glm::radians(in.fov), (float)win_w / (float)win_h, 0.1f, 65535.0f);//further than normal perspective
+	glm::mat4 proj = glm::perspective(glm::radians(fov), (float)win_w / (float)win_h, 0.1f, 65535.0f);//further than normal perspective
 	proj = glm::scale(proj, glm::vec3(-1.0, 1.0, 1.0));
 	sky2dshader.SetM4F("sky2d_projection", glm::value_ptr(proj));
 

@@ -51,7 +51,7 @@ extern md2list_c md2list;
 extern aigraph_c graph;
 
 //TODO: this really needs to be thoroughly tested
-void ChangeMap(const char* mapname)
+void ChangeMap(const char* mapname, input_c* in)
 {
 	//rip controls - go to menu
 	
@@ -71,6 +71,6 @@ void ChangeMap(const char* mapname)
 	//should have a skybox kv in JACK... 
 	//ReloadSky(name);//reload sky
 
-	SpawnPlayer();//spawn player
+	SpawnPlayer(in);//spawn player
 	//begin game loop again
 }

@@ -1,19 +1,26 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Operation:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "input.h"
 #include "draw.h"//tmp
 #include "math.h"
 
-input_c in;
+#define KEY_IDX_BAD (-1)
 
-extern winfo_t winfo;
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+input_c in;
 
 void SetupInput(GLFWwindow* win)
 {
 	ReadCFGFile("keybinds.cfg", &in);
 
+	// Raw input only occurs if the cursor is off. i.e., not in a menu
 	glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetInputMode(win, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); //raw input only occurs if the cursor is off.
+	glfwSetInputMode(win, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE); 
 }
-
 
 void CursorMove(GLFWwindow* win, double xpos, double ypos)
 {
@@ -22,8 +29,8 @@ void CursorMove(GLFWwindow* win, double xpos, double ypos)
 
 	double sensitivity = 0.5;
 
-	if (in.menu)
-		return;
+	if (in.menu != MENU::NONE)
+		return; // In a menu, don't spin around
 
 
 	dxpos = xpos - xold;
@@ -58,21 +65,19 @@ void KeyPress(GLFWwindow* win, int key, int scancode, int action, int mods)
 
 	keyidx = in.MapGLFWKeyIndex(key);
 
-	if (keyidx == -1)
+	if (keyidx == KEY_IDX_BAD)
 		return;
 
 	if (action == GLFW_PRESS)
 	{
-		//printf("%i -> %i\n", key, keyidx);
-
-		in.keys[keyidx].pressed = 1;
+		in.keys[keyidx].pressed = KEY_STATE::ON;
 	}
 	else if (action == GLFW_RELEASE)
 	{
-		if (in.keys[keyidx].liftoff)
-			in.keys[keyidx].pressed = 2; //let PCmd know that this key was just released
+		if (in.keys[keyidx].liftoff) // let PCmd know that this key was just released
+			in.keys[keyidx].pressed = KEY_STATE::LIFTOFF; 
 		else
-			in.keys[keyidx].pressed = 0;
+			in.keys[keyidx].pressed = KEY_STATE::OFF;
 
 		in.keys[keyidx].time = 0;
 	}
@@ -83,21 +88,21 @@ void MouseButtonPress(GLFWwindow* win, int button, int action, int mods)
 {
 	int keyidx = in.MapGLFWMouseButtonIndex(button);
 
-	if (keyidx == -1)
+	if (keyidx == KEY_IDX_BAD)
 		return;
 	
 	if (action == GLFW_PRESS)
 	{
 		//printf("%i -> %i\n", key, keyidx);
 
-		in.keys[keyidx].pressed = 1;
+		in.keys[keyidx].pressed = KEY_STATE::ON;
 	}
 	else if (action == GLFW_RELEASE)
 	{
 		if (in.keys[keyidx].liftoff)
-			in.keys[keyidx].pressed = 2; //let PCmd know that this key was just released
+			in.keys[keyidx].pressed = KEY_STATE::LIFTOFF; //let PCmd know that this key was just released
 		else
-			in.keys[keyidx].pressed = 0;
+			in.keys[keyidx].pressed = KEY_STATE::OFF;
 
 		in.keys[keyidx].time = 0;
 	}
@@ -108,7 +113,8 @@ void MouseButtonPress(GLFWwindow* win, int button, int action, int mods)
 
 int input_c::MapGLFWKeyIndex(int in)
 {
-	int idx = -1;
+	constexpr const int SPLIT[] = { 5, 6, 48, 62, 67, 79, 96 };
+	int idx = KEY_IDX_BAD;
 
 	//oddballs first
 	switch (in)
@@ -122,57 +128,52 @@ int input_c::MapGLFWKeyIndex(int in)
 	}
 	if ((in >= GLFW_KEY_COMMA) && (in <= GLFW_KEY_9)) //44-57 => 5-18
 	{
-		idx = in - GLFW_KEY_COMMA + KEY_SPLIT1;
+		idx = in - GLFW_KEY_COMMA + SPLIT[0];
 	}
 
-	if ((in >= GLFW_KEY_A) && (in <= GLFW_KEY_RIGHT_BRACKET))//65-93 => 19-47
+	else if ((in >= GLFW_KEY_A) && (in <= GLFW_KEY_RIGHT_BRACKET))//65-93 => 19-47
 	{
-		idx = in - GLFW_KEY_A + KEY_SPLIT2 + (GLFW_KEY_9 - GLFW_KEY_COMMA);
+		//I actually do the math for this one properly. The rest are hard-coded
+		idx = in - GLFW_KEY_A + SPLIT[1] + (GLFW_KEY_9 - GLFW_KEY_COMMA);
 	}
 
-	if ((in >= GLFW_KEY_ESCAPE) && (in <= GLFW_KEY_END))//256-269 => 48-61
+	else if ((in >= GLFW_KEY_ESCAPE) && (in <= GLFW_KEY_END))//256-269 => 48-61
 	{
-		idx = in - GLFW_KEY_ESCAPE + KEY_SPLIT3;
+		idx = in - GLFW_KEY_ESCAPE + SPLIT[2];
 	}
 
-	if ((in >= GLFW_KEY_CAPS_LOCK) && (in <= GLFW_KEY_PAUSE))//280-284 => 62-66
+	else if ((in >= GLFW_KEY_CAPS_LOCK) && (in <= GLFW_KEY_PAUSE))//280-284 => 62-66
 	{
-		idx = in - GLFW_KEY_CAPS_LOCK + KEY_SPLIT4;
+		idx = in - GLFW_KEY_CAPS_LOCK + SPLIT[3];
 	}
 
-	if ((in >= GLFW_KEY_F1) && (in <= GLFW_KEY_F12))//290-301 => 67-78
+	else if ((in >= GLFW_KEY_F1) && (in <= GLFW_KEY_F12))//290-301 => 67-78
 	{
-		idx = in - GLFW_KEY_F1 + KEY_SPLIT5;
+		idx = in - GLFW_KEY_F1 + SPLIT[4];
 	}
 
-	if ((in >= GLFW_KEY_KP_0) && (in <= GLFW_KEY_KP_EQUAL))//320-336 => 79-95
+	else if ((in >= GLFW_KEY_KP_0) && (in <= GLFW_KEY_KP_EQUAL))//320-336 => 79-95
 	{
-		idx = in - GLFW_KEY_KP_0 + KEY_SPLIT6;
+		idx = in - GLFW_KEY_KP_0 + SPLIT[5];
 	}
 
-	if ((in >= GLFW_KEY_LEFT_SHIFT) && (in <= GLFW_KEY_RIGHT_ALT))//340-346 => 96-102
+	else if ((in >= GLFW_KEY_LEFT_SHIFT) && (in <= GLFW_KEY_RIGHT_ALT))//340-346 => 96-102
 	{
-		idx = in - GLFW_KEY_LEFT_SHIFT + KEY_SPLIT7;
+		idx = in - GLFW_KEY_LEFT_SHIFT + SPLIT[6];
 	}
 
-	//printf("%i\n", idx);
 	return idx;
 }
 
 int input_c::MapGLFWMouseButtonIndex(int in)
 {
-	int idx = -1;
-	
-	idx = in - GLFW_MOUSE_BUTTON_1 + KEY_SPLIT_MOUSEBUTTONS; //0 - 7 => 103 - 110
-//	printf("%i\n", idx);
-	return idx;
+	return (in > GLFW_MOUSE_BUTTON_LAST) ? KEY_IDX_BAD : (in - GLFW_MOUSE_BUTTON_1 + NUM_KEYS);
 }
 
 input_c::input_c()
 {
 	memset(binds, 0, sizeof(binds));
 	memset(keys, 0, sizeof(keys));
-	mouseflags = MOUSENONE;
 
 	yaw = 270;
 	pitch = 0;
@@ -188,15 +189,21 @@ input_c::input_c()
 	movesideways = 0;
 	moveup = 0;
 
-	menu = MENU_NONE;
+	menu = MENU::NONE;
 
 	pvslock = false;
 	fullscreen = false;
-	movetype = MOVETYPE_WALK;
+	movetype = MOVETYPE::WALK;
 
 	fov = 105;
 	onground = -1;
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                          PCmd Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+extern winfo_t winfo;
 
 void ToggleMouseCursor()
 {
@@ -211,13 +218,14 @@ void ToggleMouseCursor()
 	{
 		glfwGetCursorPos(winfo.win, &oldx, &oldy);
 		glfwSetInputMode(winfo.win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		glfwSetCursorPos(winfo.win, winfo.w / 2, winfo.h / 2);
+		glfwSetCursorPos(winfo.win, winfo.w / 2.0, winfo.h / 2.0);
 	}
-
 }
 
 void ToggleFullscreen()
 {
+	// TODO: Retain previous size information upon fullscreen
+
 	if (!in.fullscreen)
 	{
 		in.fullscreen = true;

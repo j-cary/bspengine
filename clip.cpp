@@ -68,7 +68,7 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 	if (fraction < 1.0f)
 		save_ent = FindEntByClassName("worldspawn"); //also entlist[0]
 
-	for (i = 1; i < MAX_ENTITIES; i++) //1 since we already took care of the world
+	for (i = 1; i < ENTITIES_MAX; i++) //1 since we already took care of the world
 	{
 		e = entlist[i];
 
@@ -496,7 +496,7 @@ void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 	//search for models close to the player, not just through all of them - maybe use player's org & vel to see if a collision is even possible
 
 	*i = 1;
-	for (int ei = 0; ei < MAX_ENTITIES; ei++)
+	for (int ei = 0; ei < ENTITIES_MAX; ei++)
 	{
 		if (*i >= MAX_PHYSENTS)
 			break;

@@ -1,7 +1,9 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Purpose: Define macros, types, and classes common to all modules
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #pragma once
-#include "cmath" //sin, cos, etc
+#include <cmath> //sin, cos, etc
 #include <iostream>
-
 
 #pragma warning(disable : 4996) //for fopen
 
@@ -10,10 +12,7 @@
 #define GAMEDIR "C:/T045T/Overlord/"
  
 //maxes
-#define MAX_ENTITIES 4096
-#define TEXTURE_SIZE 128
-#define SKY_SIZE 256
-#define MD2_TEXTURE_SIZE 512
+#define MD2_TEXTURE_SIZE 512 // XXX: Move these once img becomes dynamic
 #define TEXTURE_SIZE_LARGEST MD2_TEXTURE_SIZE
 
 //macro defs 
@@ -25,7 +24,7 @@
 #define FRADSTODEG(r)	((float)(r * (180.0f / FPI)))
 
 //random between x and y. x should be less than y
-#define frand(x,y) (((float)((y)-(x)) * ((rand () & 0x7fff) / ((float)0x7fff))) + (float)(x))
+#define frand(x,y) (((float)((y)-(x)) * ((rand () & RAND_MAX) / ((float)RAND_MAX))) + (float)(x))
 
 typedef float vec3_t[3];
 typedef float vec4_t[4];
@@ -53,9 +52,9 @@ public:
 	inline vec3_c operator+ (const vec3_c& vec) { return vec3_c(v[0] + vec.v[0], v[1] + vec.v[1], v[2] + vec.v[2]); }
 	inline vec3_c operator- (const vec3_c& vec) { return vec3_c(v[0] - vec.v[0], v[1] - vec.v[1], v[2] - vec.v[2]); }
 
-	inline vec3_c operator* (float f) { return vec3_c(v[0] * f, v[1] * f, v[2] * f); }
+	inline vec3_c operator* (float f) const { return vec3_c(v[0] * f, v[1] * f, v[2] * f); }
 
-	inline vec3_c operator/ (float f) { return vec3_c(v[0] / f, v[1] / f, v[2] / f); }
+	inline vec3_c operator/ (float f) const { return vec3_c(v[0] / f, v[1] / f, v[2] / f); }
 
 	inline float operator[] (int index) const { return v[index]; }
 	inline float& operator[] (int index) { return v[index]; }
@@ -77,7 +76,7 @@ public:
 	}
 	inline float dot(const vec3_c& vec) { return v[0] * vec.v[0] + v[1] * vec.v[1] + v[2] * vec.v[2]; }
 	inline vec3_c crs(const vec3_c& vec) { return vec3_c(v[1] * vec.v[2] - v[2] * vec.v[1], v[2] * vec.v[0] - v[0] * vec.v[2], v[0] * vec.v[1] - v[1] * vec.v[0]); }
-	char* str() //there can be no more than 16 calls to this function in a single printf
+	const char* str() const //there can be no more than 16 calls to this function in a single printf
 	{
 		static char str[16][32];
 		static int strcnt = 0;
@@ -89,10 +88,9 @@ public:
 	inline vec3_c set(float v1, float v2, float v3) { return vec3_c(v[0] = v1, v[1] = v2, v[2] = v3); }
 
 	//scalar addition, so overloaded operators are less confusing - untested
-	inline vec3_c sAdd(float addend) { return vec3_c(v[0] + addend, v[1] + addend, v[2] + addend); };
+	inline vec3_c sAdd(float addend) const { return vec3_c(v[0] + addend, v[1] + addend, v[2] + addend); };
 
 };
-//inline vec3_c operator*(float f, const vec3_c& vec) { return vec * f; }
 
 inline vec3_c Proj_Vec3(vec3_c vec) { return { vec[0], 0, vec[2]}; }
 
@@ -105,83 +103,20 @@ void SYS_Exit(const char* fmt, ...);
 
 //entity.cpp
 
+//XXX - These should not be here
 //this is only to be called when reading a bsp. Adding other ents can be done later.
 void LoadHammerEntities(char* str, int len);
 void BuildNodeList();
 
-//Input structs
-typedef struct keyvalue_s
+typedef enum class MENU
 {
-	char key[64];
-	char val[64];
-} keyvalue_t;
+	NONE, MAIN
+} menu_e;
 
-typedef struct key_s
+typedef enum class MOVETYPE
 {
-	int pressed; //1 if pressed, 0 if not, 2 if just released (to run the release cmd)
-	bool liftoff; //this key does something special when it is just unpressed
-	double time; //next time to repeat. Cleared in keyup
-	char cmd[64];
-} key_t;
-
-enum MOUSEBUTTONS
-{
-	MOUSENONE = 0,
-	MOUSE1 = 1,
-	MOUSE2 = 2,
-	MOUSE3 = 4
-};
-typedef flag_t mousebuttonflags_t;
-
-enum MENUS
-{
-	MENU_NONE = 0,
-	MENU_MAIN = 1,
-	MENU_OPTIONS = 2
-};
-typedef flag_t menuflags_t;
-
-enum MOVETYPES
-{
-	MOVETYPE_NOCLIP = 0,
-	MOVETYPE_WALK 
-};
-
-#define NUM_KEYS	(103)
-#define NUM_MBUTS	(8)
-#define KEYBOARD_SIZE	NUM_KEYS + NUM_MBUTS
-
-class input_c
-{
-
-public:
-	keyvalue_t binds[256];
-	key_t keys[KEYBOARD_SIZE]; //fullsize keyboard
-	mousebuttonflags_t mouseflags;
-
-	float yaw, pitch;
-	vec3_c org, right, forward, up;
-	float camera_vertical_offset = 32;
-
-	vec3_c vel;
-	int moveforward; // negative for backwards
-	int movesideways;
-	int moveup;
-
-	menuflags_t menu;
-
-	bool pvslock;
-	bool fullscreen;
-	int movetype;
-	int onground;
-
-	float fov;
-
-	int MapGLFWKeyIndex(int in);
-	int MapGLFWMouseButtonIndex(int in);
-
-	input_c();
-};
+	NOCLIP, WALK
+} movetype_e;
 
 //all the variables here are set at the beginning of every frame/tick
 class gamestate_c
@@ -219,11 +154,6 @@ public:
 	long tick;
 	const int maxtps = 128;
 };
-
-//console.cpp
-#define STDWINCON 1
-int ConPrintf(const char* _Format, ...);
-void CreateConsole();
 
 //these functions return strings that should only be used for copying from or printing
 char* fltos(int flag);

@@ -169,6 +169,7 @@
     <ClInclude Include="atlas.h" />
     <ClInclude Include="bsp.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="console.h" />
     <ClInclude Include="draw.h" />
     <ClInclude Include="draw_models.h" />
     <ClInclude Include="draw_sky.h" />

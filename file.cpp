@@ -1,4 +1,5 @@
 #include "file.h"
+#include "atlas.h" // TEXTURES_MAX
 
 FILE* LocalFileOpen(const char* filename, const char* mode)
 {
@@ -373,24 +374,6 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bo
 	return false;
 }
 
-//mirrors MapGLFWKeyIndex
-char str2keyenum[KEYBOARD_SIZE][16] =
-{
-	"SPACE",
-	"'",
-	"=",
-	";",
-	"`",
-	",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-	"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z", "[", "\\", "]",
-	"ESCAPE", "ENTER", "TAB", "BACK", "INSERT", "DELETE", "RIGHT", "LEFT", "DOWN", "UP", "PGUP", "PGDOWN", "HOME", "END",
-	"CAPSLOCK", "SCRLLOCK", "NUMLOCK", "PRINTSCRN", "PAUSE",
-	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-	"NUM0", "NUM1", "NUM2", "NUM3", "NUM4", "NUM5", "NUM6", "NUM7", "NUM8", "NUM9", "NUMPERIOD", "NUMSLASH", "NUMSTAR", "NUMMINUS", "NUMPLUS", "NUMENTER", "NUMEQUAL",
-	"LSHIFT", "LCTRL", "LALT", "LFUNC", "RSHIFT", "RCTRL", "RALT",
-	"MOUSE1", "MOUSE2", "MOUSE3", "MOUSE4", "MOUSE5", "MOUSE6", "MOUSE7", "MOUSE8"
-};
-
 void ReadCFGFile(const char* name, input_c* in)
 {
 	FILE* f = LocalFileOpen(name, "r");
@@ -444,16 +427,15 @@ void ReadCFGFile(const char* name, input_c* in)
 		//convert the val into a value in the KEYS enum,
 		//then, if the key exists assign the value in to the key cmd.
 		//keep binds around for menus/debugging
-		for (int i = 0; i < sizeof(str2keyenum) / 16; i++)
+		for (int i = 0; i < in->str2key_len; i++)
 		{
 
-			if (!strncmp(in->binds[keyvalueidx].val, str2keyenum[i], 16)) //valid keypress
-			{
+			if (!strcmp(in->binds[keyvalueidx].val, in->str2key_enum[i])) 
+			{ // valid keypress
 				for (int j = 0; j < sizeof(inputcmds) / (CMD_LEN + sizeof(void*)); j++)
 				{
 					if (inputcmds[j].name[0] == '*')
 					{//command with argument
-						//printf("found a cmd with args\n");
 
 						char* curs = in->binds[keyvalueidx].key;
 						while (*curs != '\0')

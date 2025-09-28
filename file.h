@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "pcmd.h" //for inputcmds
+#include "input.h"
 
 FILE* LocalFileOpen(const char* filename, const char* mode);
 

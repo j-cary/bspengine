@@ -134,6 +134,7 @@ void DrawPathLine(vec3_c v1, vec3_c v2, int particle_cnt, vec3_c color, float li
 	}
 }
 
+#include "input.h"
 extern gamestate_c game;
 void PCmdDumpNodes(input_c* in, int key)
 {
