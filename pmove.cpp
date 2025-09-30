@@ -1,5 +1,5 @@
 #include "pmove.h"
-#include "math.h"
+#include "vec_math.h"
 
 extern gamestate_c game;
 extern bsp_t bsp;

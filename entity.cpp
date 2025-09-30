@@ -1,5 +1,5 @@
 #include "entity.h"
-#include "math.h"
+#include "vec_math.h"
 #include "sound.h"
 #include "md2.h" //md2list
 #include "pmove.h" //droptofloor

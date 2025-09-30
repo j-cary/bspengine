@@ -35,6 +35,8 @@ extern input_c in;
 *	Structures need to be unpacked and proper reading has to happen
 * Atlas:
 *	Wait for restructure until the lighting issue is fixed
+* Game:
+*	Deal with this later...
 * 
 * Make program more resilient - change maps, unload maps, etc.
 * Fix text drawing

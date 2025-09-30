@@ -152,7 +152,7 @@
     <ClCompile Include="md2.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="math.cpp" />
+    <ClCompile Include="vec_math.cpp" />
     <ClCompile Include="npc.cpp" />
     <ClCompile Include="npc_white_bot.cpp" />
     <ClCompile Include="parse_entity.cpp" />
@@ -182,7 +182,7 @@
     <ClInclude Include="img.h" />
     <ClInclude Include="md2.h" />
     <ClInclude Include="input.h" />
-    <ClInclude Include="math.h" />
+    <ClInclude Include="vec_math.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="npc.h" />
     <ClInclude Include="particles.h" />

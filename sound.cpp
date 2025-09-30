@@ -1,6 +1,5 @@
 #include "sound.h"
 #include "file.h"
-#include "math.h"
 
 extern gamestate_c game;
 

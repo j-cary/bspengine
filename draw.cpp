@@ -2,7 +2,7 @@
 #include "bsp.h"
 #include "shaders.h"
 #include "atlas.h"
-#include "math.h"
+#include "vec_math.h"
 #include "input.h"
 #include "img.h"
 

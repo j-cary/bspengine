@@ -3,7 +3,7 @@ Operation:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "input.h"
 #include "draw.h"//tmp
-#include "math.h"
+#include "vec_math.h"
 #include "menu.h"
 
 #define KEY_IDX_BAD (-1)

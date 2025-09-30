@@ -36,7 +36,7 @@
     <ClCompile Include="shaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="math.cpp">
+    <ClCompile Include="vec_math.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="console.cpp">
@@ -152,7 +152,7 @@
     <ClInclude Include="pmove.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="math.h">
+    <ClInclude Include="vec_math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="md2.h">

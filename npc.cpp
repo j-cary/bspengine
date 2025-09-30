@@ -1,6 +1,6 @@
 #include "npc.h"
 #include "pmove.h"
-#include "math.h"
+#include "vec_math.h"
 #include "particles.h" //tmp
 
 inline float TriArea(float a[2], float b[2], float c[2])
