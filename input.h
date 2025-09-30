@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "glinc.h"
+#include "menu.h"
 
 enum class KEY_STATE
 {

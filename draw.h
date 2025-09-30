@@ -9,6 +9,7 @@
 #include "common.h"
 #include "file.h" //bsp stuff, change later
 #include "input.h"
+#include "menu.h"
 
 #define BASE_TEXTURE_UNIT	GL_TEXTURE0
 #define WORLD_TEXTURE_UNIT	GL_TEXTURE0

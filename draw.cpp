@@ -4,6 +4,7 @@
 #include "atlas.h"
 #include "math.h"
 #include "input.h"
+#include "img.h"
 
 //todo: figure out aspect ratio scaling
 
@@ -50,6 +51,8 @@ void SetupView(GLFWwindow* win)
 	tmp.Use();
 	glGenVertexArrays(1, &VAO); //vertex array object
 	glGenBuffers(1, &VBO); //vertex buffer object
+
+	SetupNullImg();
 
 	if (!bsp.name[0])
 	{
@@ -450,7 +453,7 @@ void BuildTextureList()
 			if (bsp.miptex[i].name[0] != '~')
 			{//alpha
 				strcpy(texlist[tex_i].name, bsp.miptex[i].name);
-				img = MakeNullImg(24);
+				img = GetNullImg(24);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(WORLD_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tex_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
@@ -459,7 +462,7 @@ void BuildTextureList()
 			else
 			{
 				strcpy(alphalist[alpha_i], bsp.miptex[i].name);
-				img = MakeNullImg(32);
+				img = GetNullImg(32);
 				img = StretchBMP(img, TEXTURE_SIZE, TEXTURE_SIZE, &texlist[tex_i].xscale, &texlist[tex_i].yscale);
 				glActiveTexture(ALPHA_TEXTURE_UNIT);
 				glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, alpha_i, TEXTURE_SIZE, TEXTURE_SIZE, 1, GL_RGBA, GL_UNSIGNED_BYTE, img->data);

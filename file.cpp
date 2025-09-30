@@ -11,35 +11,6 @@ FILE* LocalFileOpen(const char* filename, const char* mode)
 	return fopen(fullname, mode);
 }
 
-void BRG2RGB(byte* data, unsigned w, unsigned h)
-{
-	for (unsigned i = 0; i < w * h * 3; i += 3)
-	{
-		byte tmp;
-		tmp = data[i];
-		data[i] = data[i + 2];
-		data[i + 2] = tmp;
-	}
-}
-
-void FlipTexture(byte* data, unsigned w, unsigned h)
-{
-	for (unsigned i = 0, j = h - 1; i < h / 2; i++, j--)
-	{
-		for (unsigned k = 0; k < w * 3; k++)
-		{
-			byte tmp;
-			unsigned first, fsecond;
-			first = i * h * 3 + k;
-			fsecond = j * h * 3 + k;
-
-			tmp = data[first];
-			data[first] = data[fsecond];
-			data[fsecond] = tmp;
-		}
-	}
-}
-
 img_c* PeekBMPFile(const char* filename)
 {
 	static img_c img;
@@ -124,163 +95,13 @@ img_c* ReadBMPFile(const char* filename, bool flip)
 	img.width = w;
 	img.height = h;
 
-	img.BRG2RGB();
+	BRG2RGB(&img);
 	
 	if (flip)
-		img.Flip();
+		FlipTexture(&img);
 
 	fclose(f);
 	return &img;
-}
-
-img_c* MakeNullImg(int bpx)
-{
-	static img_c img;
-
-	//TODO: fix this nasty stuff
-	byte missingline[TEXTURE_SIZE * 4] = {};
-	byte missingline2[TEXTURE_SIZE * 4] = {};
-	
-	byte color[4];
-	byte missing[TEXTURE_SIZE * TEXTURE_SIZE * 4];
-#if 1
-	bool state = 0;
-	color[0] = rand();
-	color[1] = rand();
-	color[2] = rand();
-	color[3] = 0x80;
-
-	//printf("%i %i %i\n", rand(), rand(), rand());
-
-
-	for (int j = 0; j < TEXTURE_SIZE * (bpx / 8); j += (bpx / 8))
-	{
-		if (j % bpx == 0)
-			state = !state;
-
-		if (state)
-		{
-			missingline[j] = color[0];
-			missingline[j + 1] = color[1];
-			missingline[j + 2] = color[2];
-			if (bpx == 32)
-			{
-				missingline[j + 3] = color[3];
-				missingline2[j + 3] = color[3];
-			}
-
-
-		}
-		else
-		{
-			missingline2[j] = color[0];
-			missingline2[j + 1] = color[1];
-			missingline2[j + 2] = color[2];
-			if (bpx == 32)
-			{
-				missingline2[j + 3] = color[3];
-				missingline[j + 3] = color[3];
-			}
-		}
-	}
-
-	byte* buf;
-	for (int j = 0; j < TEXTURE_SIZE; j++)
-	{
-		if (j % 8 == 0)
-			state = !state;
-		buf = &missing[j * TEXTURE_SIZE * (bpx / 8)];
-		if (state)
-			memcpy(buf, missingline, TEXTURE_SIZE * (bpx / 8));
-		else
-			memcpy(buf, missingline2, TEXTURE_SIZE * (bpx / 8));
-
-	}
-#else
-	for (int b = 0; b < (128 * 128 * 3) - 912; b += 24 /*8 px * RGB */) //256 loops
-	{
-		for (int iy = 0; iy < 8; iy++)
-		{
-			for (int ix = 0; ix < 8 * 3; ix += 3)
-			{
-				int idx = b + ix + iy * 128;
-				missing[idx] = 0xFF;
-				missing[idx + 1] = 0x00;
-				missing[idx + 2] = 0xFF;
-			}
-		}
-	}
-	bool state = 0;
-	for (int j = 0; j < (128 * 128 * 3); j += 3, state = !state)
-	{
-		if (state)
-			missing[j] = missing[j + 1] = missing[j + 2] = 0x00;
-		else
-			missing[j] = missing[j + 1] = missing[j + 2] = 0xFF;
-	}
-#endif
-
-	memcpy(img.data, missing, TEXTURE_SIZE * TEXTURE_SIZE * (bpx / 8));
-
-	img.height = img.width = TEXTURE_SIZE;
-
-	return &img;
-}
-
-img_c* StretchBMP(img_c* src, int new_w, int new_h, float* xratio, float* yratio)
-{
-	static img_c dst;
-	float xs, ys;
-	float ox, oy;
-	int pxlen;
-
-	if (!src)
-		return NULL;
-
-	if (!new_w || !new_h)
-		return NULL;
-
-	if (src->width == new_w && src->height == new_h)
-	{
-		if (xratio)
-			*xratio = 1.0f;
-		if (yratio)
-			*yratio = 1.0f;
-		return src;
-	}
-
-	dst.width = new_w;
-	dst.height = new_h;
-
-	xs = (float)src->width / (float)new_w;
-	ys = (float)src->height / (float)new_h;
-	if (xratio)
-		*xratio = xs;
-	if (yratio)
-		*yratio = ys;
-
-	pxlen = src->bpx / 8;
-	
-	oy = 0;
-	for (int ny = 0; ny < new_h; ny++, oy += ys)
-	{
-		ox = 0;
-		//printf("sy: %.2f / %i => dy: %i\n", oy, (int)floor(oy), ny);
-		for (int nx = 0; nx < new_w * pxlen; nx += pxlen, ox += pxlen * xs)
-		{
-			int dsti = ny * new_w * pxlen + nx;
-			int srci = (int)(floor(oy) * src->width * pxlen) + (int)(floor(ox / pxlen) * pxlen);
-
-			int y, x;
-			y = (int)floor(oy);
-			x = (int)floor(ox / pxlen);
-
-			for (int i = 0; i < pxlen; i++) //copy the pixel
-				dst.data[dsti + i] = src->data[srci + i];
-		}
-	}
-
-	return &dst;
 }
 
 bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bool flip, bool swapcolors)
@@ -304,7 +125,7 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bo
 	int colors = 0;
 	int important_colors = 0;
 
-	// NOTE: The data -is- technically modified here, but we're nice enough to fix it before returning
+	// NOTE: The data is -technically- modified here, but we're nice enough to fix it before returning
 
 	if (!(f = LocalFileOpen(name, "wb")))
 	{

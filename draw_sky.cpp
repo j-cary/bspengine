@@ -1,6 +1,6 @@
 #include "draw_sky.h"
 #include "input.h"
-
+#include "img.h"
 
 #define SKY_SIZE 256
 

@@ -1,6 +1,7 @@
 #include "pcmd.h"
 #include "draw.h" //TMP!!!
 #include "math.h"
+#include "menu.h"
 
 extern gamestate_c game;
 

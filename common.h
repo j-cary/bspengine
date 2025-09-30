@@ -101,18 +101,7 @@ const vec3_c zvec = { 0, 0, 1 };
 
 void SYS_Exit(const char* fmt, ...);
 
-//entity.cpp
-
-//XXX - These should not be here
-//this is only to be called when reading a bsp. Adding other ents can be done later.
-void LoadHammerEntities(char* str, int len);
-void BuildNodeList();
-
-typedef enum class MENU
-{
-	NONE, MAIN
-} menu_e;
-
+// TODO: This may need its own header. (Or not... it only really needs to be an ent var...)
 typedef enum class MOVETYPE
 {
 	NOCLIP, WALK
@@ -157,41 +146,3 @@ public:
 
 //these functions return strings that should only be used for copying from or printing
 char* fltos(int flag);
-
-class img_c
-{
-public:
-	int bpx;
-	int width, height;
-	byte data[TEXTURE_SIZE_LARGEST * TEXTURE_SIZE_LARGEST * 4]; //to fit biggest texture possible
-
-	void BRG2RGB()
-	{
-		for (int i = 0; i < width * height * (bpx / 8); i += (bpx / 8))
-		{
-			byte tmp;
-			tmp = data[i];
-			data[i] = data[i + 2];
-			data[i + 2] = tmp;
-		}
-	}
-
-	void Flip()
-	{
-		int bspx = bpx / 8;
-		for (int i = 0, j = height - 1; i < height / 2; i++, j--)
-		{
-			for (int k = 0; k < width * bspx; k++)
-			{
-				byte tmp;
-				unsigned first, fsecond;
-				first = i * width * bspx + k;
-				fsecond = j * width * bspx + k;
-
-				tmp = data[first];
-				data[first] = data[fsecond];
-				data[fsecond] = tmp;
-			}
-		}
-	}
-};

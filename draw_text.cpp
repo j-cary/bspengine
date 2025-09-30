@@ -1,5 +1,6 @@
 #include "draw_text.h"
 #include "input.h"
+#include "menu.h"
 
 ftchar_t ch[128];
 shader_c textshader;

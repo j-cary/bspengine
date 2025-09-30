@@ -1,4 +1,5 @@
 #include "draw_models.h"
+#include "img.h"
 
 //Gl stuff
 shader_c md2shader;

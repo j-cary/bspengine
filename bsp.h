@@ -281,3 +281,8 @@ public:
 } bsp_t;
 
 void UpdateBModelOrg(bmodel_t* mod);
+
+//this is only to be called when reading a bsp. Adding other ents can be done later.
+void LoadHammerEntities(char* str, int len);
+
+void BuildNodeList();
