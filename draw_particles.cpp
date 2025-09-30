@@ -64,7 +64,7 @@ void DrawParticles(float* model, float* view, float* proj, vec3_c up, vec3_c rig
 
 	glBindBuffer(GL_ARRAY_BUFFER, part_vbo);
 	//FIXME!!! this size
-	glBufferSubData(GL_ARRAY_BUFFER, 0, /*md2list.vertices * (sizeof(md2vertexinfo_t) / MODELS_MAX_VERTICES) * 4*/ sizeof(partvertexinfo_t), &plist.pvi); //give GL the new data
+	glBufferSubData(GL_ARRAY_BUFFER, 0, /*md2list.vertices * (sizeof(md2vertexinfo_t) / MDL_MAX::MODELS_VERTICES) * 4*/ sizeof(partvertexinfo_t), &plist.pvi); //give GL the new data
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	partshader.Use();

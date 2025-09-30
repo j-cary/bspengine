@@ -4,7 +4,7 @@ extern bsp_t bsp;
 extern  physent_t physents[MAX_PHYSENTS];
 extern	int num_physents;
 
-#include "md2.h" //MODELS_MAX
+#include "md2.h" //MDL_MAX::MODELS
 extern entlist_c	entlist;
 extern baseent_c* player;
 
@@ -80,7 +80,7 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 		//if (pe->mdl)
 		//	hull = &physents[i].mdl->hulls[HULL::POINT];
 		//else
-		if (e->models[0].mid <= MODELS_MAX)
+		if (e->models[0].mid <= MDL_MAX::MODELS)
 		{ //non world model
 			//0 - mins/maxs
 			mins = -tmp_monster_maxs; //mins = pe->mins - player_maxs; 
@@ -514,7 +514,7 @@ void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 			(*i)++;
 			continue;
 		}
-		else if (e->models[0].mid < MODELS_MAX)
+		else if (e->models[0].mid < MDL_MAX::MODELS)
 		{
 			// need to find a way to determine a model's mins/maxs
 			p[*i].mins = player_mins;

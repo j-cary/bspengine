@@ -1,9 +1,49 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Operation:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+/* Ideal system: Load ALL frames of ALL models in use. Have a list of ents with models, including
+* their origins, skins, and frame count. This can then be used to determine what data to send to GL.
+* Due to the fact that MOST ents with the same models won't be on the exact same frame, the renderer
+* will just go in order. This means that there may be duplicate frames! The vertexinfo is going to
+* have to be started from scratch every frame. MOST models will be animating, so it makes sense to
+* do it this way.
+*/
+
+/* Usage: Every entity will have a set number of model identifiers. Ents can request the model list
+* to fill these in. The ent can also give the list a model id to be removed. The list will keep
+* track of what ents are tied to a model (multiple ents can share the same model). The ent will also
+* have skin, origin, and frame count variables that the list will be able to retrieve at any time.
+* Models will be loaded into the 'mdls' array in the model list. Skins need to be kept track of.
+* (Removing a model may remove multiple skins, freeing up space). Every frae, the list will prepare
+* a new vertex list to give to GL. fThe list will through all the saved ents and determin their
+* model and frame number. The base vertex info can then be selected and translated based on origin.
+* The skin will also be given to GL.
+*/
+
+/* TODO:
+* Test this further...
+* Need to test: addign models after initial filling - see if loading a new model on top of an old
+* one works
+* Removing ents sharing the same ent non-sequentially
+* Interpolation
+* Lighting... (normals?)
+* Remove model count as a hardcoded limit
+* Use a texture atlas...
+*/
+
 #include "md2.h"
 #include "file.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#define MD2_ID				"IDP2" //ID Polygon 2
+#define MD2_VERSION			8
+
+//Anything above this value is treated as a viewmodel by GL. 
+#define VIEWMODEL_GL_VAL	(0x80000000) 
 
 md2list_c md2list = {};
 
@@ -168,7 +208,7 @@ void md2list_c::Dump()
 	int ent_cnt = 0, model_cnt = 0, skin_cnt = 0;
 	bool verbose = true;
 
-	for (int x = 0; x < MODELS_MAX; x++)
+	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{//array loop
 		entll_t* curs = ll[x];
 
@@ -179,7 +219,7 @@ void md2list_c::Dump()
 		if (verbose)
 			printf("Model %s has skin(s) ", mdls[x].name);
 
-		for (int skin_no = 0; skins[x][skin_no] < MODELS_MAX && skin_no < MODELS_MAX_SKINS; skin_no++, skin_cnt++)
+		for (int skin_no = 0; skins[x][skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++, skin_cnt++)
 		{//go through all the skins for this model
 			if(verbose)
 				printf("%s. ", mdls[x].skins[skin_no].name);
@@ -211,7 +251,7 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 		return NULL; //fixme
 
 	//determine if the model is in use
-	for (ofs = 0; ofs < MODELS_MAX; ofs++)
+	for (ofs = 0; ofs < MDL_MAX::MODELS; ofs++)
 	{
 		if (!strcmp(name, mdls[ofs].name))
 		{//already loaded
@@ -219,12 +259,12 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 			break;
 		}
 
-		if (!ll[ofs] && firstempty > MODELS_MAX)
+		if (!ll[ofs] && firstempty > MDL_MAX::MODELS)
 			firstempty = ofs; //first empty place. Keep going just in case the model is already in use later on
 	}
 
 
-	if (firstempty >= MODELS_MAX && !loaded)
+	if (firstempty >= MDL_MAX::MODELS && !loaded)
 		SYS_Exit("Not enough space to load %s\n", name);
 
 	if (!loaded)
@@ -236,7 +276,7 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 	}
 	else
 	{//go through all the skins for this model and update the number of ents using said skin
-		for (int skin_no = 0; skins[ofs][skin_no] < MODELS_MAX && skin_no < MODELS_MAX_SKINS; skin_no++)
+		for (int skin_no = 0; skins[ofs][skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++)
 			layers_used[skins[ofs][skin_no]]++;
 	}
 		
@@ -276,7 +316,7 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 	if (!ent)
 		SYS_Exit("Tried freeing NULL ent from model list\n");
 
-	if (midx->mid >= MODELS_MAX)
+	if (midx->mid >= MDL_MAX::MODELS)
 		SYS_Exit("Tried to free bogus model id %u\n", midx->mid);
 
 	curs = ll[midx->mid];
@@ -302,11 +342,11 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 
 	if (!prev && !curs->next)
 	{//no more ents using this model
-		for (int i = 0; i < MD2_SKINS_MAX; i++)
+		for (int i = 0; i < MD2_MAX::SKINS; i++)
 		{
 			unsigned* layer = &skins[midx->mid][i];
 
-			if(*layer < MODELS_MAX)
+			if(*layer < MDL_MAX::MODELS)
 				layers_used[*layer] = 0; //zero out each layer used by a respective skin, but don't do this for the dummy values that might be at the end of the skin list
 
 			*layer = 0xFFFFFFFF; //reset skins
@@ -332,7 +372,7 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 		midx->frame = 0;
 	}
 
-	if ((depth = skins[midx->mid][midx->skin]) >= MODELS_MAX_SKINS)
+	if ((depth = skins[midx->mid][midx->skin]) >= MDL_MAX::SKINS)
 	{
 		printf("oob skin %i for model %s\n", midx->skin, md2->name);
 		midx->skin = 0;
@@ -392,7 +432,7 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 			//scale & translate
 			if (midx->rflags & RF_VIEWMODEL)
 			{
-				vi.u[vertices] |= 0x80000000; //set the highest bit. (sanity check: Is MODELS_MAX_SKINS less than this?)
+				vi.u[vertices] |= 0x80000000; //set the highest bit. (sanity check: Is MDL_MAX::MODELS_SKINS less than this?)
 
 				vi.v[vertices][0] = rotated[0] + frame->translate[0];
 				vi.v[vertices][1] = rotated[1] + frame->translate[1];
@@ -418,7 +458,7 @@ void md2list_c::BuildList()
 {
 	vertices = 0;
 
-	for (int x = 0; x < MODELS_MAX; x++)
+	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{//array loop
 		entll_t* curs = ll[x];
 
@@ -440,7 +480,7 @@ void md2list_c::SetFrameGroup(model_t* m, const char* group, int offset)
 	if (!group || !m)
 		return;
 
-	if (m->mid >= MODELS_MAX)
+	if (m->mid >= MDL_MAX::MODELS)
 	{
 		printf("Tried to set frame of bogus model id %u\n", m->mid);
 		return;
@@ -481,7 +521,7 @@ bool md2list_c::InFrameGroup(model_t* m, const char* group)
 	if (!group || !m)
 		return false;
 
-	if (m->mid >= MODELS_MAX)
+	if (m->mid >= MDL_MAX::MODELS)
 	{
 		printf("Requested group of bogus model id %u\n", m->mid);
 		return false;
@@ -536,6 +576,6 @@ void md2list_c::Clear()
 	memset(layers_used, 0, sizeof(layers_used));
 	vertices = 0;
 
-	for (int i = 0; i < MODELS_MAX; i++)
+	for (int i = 0; i < MDL_MAX::MODELS; i++)
 		mdls[i].UnloadMD2();
 }

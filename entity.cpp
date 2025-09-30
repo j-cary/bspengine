@@ -28,7 +28,7 @@ void EntTick(gamestate_c* gs)
 		}
 
 		/*
-		if (ent->models[0].mid < MODELS_MAX && model_updatetick)
+		if (ent->models[0].mid < MDL_MAX::MODELS && model_updatetick)
 		{
 			ent->models[0].frame = (++ent->models[0].frame) % ent->models[0].frame_max;
 		}

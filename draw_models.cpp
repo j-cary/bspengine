@@ -40,7 +40,7 @@ void SetupModels(char* ent_str, int ent_len)
 	glGenTextures(1, &skinarray);
 	glActiveTexture(MODEL_TEXTURE_UNIT);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, skinarray);
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, MODELS_MAX_SKINS, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, MDL_MAX::SKINS, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -93,7 +93,7 @@ void DrawModels(float* model, float* view, float* iview, float* proj)
 
 	glBindBuffer(GL_ARRAY_BUFFER, md2_vbo);
 	//FIXME!!! this size
-	glBufferSubData(GL_ARRAY_BUFFER, 0, /*md2list.vertices * (sizeof(md2vertexinfo_t) / MODELS_MAX_VERTICES) * 4*/ sizeof(md2vertexinfo_t), &md2list.vi); //give GL the new data
+	glBufferSubData(GL_ARRAY_BUFFER, 0, /*md2list.vertices * (sizeof(md2vertexinfo_t) / MDL_MAX::MODELS_VERTICES) * 4*/ sizeof(md2vertexinfo_t), &md2list.vi); //give GL the new data
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	md2shader.Use();
@@ -119,13 +119,13 @@ void md2list_c::LoadSkins(md2_c* md2, unsigned* skins)
 		img = StretchBMP(img, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, NULL, NULL);
 
 		//figure out where it should go
-		for (array_depth = 0; array_depth < MODELS_MAX; array_depth++)
+		for (array_depth = 0; array_depth < MDL_MAX::MODELS; array_depth++)
 		{
 			if (!layers_used[array_depth])
 				break; //found an empty spot
 		}
 
-		if (array_depth >= MODELS_MAX - 1)
+		if (array_depth >= MDL_MAX::MODELS - 1)
 			SYS_Exit("Skin %s was one too many\n", md2->skins[skin_no].name);
 
 
@@ -137,7 +137,7 @@ void md2list_c::LoadSkins(md2_c* md2, unsigned* skins)
 
 void md2list_c::FillSkinArray()
 {//load all the skins from ents loaded at map start
-	for (int x = 0; x < MODELS_MAX; x++)
+	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{
 		LoadSkins(&mdls[x], skins[x]);
 	}
