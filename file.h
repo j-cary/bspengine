@@ -3,6 +3,7 @@
 #include "pcmd.h" //for inputcmds
 #include "input.h"
 #include "img.h"
+#include "sound.h"
 
 FILE* LocalFileOpen(const char* filename, const char* mode);
 
@@ -13,17 +14,6 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bo
 
 //sets up in.keys
 void ReadCFGFile(const char* name, input_c* in);
-
-typedef struct wavinfo_s
-{
-	int fmt;
-	int size;
-	int rate;
-	void* data;
-} wavinfo_t;
-
-//sound.cpp
-int ToALFmt(int bps, int channels);
 
 //16-bit stereo
 void ReadWAVFile(const char* name, wavinfo_t* info, bool music);

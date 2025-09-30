@@ -99,6 +99,7 @@ const vec3_c upvec = { 0, 1, 0 };
 const vec3_c xvec = { 1, 0, 0 };
 const vec3_c zvec = { 0, 0, 1 };
 
+[[noreturn]]
 void SYS_Exit(const char* fmt, ...);
 
 // TODO: This may need its own header. (Or not... it only really needs to be an ent var...)

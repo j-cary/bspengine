@@ -40,27 +40,6 @@ void SetupSound()
 	printf("Successfully initialized openAL sound\n");
 }
 
-int ToALFmt(int bps, int channels)
-{
-	switch (bps)
-	{
-	case 8:
-		if (channels == 1)
-			return AL_FORMAT_MONO8;
-		else
-			return AL_FORMAT_STEREO8;
-			break;
-	case 16:
-		if (channels == 1)
-			return AL_FORMAT_MONO16; //for sfx
-		else
-			return AL_FORMAT_STEREO16; //for music
-		break;
-	default:
-		return 0;
-	}
-}
-
 void ListAudioDevices(const ALCchar* devname)
 {
 	const ALCchar* dev = devname, * nextdev = devname + 1;

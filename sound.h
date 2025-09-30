@@ -16,6 +16,14 @@ enum SNDACTIONS
 	SND_RESUMELOOP
 };
 
+typedef struct wavinfo_s
+{
+	int fmt;
+	int size;
+	int rate;
+	void* data;
+} wavinfo_t;
+
 #define SND_MAX_AMBS	32
 #define SND_MAX_DYNS	64
 #define SND_MAX (SND_MAX_AMBS + SND_MAX_DYNS)

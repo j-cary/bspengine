@@ -1,12 +1,41 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Operation:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "file.h"
 #include "atlas.h" // TEXTURES_MAX
 
+static int ToALFmt(int bps, int channels)
+{
+	switch (bps)
+	{
+	case 8:
+		if (channels == 1)
+			return AL_FORMAT_MONO8;
+		else
+			return AL_FORMAT_STEREO8;
+		break;
+	case 16:
+		if (channels == 1)
+			return AL_FORMAT_MONO16; //for sfx
+		else
+			return AL_FORMAT_STEREO16; //for music
+		break;
+	default:
+		return 0;
+	}
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 FILE* LocalFileOpen(const char* filename, const char* mode)
 {
-	char fullname[FILENAME_MAX];
+	char fullname[FILENAME_MAX] = GAMEDIR;
+	constexpr size_t gamedir_len = sizeof(GAMEDIR) - 1u;
 
-	strcpy(fullname, GAMEDIR);
-	strcat(fullname, filename);
+	strncpy(&fullname[gamedir_len], filename, FILENAME_MAX - gamedir_len);
+	fullname[FILENAME_MAX - 1] = '\0';
 
 	return fopen(fullname, mode);
 }
@@ -164,8 +193,10 @@ bool WriteBMPFile(const char* name, unsigned w, unsigned h, const byte* data, bo
 	if(flip)
 		FlipTexture((byte*)data, w, h);
 
-	if(!pad)
+	if (!pad)
+	{
 		fwrite((void*)data, 1, w * h * 3, f);
+	}
 	else
 	{
 		//byte* buf;
@@ -253,7 +284,7 @@ void ReadCFGFile(const char* name, input_c* in)
 
 			if (!strcmp(in->binds[keyvalueidx].val, in->str2key_enum[i])) 
 			{ // valid keypress
-				for (int j = 0; j < sizeof(inputcmds) / (CMD_LEN + sizeof(void*)); j++)
+				for (int j = 0; j < sizeof(inputcmds) / sizeof(inputcmds[0]); j++)
 				{
 					if (inputcmds[j].name[0] == '*')
 					{//command with argument
@@ -342,7 +373,9 @@ void ReadWAVFile(const char* name, wavinfo_t* info, bool music)
 
 	info->data = malloc(info->size);
 
-	fread(info->data, info->size, 1, f);
+	if (!info->data)
+		SYS_Exit("Ran out of memory");
 
+	fread(info->data, info->size, 1, f);
 	fclose(f);
 }

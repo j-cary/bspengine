@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 
+[[noreturn]]
 void SYS_Exit(const char* fmt, ...)
 {
 	va_list args;
