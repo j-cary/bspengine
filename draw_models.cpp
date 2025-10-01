@@ -121,7 +121,7 @@ void md2list_c::LoadSkins(md2_c* md2, unsigned* skins)
 		//figure out where it should go
 		for (array_depth = 0; array_depth < MDL_MAX::MODELS; array_depth++)
 		{
-			if (!layers_used[array_depth])
+			if (info[array_depth].layers_used == 0)
 				break; //found an empty spot
 		}
 
@@ -131,7 +131,7 @@ void md2list_c::LoadSkins(md2_c* md2, unsigned* skins)
 
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, array_depth /*depth*/, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
 		skins[skin_no] = array_depth; //remember which layer this skin's data is at
-		layers_used[array_depth]++; //redundant count for later
+		info[array_depth].layers_used++; // Redundant count for later
 	}
 }
 
@@ -139,6 +139,6 @@ void md2list_c::FillSkinArray()
 {//load all the skins from ents loaded at map start
 	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{
-		LoadSkins(&mdls[x], skins[x]);
+		LoadSkins(&info[x].mdl, info[x].skins);
 	}
 }

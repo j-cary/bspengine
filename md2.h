@@ -211,26 +211,25 @@ class md2list_c
 private:
 	/* === Internal Record Keeping === */
 
+	//an entity's 'mid' is an index in this list
 	struct
 	{
 		md2_c mdl;
-		entll_t* ll;
+
+		// A list of what entities are using each model
+		entll_t* ll; 
+
+		/* Record of what index into the texture array each models' skins are in. Obviously can hold the
+		maximum number of skins for each model */
 		unsigned skins[MD2_MAX::SKINS];
+
+		unsigned layers_used;
 	} info[MDL_MAX::MODELS];
 
-	//an entity's 'mid' is an index in this list, ll, or skins.
-	md2_c mdls[MDL_MAX::MODELS] = {}; 
-
-	// A list of what entities are using each model
-	entll_t* ll[MDL_MAX::MODELS]; 
-
-	/* Record of what index into the texture array each models' skins are in. Obviously can hold the
-	maximum number of skins for each model */
-	unsigned skins[MDL_MAX::MODELS][MD2_MAX::SKINS]; 
 
 	/* Record what indices in the texture array have been used. This is technically redundant.
 	TODO: Work on this later for atlas stuff... */
-	unsigned layers_used[MDL_MAX::MODELS]; 
+	//unsigned layers_used[MDL_MAX::MODELS]; 
 
 	//for building the list that gets sent to GL every frame
 	void AddMDLtoList(baseent_c* ent, model_t* midx);
@@ -252,7 +251,7 @@ public:
 		//free up the linked list of entity pointers
 		for (int x = 0; x < MDL_MAX::MODELS; x++)
 		{//array loop
-			entll_t* curs = ll[x];
+			entll_t* curs = info[x].ll;
 
 			while (curs)
 			{//linked list loop

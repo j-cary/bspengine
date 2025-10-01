@@ -210,19 +210,19 @@ void md2list_c::Dump()
 
 	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{//array loop
-		entll_t* curs = ll[x];
+		entll_t* curs = info[x].ll;
 
 		if (!curs) //unused model slot
 			break;
 
 		model_cnt++;
 		if (verbose)
-			printf("Model %s has skin(s) ", mdls[x].name);
+			printf("Model %s has skin(s) ", info[x].mdl.name);
 
-		for (int skin_no = 0; skins[x][skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++, skin_cnt++)
+		for (int skin_no = 0; info[x].skins[skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++, skin_cnt++)
 		{//go through all the skins for this model
 			if(verbose)
-				printf("%s. ", mdls[x].skins[skin_no].name);
+				printf("%s. ", info[x].mdl.skins[skin_no].name);
 		}
 
 		if (verbose)
@@ -253,14 +253,15 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 	//determine if the model is in use
 	for (ofs = 0; ofs < MDL_MAX::MODELS; ofs++)
 	{
-		if (!strcmp(name, mdls[ofs].name))
+		if (!strcmp(name, info[ofs].mdl.name))
 		{//already loaded
 			loaded = true;
 			break;
 		}
 
-		if (!ll[ofs] && firstempty > MDL_MAX::MODELS)
-			firstempty = ofs; //first empty place. Keep going just in case the model is already in use later on
+		//first empty place. Keep going just in case the model is already in use later on
+		if (!info[ofs].ll && firstempty > MDL_MAX::MODELS)
+			firstempty = ofs; 
 	}
 
 
@@ -270,22 +271,22 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 	if (!loaded)
 	{
 		ofs = firstempty;
-		mdls[ofs].LoadMD2(name);
+		info[ofs].mdl.LoadMD2(name);
 		//FIXME!!! - this needs to be called here, but only after initial map loading!
-		LoadSkins(&mdls[ofs], skins[ofs]);
+		LoadSkins(&info[ofs].mdl, info[ofs].skins);
 	}
 	else
 	{//go through all the skins for this model and update the number of ents using said skin
-		for (int skin_no = 0; skins[ofs][skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++)
-			layers_used[skins[ofs][skin_no]]++;
+		for (int skin_no = 0; info[ofs].skins[skin_no] < MDL_MAX::MODELS && skin_no < MDL_MAX::SKINS; skin_no++)
+			info[info[ofs].skins[skin_no]].layers_used++; //layers_used[info[ofs].skins[skin_no]]++;
 	}
 		
 
 	//locate the end of the list of entities using this model
-	end = ll[ofs];
+	end = info[ofs].ll;
 	if (!end)
 	{//empty list
-		end = ll[ofs] = new entll_t;
+		end = info[ofs].ll = new entll_t;
 	}
 	else
 	{
@@ -303,7 +304,7 @@ unsigned md2list_c::Alloc(const char* name, baseent_c* ent, model_t* _midx)
 	end->next = NULL;
 
 	_midx->mid = ofs;
-	_midx->frame_max = mdls[ofs].hdr.frame_cnt;
+	_midx->frame_max = info[ofs].mdl.hdr.frame_cnt;
 
 	return ofs; //give the calling ent the mid
 }
@@ -319,7 +320,7 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 	if (midx->mid >= MDL_MAX::MODELS)
 		SYS_Exit("Tried to free bogus model id %u\n", midx->mid);
 
-	curs = ll[midx->mid];
+	curs = info[midx->mid].ll;
 	prev = NULL;
 
 	while (1)
@@ -335,7 +336,7 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 	}
 
 	if (!prev) //this ent is first in the list
-		ll[midx->mid] = curs->next;
+		info[midx->mid].ll = curs->next;
 	else
 		prev->next = curs->next;
 
@@ -344,16 +345,19 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 	{//no more ents using this model
 		for (int i = 0; i < MD2_MAX::SKINS; i++)
 		{
-			unsigned* layer = &skins[midx->mid][i];
+			unsigned* layer = &info[midx->mid].skins[i];
 
-			if(*layer < MDL_MAX::MODELS)
-				layers_used[*layer] = 0; //zero out each layer used by a respective skin, but don't do this for the dummy values that might be at the end of the skin list
+			/* Zero out each layer used by a respective skin, but don't for the dummy values that 
+			might be at the end of the skin list*/
+			if (*layer < MDL_MAX::MODELS)
+				info[*layer].layers_used = 0;
+				//layers_used[*layer] = 0; 
 
 			*layer = 0xFFFFFFFF; //reset skins
 		}
 
 		//really just clearing the name
-		mdls[midx->mid].UnloadMD2();
+		info[midx->mid].mdl.UnloadMD2();
 	}
 
 	delete curs;
@@ -362,7 +366,7 @@ void md2list_c::Free(model_t* midx, baseent_c* ent)
 
 void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 {
-	md2_c* md2 = &mdls[midx->mid];
+	md2_c* md2 = &info[midx->mid].mdl;
 	unsigned depth = 0;
 	glm::mat4 rotate(1.0f);
 
@@ -372,11 +376,11 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 		midx->frame = 0;
 	}
 
-	if ((depth = skins[midx->mid][midx->skin]) >= MDL_MAX::SKINS)
+	if ((depth = info[midx->mid].skins[midx->skin]) >= MDL_MAX::SKINS)
 	{
 		printf("oob skin %i for model %s\n", midx->skin, md2->name);
 		midx->skin = 0;
-		depth = skins[midx->mid][midx->skin];
+		depth = info[midx->mid].skins[midx->skin];
 	}
 
 
@@ -460,7 +464,7 @@ void md2list_c::BuildList()
 
 	for (int x = 0; x < MDL_MAX::MODELS; x++)
 	{//array loop
-		entll_t* curs = ll[x];
+		entll_t* curs = info[x].ll;
 
 		while (curs)
 		{//linked list loop
@@ -486,7 +490,7 @@ void md2list_c::SetFrameGroup(model_t* m, const char* group, int offset)
 		return;
 	}
 
-	mdl = &mdls[m->mid];
+	mdl = &info[m->mid].mdl;
 	frames = mdl->Frames();
 	len = (int)strlen(group);
 
@@ -527,7 +531,7 @@ bool md2list_c::InFrameGroup(model_t* m, const char* group)
 		return false;
 	}
 
-	mdl = &mdls[m->mid];
+	mdl = &info[m->mid].mdl;
 	frames = mdl->Frames();
 	len = (int)strlen(group);
 
@@ -570,12 +574,23 @@ void md2list_c::TMP()
 
 void md2list_c::Clear()
 {
-	memset(ll, NULL, sizeof(ll));
-	memset(&vi, 0, sizeof(vi));
-	memset(skins, 0xFF, sizeof(skins)); //0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
-	memset(layers_used, 0, sizeof(layers_used));
-	vertices = 0;
+	for (int i = 0; i < MDL_MAX::MODELS; ++i)
+	{
+		info[i].ll = NULL; // Shouldn't this be a free??? FIXME
+		info[i].layers_used = 0;
 
-	for (int i = 0; i < MDL_MAX::MODELS; i++)
-		mdls[i].UnloadMD2();
+		for (int j = 0; j < MD2_MAX::SKINS; ++j)
+		{
+			//0 is a valid index into the GL array so 0xFFFFFF is used as a terminator. Sucks.
+			info[i].skins[j] = 0xFFFFFFFF;
+		}
+
+		for (int j = 0; j < MDL_MAX::MODELS; ++j)
+		{
+			info[i].mdl.UnloadMD2();
+		}
+	}
+
+	memset(&vi, 0, sizeof(vi));
+	vertices = 0;
 }
