@@ -37,6 +37,8 @@ extern input_c in;
 *	Wait for restructure until the lighting issue is fixed
 * Game:
 *	Deal with this later...
+* MD2:
+*	Needs more major refactor; dynamic number of models
 * 
 * Make program more resilient - change maps, unload maps, etc.
 * Fix text drawing

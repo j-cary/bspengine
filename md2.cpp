@@ -1,37 +1,36 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 Operation:
+
+	Ideal system: Load ALL frames of ALL models in use. Have a list of ents with models, including
+their origins, skins, and frame count. This can then be used to determine what data to send to GL.
+Due to the fact that MOST ents with the same models won't be on the exact same frame, the renderer
+will just go in order. This means that there may be duplicate frames! The vertexinfo is going to
+have to be started from scratch every frame. MOST models will be animating, so it makes sense to
+do it this way.
+
+
+	Usage: Every entity will have a set number of model identifiers. Ents can request the model list
+to fill these in. The ent can also give the list a model id to be removed. The list will keep
+track of what ents are tied to a model (multiple ents can share the same model). The ent will also
+have skin, origin, and frame count variables that the list will be able to retrieve at any time.
+Models will be loaded into the 'mdls' array in the model list. Skins need to be kept track of.
+(Removing a model may remove multiple skins, freeing up space). Every frae, the list will prepare
+a new vertex list to give to GL. fThe list will through all the saved ents and determin their
+model and frame number. The base vertex info can then be selected and translated based on origin.
+The skin will also be given to GL.
+
+
+	TODO:
+Test this further...
+Need to test: addign models after initial filling - see if loading a new model on top of an old
+one works
+Removing ents sharing the same ent non-sequentially
+Interpolation
+Lighting... (normals?)
+Remove model count as a hardcoded limit
+Use a texture atlas...
+Put MD2 in this file once everything is dynamic
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-
-/* Ideal system: Load ALL frames of ALL models in use. Have a list of ents with models, including
-* their origins, skins, and frame count. This can then be used to determine what data to send to GL.
-* Due to the fact that MOST ents with the same models won't be on the exact same frame, the renderer
-* will just go in order. This means that there may be duplicate frames! The vertexinfo is going to
-* have to be started from scratch every frame. MOST models will be animating, so it makes sense to
-* do it this way.
-*/
-
-/* Usage: Every entity will have a set number of model identifiers. Ents can request the model list
-* to fill these in. The ent can also give the list a model id to be removed. The list will keep
-* track of what ents are tied to a model (multiple ents can share the same model). The ent will also
-* have skin, origin, and frame count variables that the list will be able to retrieve at any time.
-* Models will be loaded into the 'mdls' array in the model list. Skins need to be kept track of.
-* (Removing a model may remove multiple skins, freeing up space). Every frae, the list will prepare
-* a new vertex list to give to GL. fThe list will through all the saved ents and determin their
-* model and frame number. The base vertex info can then be selected and translated based on origin.
-* The skin will also be given to GL.
-*/
-
-/* TODO:
-* Test this further...
-* Need to test: addign models after initial filling - see if loading a new model on top of an old
-* one works
-* Removing ents sharing the same ent non-sequentially
-* Interpolation
-* Lighting... (normals?)
-* Remove model count as a hardcoded limit
-* Use a texture atlas...
-*/
-
 #include "md2.h"
 #include "file.h"
 
@@ -45,7 +44,9 @@ Operation:
 //Anything above this value is treated as a viewmodel by GL. 
 #define VIEWMODEL_GL_VAL	(0x80000000) 
 
-md2list_c md2list = {};
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                       MD2 Loading                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void md2_c::LoadMD2(const char* filename)
 {
@@ -197,11 +198,11 @@ void md2_c::UnloadMD2()
 	}
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                       MD2List Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
-
-
-//Global model list
+md2list_c md2list = {};
 
 void md2list_c::Dump()
 {
@@ -471,6 +472,47 @@ void md2list_c::BuildList()
 			AddMDLtoList(curs->ent, &curs->ent->models[0]);
 			curs = curs->next;
 		}
+	}
+}
+
+//TESTME!!! This function SHOULD work for adding skins after setup has already occured
+void md2list_c::LoadSkins(md2_c* md2, unsigned* skins)
+{//This skin is NOT in use by anything else!
+	img_c* img;
+	int array_depth;
+
+	for (int skin_no = 0; skin_no < md2->hdr.skin_cnt; skin_no++)
+	{
+		//Load the skin
+		if (!(img = ReadBMPFile(md2->skins[skin_no].name, true)))
+		{
+			printf("Couldn't load skin %s\n", md2->skins[skin_no].name);
+			break;
+		}
+		img = StretchBMP(img, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, NULL, NULL);
+
+		//figure out where it should go
+		for (array_depth = 0; array_depth < MDL_MAX::MODELS; array_depth++)
+		{
+			if (info[array_depth].layers_used == 0)
+				break; //found an empty spot
+		}
+
+		if (array_depth >= MDL_MAX::MODELS - 1)
+			SYS_Exit("Skin %s was one too many\n", md2->skins[skin_no].name);
+
+
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, array_depth /*depth*/, MD2_TEXTURE_SIZE, MD2_TEXTURE_SIZE, 1, GL_RGB, GL_UNSIGNED_BYTE, img->data);
+		skins[skin_no] = array_depth; //remember which layer this skin's data is at
+		info[array_depth].layers_used++; // Redundant count for later
+	}
+}
+
+void md2list_c::FillSkinArray()
+{//load all the skins from ents loaded at map start
+	for (int x = 0; x < MDL_MAX::MODELS; x++)
+	{
+		LoadSkins(&info[x].mdl, info[x].skins);
 	}
 }
 
