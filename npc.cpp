@@ -47,19 +47,19 @@ bool CanSee(baseent_c* ent, baseent_c* target, float fov, float dist)
 	//build the viewing space
 	points[0][0] = ent->origin[0];
 	points[0][1] = ent->origin[2];
-	//SpawnParticle(ent->origin, { 0,0,0 }, { 0,1,0 }, 0.01, 5, 0, 0);
+	//ParticleSpawn(ent->origin, { 0,0,0 }, { 0,1,0 }, 0.01, 5, 0, 0);
 
 	GetForwardVector(0, ent->chase_angle + (fov / 2.0f), side);
 	point = ent->origin + side * dist;
 	points[1][0] = point[0];
 	points[1][1] = point[2];
-	//SpawnParticle(point, { 0,0,0 }, { 1,0,0 }, 0.01, 5, 0, 0);
+	//ParticleSpawn(point, { 0,0,0 }, { 1,0,0 }, 0.01, 5, 0, 0);
 
 	GetForwardVector(0, ent->chase_angle - (fov / 2.0f), side);
 	point = ent->origin + side * dist;
 	points[2][0] = point[0];
 	points[2][1] = point[2];
-	//SpawnParticle(point, { 0,0,0 }, { 0,0,1 }, 0.01, 5, 0, 0);
+	//ParticleSpawn(point, { 0,0,0 }, { 0,0,1 }, 0.01, 5, 0, 0);
 
 #if 0
 	//calculate area of the triangle

@@ -6,9 +6,40 @@
 
 extern gamestate_c game;
 
-particlelist_c plist;
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                       Particle Functions                                         *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-//particle_c
+class particle_c
+{
+private:
+
+public:
+	float	birthtime; //for use with darkening/lightening
+	float	lifetime; //when this is less than game time, the particle is dead.
+	vec3_c	color; //from the collided surface if bullet
+	float	alpha;
+	vec3_c	origin;
+	vec3_c	velocity; //really should have a tick function because of this
+	float	size;
+	float	weight; //scaling factor against regular gravity
+	flag_t	flags;
+
+	void Update();
+
+	particle_c()
+	{
+		birthtime = 0.0f;
+		lifetime = -1.0f; //start dead
+		color = zerovec;
+		alpha = 1.0f;
+		origin = zerovec;
+		velocity = zerovec;
+		size = 0.0f;
+		weight = 0.0f;
+		flags = PF_NONE;
+	}
+};
 
 void particle_c::Update()
 {
@@ -53,8 +84,33 @@ void particle_c::Update()
 	origin = wishpos;
 }
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                    Particle List Functions                                       *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-//particlelist_c
+class particlelist_c
+{
+private:
+	int highest_used;
+	float ctime; //set in buildlist
+	particle_c pl[PARTICLES_MAX];
+
+	void AddParticleToList(particle_c* p);
+public:
+	partvertexinfo_t pvi;
+	int particles;
+
+	void Clear();
+	void Dump();
+	void BuildList(float time);
+	void AddParticle(vec3_c _origin, vec3_c vel, vec3_c _color, float _lifetime, float _size, float _weight, flag_t _flags);
+	void RunParticles();
+
+	particlelist_c()
+	{
+		Clear();
+	}
+};
 
 void particlelist_c::Clear()
 {
@@ -67,8 +123,6 @@ void particlelist_c::Clear()
 		pl[i].alpha = 1.0f;
 	}
 }
-
-
 
 void particlelist_c::Dump()
 {
@@ -167,21 +221,23 @@ void particlelist_c::RunParticles()
 	}
 }
 
-//
-//	Interface
-//
+
+static particlelist_c plist;
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-
-void SpawnParticle(vec3_c _origin, vec3_c vel, vec3_c _color, float _lifetime, float _size, float _weight, flag_t _flags)
+void ParticleSpawn(vec3_c _origin, vec3_c vel, vec3_c _color, float _lifetime, float _size, float _weight, flag_t _flags)
 {
 	//todo: add alpha in here
 	plist.AddParticle(_origin, vel, _color, _lifetime, _size, _weight, _flags);
 }
 
-void SpawnOil(vec3_c origin, float damage)
+void ParticleSpawnOil(vec3_c origin, float damage)
 {
-	//vec3_c bloodred = { 0.4, 0.02, 0.02 };
+	vec3_c bloodred = { 0.4, 0.02, 0.02 };
 	vec3_c color = { 0.2f, 0.2f, 0.2f };
 	vec3_c vel;
 	float life;
@@ -193,22 +249,36 @@ void SpawnOil(vec3_c origin, float damage)
 		vel.v[2] = frand(-80, 80);
 		life = 0.7f + frand(-0.2, 0.2);
 
-		SpawnParticle(origin, vel, color, life, 0.5f, 0.3f, PF_FADEOUT);
+		ParticleSpawn(origin, vel, bloodred, life, 0.5f, 0.3f, PF_FADEOUT);
 	}
 }
-
 
 void ParticleTick()
 {
 	plist.RunParticles();
 }
 
+void ParticleListBuild(float time)
+{
+	plist.BuildList(time);
+}
 
-#include "pcmd.h"
-#include "input.h"
+const partvertexinfo_t* ParticleList()
+{
+	return &plist.pvi;
+}
 
-void PCmdPrintPartlist(input_c* in, int key)
+int ParticleListCnt()
+{
+	return (int)sizeof(partvertexinfo_t);
+}
+
+int ParticleCnt()
+{
+	return plist.particles;
+}
+
+void ParticleDump()
 {
 	plist.Dump();
-	in->keys[key].time = game.time + 0.5;
 }

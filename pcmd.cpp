@@ -275,3 +275,9 @@ void PCmd(const char cmd[CMD_LEN], input_c* in, int key)
 		}
 }
 
+#include "particles.h"
+void PCmdPrintPartlist(input_c* in, int key)
+{
+	ParticleDump();
+	in->keys[key].time = game.time + 0.5;
+}

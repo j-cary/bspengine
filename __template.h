@@ -33,4 +33,8 @@ Operation:
 *	Un-inherited classes, structs, and classes with few member functions should be typedef structs
 *	Inherited classes should actually be classes
 *	Structs should only have a typedef name unless required
+* 
+* Referencing:
+*	Structs passed as args that aren't modified should be references to consts
+*	Structs passed as args that ARE modified should be const pointers
 */

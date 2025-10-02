@@ -43,7 +43,7 @@ double FireWeapon(input_c* in, baseent_c* p)
 	if ((ent = tr.TraceBullet(p->eyes, in->forward.nml(), 1024, 0, 0)))
 	{//hit the world or another (studio) model
 		//printf("hit a %s - %s\n", ent->classname, ent->origin.str());
-		SpawnOil(tr.end, 100);
+		ParticleSpawnOil(tr.end, 100);
 		
 	}
 	else

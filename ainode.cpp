@@ -130,7 +130,7 @@ void DrawPathLine(vec3_c v1, vec3_c v2, int particle_cnt, vec3_c color, float li
 		point = v1 + (delta * scale);
 
 
-		SpawnParticle(point, { 0,0,0 }, color, lifetime, 8, 0, PF_NONE);
+		ParticleSpawn(point, { 0,0,0 }, color, lifetime, 8, 0, PF_NONE);
 	}
 }
 
