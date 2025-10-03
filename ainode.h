@@ -50,6 +50,7 @@ public:
 
 	int Initialize();
 	void Clear();
+	void Dump();
 
 	//void FindNearestLink();
 
@@ -84,3 +85,4 @@ typedef struct aipath_s
 ainode_c* FindNearestNode(vec3_c point, bool visible);
 void MakePath(baseent_c* e, baseent_c* target, aipath_t* path);
 void DrawPath(aipath_t* path); //debug
+void GraphDump();

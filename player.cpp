@@ -1,5 +1,4 @@
 #include "player.h"
-#include "pcmd.h" //shooting
 #include "weapons.h"
 #include "input.h"
 
@@ -52,6 +51,11 @@ void SpawnPlayer(input_c* in)
 	player->models[0].rflags |= RF_VIEWMODEL;
 }
 
+baseent_c* GetPlayer()
+{
+	return player;
+}
+
 void PlayerTick(const input_c* in)
 {
 	int model_skiptick = game.maxtps / 16; //how many ticks to skip inbetween model frame updates
@@ -77,17 +81,4 @@ void PlayerTick(const input_c* in)
 	if (model_updatetick)
 		WeaponTick(player);
 
-}
-
-
-void PCmdShoot(input_c* in, int key)
-{
-	double wait;
-	static double nextfire = -1.;
-
-	if (game.time < nextfire)
-		return; //stop the player from spamming this button
-
-	wait = FireWeapon(in, player);
-	nextfire = in->keys[key].time = game.time + wait;
 }

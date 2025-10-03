@@ -7,3 +7,4 @@
 void SetupPlayer(input_c* in);
 void PlayerTick(const input_c* in);
 void SpawnPlayer(input_c* in);
+baseent_c* GetPlayer();

@@ -636,3 +636,8 @@ void md2list_c::Clear()
 	memset(&vi, 0, sizeof(vi));
 	vertices = 0;
 }
+
+void MD2Dump()
+{
+	md2list.Dump();
+}

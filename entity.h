@@ -276,6 +276,8 @@ public:
 
 	baseent_c* Alloc(const char* classname);
 
+	void Dump() const;
+
 	entlist_c()
 	{
 		memset(list, NULL, sizeof(list));
@@ -299,5 +301,5 @@ int FindEntByClassName(baseent_c*& e, const char* name, int start);
 baseent_c* FindEntByName(const char* name);
 void ClearEntlist();
 
-
+void EntDump();
 void EntTick(gamestate_c* gs);

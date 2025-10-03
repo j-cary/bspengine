@@ -5,9 +5,13 @@
 #include "pmove.h" //droptofloor
 
 entlist_c entlist;
-extern md2list_c md2list;
 extern gamestate_c game;
 extern bsp_t bsp;
+
+void EntDump()
+{
+	entlist.Dump();
+}
 
 void EntTick(gamestate_c* gs)
 {
@@ -195,6 +199,27 @@ baseent_c* entlist_c::Alloc(const char* classname)
 
 #undef S
 
+void entlist_c::Dump() const
+{
+	for (int i = 0; i < ENTITIES_MAX; i++)
+	{
+		baseent_c* e = list[i];
+
+		if (!e)
+			continue;
+
+		printf("%s with org %s, angles %s, name %s, model %s, noise %s\n",
+			e->classname,
+			e->origin.str(),
+			e->angles.str(),
+			e->name,
+			e->modelname,
+			e->noise);
+	}
+}
+
+
+
 baseent_c* AllocEnt(const char* classname)
 {
 	return entlist.Alloc(classname);
@@ -243,44 +268,4 @@ void ClearEntlist()
 		}
 		//e->Clear();
 	}
-}
-
-
-
-
-#include "input.h"
-void PCmdPrintEntlist(input_c* in, int key)
-{
-	for (int i = 0; i < ENTITIES_MAX; i++)
-	{
-		baseent_c* e = entlist[i];
-
-		if (!e)
-			continue;
-		//if (!e->inuse)
-		//	continue;
-
-		printf("%s with org %s, angles %s, name %s, model %s, noise %s\n",
-			e->classname,
-			e->origin.str(),
-			e->angles.str(),
-			e->name,
-			e->modelname,
-			e->noise);
-	}
-
-	in->keys[key].time = game.time + 0.5;
-}
-
-void PCmdPrintMD2list(input_c* in, int key)
-{
-	md2list.Dump();
-	in->keys[key].time = game.time + 0.5;
-}
-
-void PCmdTMP(input_c* in, int key)
-{//temp to test removing entities
-	md2list.TMP();
-	in->keys[key].time = game.time + 0.5;
-	in->keys[key].pressed = KEY_STATE::OFF;
 }

@@ -284,9 +284,10 @@ void ReadCFGFile(const char* name, input_c* in)
 
 			if (!strcmp(in->binds[keyvalueidx].val, in->str2key_enum[i])) 
 			{ // valid keypress
-				for (int j = 0; j < sizeof(inputcmds) / sizeof(inputcmds[0]); j++)
+				for (int j = 0; j < PCmdBindCnt(); j++)
 				{
-					if (inputcmds[j].name[0] == '*')
+					const cmd_t* cmd = PCmdBind(j);
+					if (cmd->name[0] == '*')
 					{//command with argument
 
 						char* curs = in->binds[keyvalueidx].key;
@@ -297,14 +298,14 @@ void ReadCFGFile(const char* name, input_c* in)
 							curs++;
 						}
 
-						if (!strncmp(&inputcmds[j].name[1], in->binds[keyvalueidx].key, curs - in->binds[keyvalueidx].key))
+						if (!strncmp(&cmd->name[1], in->binds[keyvalueidx].key, curs - in->binds[keyvalueidx].key))
 						{
 							strcpy(in->keys[i].cmd, in->binds[keyvalueidx].key);
 							break;
 						}
 					}
 
-					if (!strncmp(in->binds[keyvalueidx].key, inputcmds[j].name, CMD_LEN)) //valid input. If not valid, do nothing
+					if (!strcmp(in->binds[keyvalueidx].key, cmd->name)) //valid input. If not valid, do nothing
 					{
 						if (in->binds[keyvalueidx].key[0] == '+')
 							in->keys[i].liftoff = 1;

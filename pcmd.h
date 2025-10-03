@@ -2,6 +2,10 @@
 #include "common.h"
 #include "input.h"
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 #define CMD_LEN	64
 typedef struct cmd_s
 {
@@ -9,56 +13,14 @@ typedef struct cmd_s
 	void (*func)(input_c*, int);
 } cmd_t;
 
-void PCmdForward(input_c* in, int key);
-void PCmdBack(input_c* in, int key);
-void PCmdLeft(input_c* in, int key);
-void PCmdRight(input_c* in, int key);
-void PCmdUp(input_c* in, int key);
-void PCmdDown(input_c* in, int key);
-void PCmdFullscreen(input_c* in, int key);
-void PCmdMenu(input_c* in, int key);
-void PCmdShoot(input_c* in, int key); //player.cpp
-
-void PCmdPos(input_c* in, int key);
-void PCmdRmode(input_c* in, int key);
-void PCmdPrintEntlist(input_c* in, int key); //defined in entity.cpp
-void PCmdPrintMD2list(input_c* in, int key); //defined in entity.cpp
-void PCmdPrintPartlist(input_c* in, int key); //defined in particle.cpp
-void PCmdTMP(input_c* in, int key);
-void PCmdLockPVS(input_c* in, int key);
-void PCmdCmode(input_c* in, int key);
-void PCmdDumpCmds(input_c* in, int key);
-void PCmdDumpNodes(input_c* in, int key);
-
-void PCmdMapA(input_c* in, int key);
-
-const cmd_t inputcmds[] =
-{
-	"+moveforward", &PCmdForward,
-	"+moveback",	&PCmdBack,
-	"+moveleft",	&PCmdLeft,
-	"+moveright",	&PCmdRight,
-	"+moveup",		&PCmdUp,
-	"+movedown",	&PCmdDown,
-	"fullscreen",	&PCmdFullscreen,
-	"menu",			&PCmdMenu,
-	"shoot",		&PCmdShoot,
-
-	"pos",			&PCmdPos,
-	"rmode",		&PCmdRmode,
-	"entlist",		&PCmdPrintEntlist,
-	"mdllist",		&PCmdPrintMD2list,
-	"partlist",		&PCmdPrintPartlist,
-	"tmp",			&PCmdTMP,
-	"lockpvs",		&PCmdLockPVS,
-	"clip",			&PCmdCmode,
-	"dumpcmds",		&PCmdDumpCmds,
-	"dumpnodes",	&PCmdDumpNodes,
-
-	"*map",			&PCmdMapA,
-};
-
 void PKeys(input_c* in);
 void PCmd(const char cmd[CMD_LEN], input_c* in, int key);
+
+int PCmdBindCnt();
+const cmd_t* PCmdBind(int index);
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                      Direct Engine Calls                                         *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void ChangeMap(const char* mapname, input_c* in);

@@ -107,38 +107,12 @@ void aigraph_c::Clear()
 	num_nodes = 0;
 }
 
-#include "particles.h"
+// FIXME
+void DrawPathLine(vec3_c v1, vec3_c v2, int particle_cnt, vec3_c color, float lifetime);
 
-void DrawPathLine(vec3_c v1, vec3_c v2, int particle_cnt, vec3_c color, float lifetime)
+void aigraph_c::Dump()
 {
-	vec3_c	delta;
-	float	dist;
-	float	particle_dist;
-
-
-	delta = v2 - v1;
-	dist = delta.len();
-	delta = delta.nml(); //direction
-
-
-	particle_dist = dist / (float)(particle_cnt - 1);
-	for (int k = 0; k < particle_cnt; k++)
-	{
-		float scale = particle_dist * k;
-		vec3_c point;
-
-		point = v1 + (delta * scale);
-
-
-		ParticleSpawn(point, { 0,0,0 }, color, lifetime, 8, 0, PF_NONE);
-	}
-}
-
-#include "input.h"
-extern gamestate_c game;
-void PCmdDumpNodes(input_c* in, int key)
-{
-	ainode_c* l, *n;
+	ainode_c* l, * n;
 	int link_cnt = 0;
 	int links_per_node;
 	const int particles = 10;
@@ -182,10 +156,39 @@ void PCmdDumpNodes(input_c* in, int key)
 	}
 
 	printf("%i nodes with %i connections\n", graph.num_nodes, link_cnt);
-
-	in->keys[key].time = game.time + 0.5;
 }
 
+void GraphDump()
+{
+	graph.Dump();
+}
+
+#include "particles.h"
+
+void DrawPathLine(vec3_c v1, vec3_c v2, int particle_cnt, vec3_c color, float lifetime)
+{
+	vec3_c	delta;
+	float	dist;
+	float	particle_dist;
+
+
+	delta = v2 - v1;
+	dist = delta.len();
+	delta = delta.nml(); //direction
+
+
+	particle_dist = dist / (float)(particle_cnt - 1);
+	for (int k = 0; k < particle_cnt; k++)
+	{
+		float scale = particle_dist * k;
+		vec3_c point;
+
+		point = v1 + (delta * scale);
+
+
+		ParticleSpawn(point, { 0,0,0 }, color, lifetime, 8, 0, PF_NONE);
+	}
+}
 
 //
 //interface

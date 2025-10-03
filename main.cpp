@@ -30,6 +30,7 @@ extern input_c in;
 
 /* New priority list:
 * Restructure program!!!
+
 * BSP:
 *	PVS restructure is getting pushed back into the PVS bug fix
 *	Structures need to be unpacked and proper reading has to happen
@@ -40,6 +41,7 @@ extern input_c in;
 * MD2:
 *	Needs more major refactor; dynamic number of models
 * 
+* Crash when changing maps: Elist not being cleared
 * Make program more resilient - change maps, unload maps, etc.
 * Fix text drawing
 * Fix annoying mysterious lighting bug
