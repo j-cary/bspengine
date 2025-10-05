@@ -3,6 +3,7 @@
 #include "sound.h"
 #include "md2.h" //md2list
 #include "pmove.h" //droptofloor
+#include "clip.h"
 
 entlist_c entlist;
 extern gamestate_c game;

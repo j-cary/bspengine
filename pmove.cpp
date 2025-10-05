@@ -1,15 +1,27 @@
 #include "pmove.h"
+#include "clip.h"
 #include "vec_math.h"
 
-extern gamestate_c game;
-extern bsp_t bsp;
+typedef struct
+{
+	movetype_e movetype;
+	int moveup, moveforward, moveright;
+	float pitch, yaw;
+	int* onground;
+	vec3_c* org, * vel;
+	baseent_c* ent;
+} pmove_t;
 
-const float pMaxSpeed = 320; //units / second
-const float pAccelRate = 10.0;
-const float pFriction = 6;
-const float pStopSpeed = 100;
-const float pGravity = 800;
-const float pJumpSpeed = 270;
+extern gamestate_c game;
+
+// in units/second
+
+#define SPEED_MAX 320 
+#define ACCEL_RATE (10.0f)
+#define FRICTION 6
+#define SPEED_STOP 100
+#define GRAVITY 800
+#define JUMP_SPEED 270
 
 #define STOP_EPSILON (0.75f)
 #define CLIP_PLANES_MAX	4
@@ -17,79 +29,26 @@ const float pJumpSpeed = 270;
 
 #define GROUNDED_NOT	(-1)
 
-physent_t physents[MAX_PHYSENTS]; //0th is the world
-int num_physents = 0;
+static int jumpheld = 0; //FIXME: jump is actually triggering twice somehow - getting a little too much height
+
+static pmove_t pm;
 
 //todo: nudgeposition & pm_testplayerposition - are these even necessary?
 
-void PAccelerate(vec3_c wishdir, float wishspd, float accel);
-void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel);
-void PJump();
-void PFriction();
-void PClip(vec3_c wishvel, vec3_c norm, vec3_c& clippedvel); //clip velocity and fill in a trace
-void PFlyMove(); //Clip movement and slide across multiple planes. TODO: give this some parms so groundmove isn't so unreadable
-void PGroundMove(); //Player is already on the ground and is not jumping
-void PCategorizePosition();
+static void PAccelerate(vec3_c wishdir, float wishspd, float accel);
+static void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel);
+static void PJump();
+static void PFriction();
+static void PClip(vec3_c wishvel, vec3_c norm, vec3_c& clippedvel); //clip velocity and fill in a trace
+static void PFlyMove(); //Clip movement and slide across multiple planes. TODO: give this some parms so groundmove isn't so unreadable
+static void PGroundMove(); //Player is already on the ground and is not jumping
+static void PCategorizePosition();
 
-void NoClipMove();
-void WaterMove();
-void ClipMove();
+static void NoClipMove();
+static void WaterMove();
+static void ClipMove();
 
-
-int jumpheld = 0; //FIXME: jump is actually triggering twice somehow - getting a little too much height
-
-pmove_t pm;
-
-void PMove()
-{
-	if (pm.movetype == MOVETYPE::NOCLIP)
-	{//FIXME: moving while walking carries over speed to noclipping
-		NoClipMove();
-		return;
-	}
-
-	num_physents = 1; //the world model is always in this
-	BuildPhysentList(physents, &num_physents, pm.ent);
-
-	//NudgePosition();
-
-	PCategorizePosition();
-
-	//printf("%i\n", onground);
-	
-	/*
-	if (waterlevel == 2)
-		CheckWaterJump();
-
-	if (pmove.velocity[2] < 0)
-		pmove.waterjumptime = 0;
-
-	if (pmove.cmd.buttons & BUTTON_JUMP)
-		JumpButton();
-	else
-		pmove.oldbuttons &= ~BUTTON_JUMP;
-	*/
-
-	if (pm.moveup == 1)
-		PJump();
-	else if (jumpheld)
-		jumpheld = 0;
-
-	PFriction();
-
-	//if (waterlevel >= 2)
-	//	WaterMove();
-	//else
-		ClipMove();
-
-
-	PCategorizePosition();
-
-	pm.org = NULL;
-	pm.vel = NULL;
-}
-
-void ClipMove()
+static void ClipMove()
 {
 	vec3_c wishvel, wishdir;
 	vec3_c vel_upt; //in units/tick
@@ -107,33 +66,33 @@ void ClipMove()
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);
-	if (wishspd > pMaxSpeed)
+	if (wishspd > SPEED_MAX)
 	{
-		VecScale(wishvel, wishvel, pMaxSpeed / wishspd);
-		wishspd = pMaxSpeed;
+		VecScale(wishvel, wishvel, SPEED_MAX / wishspd);
+		wishspd = SPEED_MAX;
 	}
 
 	if (*pm.onground != GROUNDED_NOT)
 	{
 		pm.vel->v[1] = 0;
-		PAccelerate(wishdir, wishspd, pAccelRate);
+		PAccelerate(wishdir, wishspd, ACCEL_RATE);
 		
-		pm.vel->v[1] -= pGravity * (float)game.tickdelta;
+		pm.vel->v[1] -= SPEED_STOP * (float)game.tickdelta;
 		PGroundMove();
 	}
 	else
 	{	
 		// not on ground, so little effect on velocity
-		PAirAccelerate(wishdir, wishspd, pAccelRate);
+		PAirAccelerate(wishdir, wishspd, ACCEL_RATE);
 
 		// add gravity
-		pm.vel->v[1] -= pGravity * (float)game.tickdelta; //pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
+		pm.vel->v[1] -= GRAVITY * (float)game.tickdelta; //pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
 		PFlyMove();
 
 	}
 }
 
-void WaterMove()
+static void WaterMove()
 {
 #if 0
 	vec3_c wishvel, wishdir;
@@ -146,15 +105,15 @@ void WaterMove()
 
 	NormalizeVector(wishdir, wishvel);
 	wishspd = LengthOfVector(wishvel);
-	if (wishspd > pMaxSpeed)
+	if (wishspd > SPEED_MAX)
 	{
-		MultVector(wishvel, wishvel, pMaxSpeed / wishspd);
-		wishspd = pMaxSpeed;
+		MultVector(wishvel, wishvel, SPEED_MAX / wishspd);
+		wishspd = SPEED_MAX;
 	}
 #endif
 }
 
-void PAccelerate(vec3_c wishdir, float wishspd, float accel)
+static void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 {
 	float addspd, accelspd, curspd;
 	//printf("%.3f | %.3f, %.3f, %.3f\n", wishspd, wishdir[0], wishdir[1], wishdir[2]);
@@ -171,7 +130,7 @@ void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 
 }
 
-void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
+static void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed, wishspd = wishspeed;
@@ -201,7 +160,7 @@ void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
 
 }
 
-void PFriction()
+static void PFriction()
 {
 	float		speed, newspeed, control;
 	float		friction;
@@ -222,7 +181,7 @@ void PFriction()
 		return;
 	}
 
-	friction = pFriction;
+	friction = FRICTION;
 
 	// if the leading edge is over a dropoff, increase friction
 	/*
@@ -246,7 +205,7 @@ void PFriction()
 	//	drop += speed * movevars.waterfriction * waterlevel * frametime;
 	/*else*/ if (*pm.onground != -1) // apply ground friction
 	{
-		control = speed < pStopSpeed ? pStopSpeed : speed;
+		control = speed < SPEED_STOP ? SPEED_STOP : speed;
 		drop = control * friction * (float)game.tickdelta;
 	}
 
@@ -260,7 +219,7 @@ void PFriction()
 	*pm.vel = *pm.vel * newspeed;
 }
 
-void PClip(vec3_c wishvel, vec3_c norm,  vec3_c& clippedvel)
+static void PClip(vec3_c wishvel, vec3_c norm,  vec3_c& clippedvel)
 {
 	float backoff;
 	vec3_c newvel;
@@ -275,7 +234,7 @@ void PClip(vec3_c wishvel, vec3_c norm,  vec3_c& clippedvel)
 	clippedvel = newvel;
 }
 
-void PFlyMove()
+static void PFlyMove()
 {
 	float time_left = (float)game.tickdelta;
 	int numbumps = 4;
@@ -387,7 +346,7 @@ void PFlyMove()
 }
 
 //NOT THOROUGHLY TESTED! - stairs
-void PGroundMove()
+static void PGroundMove()
 {
 	vec3_c start, dest;
 	trace_c trace;
@@ -471,7 +430,7 @@ void PGroundMove()
 
 }
 
-void PCategorizePosition()
+static void PCategorizePosition()
 {
 	vec3_c point;
 	//int cont;
@@ -482,7 +441,9 @@ void PCategorizePosition()
 	point.v[1]--;
 
 	if (pm.vel->v[1] > 180)
-		*pm.onground = GROUNDED_NOT; //falling very fast, must not be grounded
+	{ //falling very fast, must not be grounded
+		*pm.onground = GROUNDED_NOT;
+	}
 	else
 	{
 		tr.PlayerMove(*pm.org, point);
@@ -539,7 +500,7 @@ void PCategorizePosition()
 
 #include "sound.h"
 
-void PJump()
+static void PJump()
 {
 	/*
 	if (pmove.dead)
@@ -582,7 +543,7 @@ void PJump()
 	//	return;		// don't pogo stick
 
 	*pm.onground = -1;
-	pm.vel->v[1] += pJumpSpeed;//pmove.velocity[2] += 270;
+	pm.vel->v[1] += JUMP_SPEED;//pmove.velocity[2] += 270;
 
 	//PlaySound("sound/plyr/step2.wav", *pm.org, 0.2, 1, 0);
 	jumpheld++;
@@ -590,13 +551,13 @@ void PJump()
 }
 
 
-void NudgePosition()
+static void NudgePosition()
 {
 
 }
 
 
-void NoClipMove()
+static void NoClipMove()
 {
 	vec3_c fwd, right;
 	float newpitch;
@@ -615,13 +576,13 @@ void NoClipMove()
 
 	VecNormalize(wishdir, wishvel);
 	wishspd = VecLength(wishvel);
-	if (wishspd > pMaxSpeed)
+	if (wishspd > SPEED_MAX)
 	{
-		VecScale(wishvel, wishvel, pMaxSpeed / wishspd);
-		wishspd = pMaxSpeed;
+		VecScale(wishvel, wishvel, SPEED_MAX / wishspd);
+		wishspd = SPEED_MAX;
 	}
 
-	PAccelerate(wishdir, wishspd, pAccelRate);
+	PAccelerate(wishdir, wishspd, ACCEL_RATE);
 
 	//change the velocity from units/second to units/tick
 	vel_upt = *pm.vel * (float)game.tickdelta;
@@ -635,6 +596,60 @@ void NoClipMove()
 		pm.org->v[1] -= 300 * (float)game.tickdelta;
 	
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+
+void PMove()
+{
+	if (pm.movetype == MOVETYPE::NOCLIP)
+	{//FIXME: moving while walking carries over speed to noclipping
+		NoClipMove();
+		return;
+	}
+
+	BuildPhysentList(pm.ent);
+
+	//NudgePosition();
+
+	PCategorizePosition();
+
+	//printf("%i\n", onground);
+
+	/*
+	if (waterlevel == 2)
+		CheckWaterJump();
+
+	if (pmove.velocity[2] < 0)
+		pmove.waterjumptime = 0;
+
+	if (pmove.cmd.buttons & BUTTON_JUMP)
+		JumpButton();
+	else
+		pmove.oldbuttons &= ~BUTTON_JUMP;
+	*/
+
+	if (pm.moveup == 1)
+		PJump();
+	else if (jumpheld)
+		jumpheld = 0;
+
+	PFriction();
+
+	//if (waterlevel >= 2)
+	//	WaterMove();
+	//else
+	ClipMove();
+
+
+	PCategorizePosition();
+
+	pm.org = NULL;
+	pm.vel = NULL;
+}
+
 
 void SetMoveVars(input_c* i)
 {

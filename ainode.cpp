@@ -1,5 +1,6 @@
 #include "ainode.h"
-#include "pmove.h"
+#include "clip.h"
+#include "glinc.h" // Time
 
 aigraph_c graph;
 

@@ -1,5 +1,5 @@
 #include "weapons.h"
-#include "pmove.h" //shooting
+#include "clip.h"
 #include "md2.h" //animating
 #include "particles.h"
 #include "sound.h"

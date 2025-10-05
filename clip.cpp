@@ -1,9 +1,19 @@
+#include "clip.h"
 #include "pmove.h"
 #include "player.h"
 
+#define MAX_PHYSENTS	32
+
+typedef struct
+{
+	vec3_c org;
+	bmodel_t* mdl;//for bsp models
+	vec3_c mins, maxs;//for md2 models
+} physent_t;
+
 extern bsp_t bsp;
-extern  physent_t physents[MAX_PHYSENTS];
-extern	int num_physents;
+static physent_t physents[MAX_PHYSENTS]; //0th is the world
+static int num_physents;
 
 #include "md2.h" //MDL_MAX::MODELS
 extern entlist_c	entlist;
@@ -18,6 +28,7 @@ const vec3_c tmp_monster_mins = { -16, -72, -16 };
 const vec3_c tmp_monster_maxs = { 16, 0, 16 };
 
 hull_t* HullForBox(vec3_c mins, vec3_c maxs);
+bool R_HullCheck(hull_t* hull, int num, float p1f, float p2f, vec3_c p1, vec3_c p2, trace_c* trace);
 
 //TODO: somehow need to handle translation of world models. idk how tho
 
@@ -235,7 +246,7 @@ void InitBoxHull()
 	}
 }
 
-void SetupPMove() 
+void SetupClip() 
 { 
 	InitBoxHull(); 
 };
@@ -486,18 +497,18 @@ bool TestPlayerPosition(vec3_c p)
 
 
 
-void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
+void BuildPhysentList(baseent_c* ent)
 {
-	p[0].org = bsp.models[0].origin;
-	p[0].mdl = &bsp.models[0];
+	physents[0].org = bsp.models[0].origin;
+	physents[0].mdl = &bsp.models[0];
 
 	//TODO: mins/maxs
 	//search for models close to the player, not just through all of them - maybe use player's org & vel to see if a collision is even possible
 
-	*i = 1;
+	num_physents = 1;
 	for (int ei = 0; ei < ENTITIES_MAX; ei++)
 	{
-		if (*i >= MAX_PHYSENTS)
+		if (num_physents >= MAX_PHYSENTS)
 			break;
 
 		baseent_c* e = entlist[ei];
@@ -508,19 +519,19 @@ void BuildPhysentList(physent_t* p, int* i, baseent_c* ent)
 
 		if (e->bmodel)
 		{
-			p[*i].org = e->bmodel->origin;
-			p[*i].mdl = e->bmodel;
-			(*i)++;
+			physents[num_physents].org = e->bmodel->origin;
+			physents[num_physents].mdl = e->bmodel;
+			num_physents++;
 			continue;
 		}
 		else if (e->models[0].mid < MDL_MAX::MODELS)
 		{
 			// need to find a way to determine a model's mins/maxs
-			p[*i].mins = player_mins;
-			p[*i].maxs = player_maxs;
-			p[*i].org = e->origin;
+			physents[num_physents].mins = player_mins;
+			physents[num_physents].maxs = player_maxs;
+			physents[num_physents].org = e->origin;
 
-			(*i)++;
+			num_physents++;
 		}
 	}
 }

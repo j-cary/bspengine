@@ -1,5 +1,5 @@
 #include "particles.h"
-#include "pmove.h"
+#include "clip.h"
 
 #define PARTICLE_GRAVITY	10
 #define PARTICLE_FRICTION	6

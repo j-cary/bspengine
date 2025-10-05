@@ -203,5 +203,8 @@
     <ClInclude Include="img.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="clip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

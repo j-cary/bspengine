@@ -1,5 +1,5 @@
 #include "npc.h"
-#include "pmove.h"
+#include "clip.h"
 #include "vec_math.h"
 #include "particles.h" //tmp
 

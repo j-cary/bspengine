@@ -7,6 +7,7 @@
 #include "console.h"
 #include "pcmd.h" //keys
 #include "pmove.h" //pmove
+#include "clip.h"
 #include "input.h"
 #include "file.h"
 #include "draw.h"
@@ -121,7 +122,7 @@ static void Setup(char* cmdargs)
 	SetupView(winfo.win);
 	SetupInput(winfo.win);
 	SetupSound();
-	SetupPMove();
+	SetupClip();
 	SetupPlayer(&in);
 
 	printf("Setup took %.2f seconds\n", glfwGetTime() - time);
