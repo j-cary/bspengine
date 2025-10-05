@@ -13,7 +13,7 @@ typedef struct
 	double delay; // Standard delay until next possible command time
 } cmd_t;
 
-// Read the state of input keys and run functions a accordingly
+// Read the state of input keys and run functions accordingly
 void PKeys(input_c* in);
 void PCmd(const char* const cmd, input_c* in, int key);
 

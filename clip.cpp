@@ -1,4 +1,5 @@
 #include "pmove.h"
+#include "player.h"
 
 extern bsp_t bsp;
 extern  physent_t physents[MAX_PHYSENTS];
@@ -6,7 +7,6 @@ extern	int num_physents;
 
 #include "md2.h" //MDL_MAX::MODELS
 extern entlist_c	entlist;
-extern baseent_c* player;
 
 //these are just used for colliding with regular models, not a huge deal
 //half life has 4 different mins/maxs per hull...
@@ -72,8 +72,7 @@ baseent_c* trace_c::TraceBullet(vec3_c start, vec3_c dir, float dist, float spre
 	{
 		e = entlist[i];
 
-		//if (!e->inuse || e == player)
-		if(!e || e == player)
+		if(!e || e == GetPlayer())
 			continue;
 
 		// get the clipping hull
