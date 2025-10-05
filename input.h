@@ -10,14 +10,17 @@ enum class KEY_STATE
 
 typedef KEY_STATE key_state_e;
 
+#define PCMD_MAX_LEN (64)
+
 class input_c
 {
 
 public:
-	static constexpr int 
-		NUM_KEYS = 103, 
-		NUM_MBUTS = 8, 
-		KEYBOARD_SIZE = NUM_KEYS + NUM_MBUTS;
+	static constexpr int
+		NUM_KEYS = 103,
+		NUM_MBUTS = 8,
+		KEYBOARD_SIZE = NUM_KEYS + NUM_MBUTS,
+		BINDS_MAX = 256;
 
 	// This and the GLFW key mappings must be consistent
 	static constexpr const char* const str2key_enum[KEYBOARD_SIZE] =
@@ -41,16 +44,16 @@ public:
 
 	struct
 	{
-		char key[64];
-		char val[64];
-	} binds[256];
+		char key[PCMD_MAX_LEN];
+		char val[PCMD_MAX_LEN];
+	} binds[BINDS_MAX];
 
 	struct
 	{
 		key_state_e pressed; //1 if pressed, 0 if not, 2 if just released (to run the release cmd)
 		bool liftoff; //this key does something special when it is just unpressed
 		double time; //next time to repeat. Cleared in keyup
-		char cmd[64];
+		char cmd[PCMD_MAX_LEN];
 	} keys[KEYBOARD_SIZE]; //fullsize keyboard
 
 	float yaw, pitch;

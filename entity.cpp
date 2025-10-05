@@ -264,7 +264,7 @@ void ClearEntlist()
 		if (e)
 		{
 			delete e;
-			e = NULL;
+			e = NULL; // FIXME: This isn't updating correctly...
 		}
 		//e->Clear();
 	}

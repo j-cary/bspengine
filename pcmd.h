@@ -6,15 +6,16 @@
 *                                        Module Interface                                          *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#define CMD_LEN	64
-typedef struct cmd_s
+typedef struct
 {
-	char name[CMD_LEN];
+	const char* name;
 	void (*func)(input_c*, int);
+	double delay; // Standard delay until next possible command time
 } cmd_t;
 
+// Read the state of input keys and run functions a accordingly
 void PKeys(input_c* in);
-void PCmd(const char cmd[CMD_LEN], input_c* in, int key);
+void PCmd(const char* const cmd, input_c* in, int key);
 
 int PCmdBindCnt();
 const cmd_t* PCmdBind(int index);

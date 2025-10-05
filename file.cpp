@@ -234,7 +234,7 @@ void ReadCFGFile(const char* name, input_c* in)
 	char buf[256] = {};
 	int bidx;
 
-	char keyvalue[2][64];
+	char keyvalue[2][PCMD_MAX_LEN];
 
 	int delims[4];
 	int delimidx;

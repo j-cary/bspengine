@@ -55,7 +55,6 @@ static void ParseCmdArgs(const char* _cmd, char*& cmd, char*& arg)
 
 }
 
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 *                                 Internal Command Definitions                                     *
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -66,14 +65,7 @@ static void PCmdForward(input_c* in, int key)
 		return;
 
 
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-	{
-		in->moveforward = 0;
-	}
-	else
-	{
-		in->moveforward = 400;
-	}
+	in->moveforward = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : 400;
 }
 
 static void PCmdBack(input_c* in, int key)
@@ -81,11 +73,7 @@ static void PCmdBack(input_c* in, int key)
 	if (in->menu != MENU::NONE)
 		return;
 
-
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-		in->moveforward = 0;
-	else
-		in->moveforward = -400;
+	in->moveforward = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : -400;
 }
 
 static void PCmdLeft(input_c* in, int key)
@@ -93,11 +81,7 @@ static void PCmdLeft(input_c* in, int key)
 	if (in->menu != MENU::NONE)
 		return;
 
-
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-		in->movesideways = 0;
-	else
-		in->movesideways = 400;
+	in->movesideways = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : 400;
 }
 
 static void PCmdRight(input_c* in, int key)
@@ -105,11 +89,7 @@ static void PCmdRight(input_c* in, int key)
 	if (in->menu != MENU::NONE)
 		return;
 
-
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-		in->movesideways = 0;
-	else
-		in->movesideways = -400;
+	in->movesideways = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : -400;
 }
 
 static void PCmdUp(input_c* in, int key)
@@ -117,12 +97,7 @@ static void PCmdUp(input_c* in, int key)
 	if (in->menu != MENU::NONE)
 		return;
 
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-		in->moveup = 0;
-	else
-		in->moveup = 1;
-
-	//in->org.v[1] += MVSPEEDtmp;
+	in->moveup = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : 1;
 }
 
 static void PCmdDown(input_c* in, int key)
@@ -130,28 +105,18 @@ static void PCmdDown(input_c* in, int key)
 	if (in->menu != MENU::NONE)
 		return;
 
-	if (in->keys[key].pressed == KEY_STATE::LIFTOFF) //release cmd
-		in->moveup = 0;
-	else
-		in->moveup = -1;
-	//in->org.v[1] -= MVSPEEDtmp;
+	in->moveup = (in->keys[key].pressed == KEY_STATE::LIFTOFF) ? 0 : -1;
 }
 
 static void PCmdFullscreen(input_c* in, int key)
 {
 	ToggleFullscreen();
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdMenu(input_c* in, int key)
 {
-	if ((in->menu == MENU::NONE))
-		in->menu = MENU::MAIN;
-	else
-		in->menu = MENU::NONE;
+	in->menu = ((in->menu == MENU::NONE) ? MENU::MAIN : MENU::NONE);
 	ToggleMouseCursor();
-
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdPos(input_c* in, int key)
@@ -161,9 +126,7 @@ static void PCmdPos(input_c* in, int key)
 
 static void PCmdRmode(input_c* in, int key)
 {
-	//game.rmode = (game.rmode + 1) % 2;
-
-	in->keys[key].time = game.time + 0.5;
+	// NOP
 }
 
 static void PCmdLockPVS(input_c* in, int key)
@@ -178,8 +141,6 @@ static void PCmdLockPVS(input_c* in, int key)
 		in->pvslock = true;
 		printf("Locking PVS\n");
 	}
-
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdCmode(input_c* in, int key)
@@ -196,7 +157,6 @@ static void PCmdCmode(input_c* in, int key)
 		in->movetype = MOVETYPE::NOCLIP;
 		break;
 	}
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdDumpCmds(input_c* in, int key)
@@ -207,7 +167,6 @@ static void PCmdDumpCmds(input_c* in, int key)
 			continue;
 
 		printf("%s %s\n", in->binds[i].val, in->binds[i].key);
-		in->keys[key].time = game.time + 0.5;
 	}
 }
 
@@ -226,38 +185,35 @@ static void PCmdMapA(input_c* in, int key)
 	strcat(name, ".bsp");
 
 	ChangeMap(name, in);
-
-
-	in->keys[key].time = game.time + 0.5;
 }
 
 static constexpr cmd_t inputcmds[] =
 {
 	// Real commands
-	"+moveforward", &PCmdForward,
-	"+moveback",	&PCmdBack,
-	"+moveleft",	&PCmdLeft,
-	"+moveright",	&PCmdRight,
-	"+moveup",		&PCmdUp,
-	"+movedown",	&PCmdDown,
-	"fullscreen",	&PCmdFullscreen,
-	"menu",			&PCmdMenu,
-	"shoot",		&PCmdShoot,
+	"+moveforward", &PCmdForward, 0,
+	"+moveback",	&PCmdBack, 0,
+	"+moveleft",	&PCmdLeft, 0,
+	"+moveright",	&PCmdRight, 0,
+	"+moveup",		&PCmdUp, 0,
+	"+movedown",	&PCmdDown, 0,
+	"fullscreen",	&PCmdFullscreen, 0.5,
+	"menu",			&PCmdMenu, 0.5,
+	"shoot",		&PCmdShoot, 0,
 
 	// Debug Stuff
-	"pos",			&PCmdPos,
-	"rmode",		&PCmdRmode,
-	"entlist",		&PCmdPrintEntlist,
-	"mdllist",		&PCmdPrintMD2list,
-	"partlist",		&PCmdPrintPartlist,
-	"tmp",			&PCmdTMP,
-	"lockpvs",		&PCmdLockPVS,
-	"clip",			&PCmdCmode,
-	"dumpcmds",		&PCmdDumpCmds,
-	"dumpnodes",	&PCmdDumpNodes,
+	"pos",			&PCmdPos, 0.05,
+	"rmode",		&PCmdRmode, 0.5,
+	"entlist",		&PCmdPrintEntlist, 0.5,
+	"mdllist",		&PCmdPrintMD2list, 0.5,
+	"partlist",		&PCmdPrintPartlist, 0.5,
+	"tmp",			&PCmdTMP, 0.5,
+	"lockpvs",		&PCmdLockPVS, 0.5,
+	"clip",			&PCmdCmode, 0.5,
+	"dumpcmds",		&PCmdDumpCmds, 0.5,
+	"dumpnodes",	&PCmdDumpNodes, 0.5,
 
 	// Engine Commands
-	"*map",			&PCmdMapA,
+	"*map",			&PCmdMapA, 0.5,
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -271,7 +227,7 @@ void PKeys(input_c* in)
 		if (in->keys[i].pressed == KEY_STATE::OFF)
 			continue;
 
-		if (!in->keys[i].cmd[0])
+		if (in->keys[i].cmd[0] == '\0')
 			continue;
 
 		if (in->keys[i].time > game.time) //note: this check does NOT work while debugging!
@@ -286,38 +242,40 @@ void PKeys(input_c* in)
 }
 
 //This can be used to send commands from sources other than a players keyboard
-void PCmd(const char cmd[CMD_LEN], input_c* in, int key)
+void PCmd(const char* const cmd, input_c* in, int key)
 {
 	if (in)
 		GetAngleVectors(in->pitch, in->yaw, in->forward, in->right);//for move commands
-	//this is a server command otherwise
+	else
+		return; //this is a server command otherwise
 
-		for (int i = 0; i < sizeof(inputcmds) / (CMD_LEN + sizeof(void*)); i++)
-		{
-			if (inputcmds[i].name[0] == '*')
-			{//command with argument
+	for (int i = 0; i < PCmdBindCnt(); i++)
+	{
+		const cmd_t* const pcmd = PCmdBind(i);
+		if (pcmd->name[0] == '*')
+		{//command with argument
 
-				const char* curs = cmd;
-				while (*curs != '\0')
-				{//find the end of the actual cmd
-					if (*curs == ' ')
-						break;
-					curs++;
-				}
-
-				if (!strncmp(cmd, &inputcmds[i].name[1], curs - cmd))
-				{
-					inputcmds[i].func(in, key);
+			const char* curs = cmd;
+			while (*curs != '\0')
+			{//find the end of the actual cmd
+				if (*curs == ' ')
 					break;
-				}
+				curs++;
 			}
 
-			if (!strncmp(cmd, inputcmds[i].name, 64))
+			if (!strncmp(cmd, &pcmd->name[1], curs - cmd))
 			{
-				inputcmds[i].func(in, key);
-				//printf("trying cmd: %s...\n", cmd);
+				pcmd->func(in, key);
+				break;
 			}
 		}
+
+		if (!strcmp(cmd, pcmd->name))
+		{
+			pcmd->func(in, key);
+			in->keys[key].time = game.time + pcmd->delay;
+		}
+	}
 }
 
 int PCmdBindCnt()
@@ -341,7 +299,6 @@ const cmd_t* PCmdBind(int index)
 static void PCmdPrintPartlist(input_c* in, int key)
 {
 	ParticleDump();
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdShoot(input_c* in, int key)
@@ -349,35 +306,34 @@ static void PCmdShoot(input_c* in, int key)
 	double wait;
 	static double nextfire = -1.;
 
+	if (in->menu != MENU::NONE)
+		return;
+
 	if (game.time < nextfire)
 		return; //stop the player from spamming this button
 
+	// Manually handle the delay; TODO: this should be handled in the weapon module
 	wait = FireWeapon(in, GetPlayer());
 	nextfire = in->keys[key].time = game.time + wait;
 }
 
 static void PCmdPrintEntlist(input_c* in, int key)
 {
-	
 	EntDump();
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdPrintMD2list(input_c* in, int key)
 {
 	MD2Dump();
-	in->keys[key].time = game.time + 0.5;
 }
 
 static void PCmdTMP(input_c* in, int key)
 {//temp to test removing entities
 	//md2list.TMP();
-	in->keys[key].time = game.time + 0.5;
 	in->keys[key].pressed = KEY_STATE::OFF;
 }
 
 static void PCmdDumpNodes(input_c* in, int key)
 {
 	GraphDump();
-	in->keys[key].time = game.time + 0.5;
 }
