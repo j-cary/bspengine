@@ -259,7 +259,7 @@ static void NudgePosition()
 }
 
 //clip velocity and fill in a trace
-static void PClip(vec3_c wishvel, vec3_c norm, vec3_c& clippedvel)
+static void PClip(const vec3_c& wishvel, const vec3_c& norm, vec3_c* clippedvel)
 {
 	float backoff;
 	vec3_c newvel;
@@ -271,44 +271,40 @@ static void PClip(vec3_c wishvel, vec3_c norm, vec3_c& clippedvel)
 	for (int i = 0; i < 3; i++) //stop minor oscillations in speed. TESTME!!! is this even doing anything?
 		if (newvel[i] > -STOP_EPSILON && newvel[i] < STOP_EPSILON)	newvel[i] = 0;
 
-	clippedvel = newvel;
+	*clippedvel = newvel;
 }
 
-//Clip movement and slide across multiple planes. TODO: give this some parms so groundmove isn't so unreadable
-static void PFlyMove()
+//Clip movement and slide across multiple planes
+static void PFlyMove(const vec3_c& og_org, const vec3_c& og_vel, vec3_c* new_org, vec3_c* new_vel)
 {
 	float time_left = (float)game.tickdelta;
-	int numbumps = 4;
 	vec3_c end;
 	vec3_c dir;
-	int numplanes, blocked;
 	trace_c trace;
 	vec3_c pnorms[CLIP_PLANES_MAX]; //normals of collided planes
 	int i, j;
-	vec3_c original_vel;
 	float dot;
+	int numbumps = 4;
+	int numplanes = 0, blocked = 0;
 
-	numbumps = 4;
-	blocked = 0;
-	numplanes = 0;
-	original_vel = pm.vel;
-
+	*new_org = og_org;
+	*new_vel = og_vel;
 
 	for (int bumpcnt = 0; bumpcnt < numbumps; bumpcnt++)
 	{
-		end = pm.org + (pm.vel * time_left);
-		trace.PlayerMove(pm.org, end);
+		end = (*new_org) + ((*new_vel) * time_left); 
+		trace.PlayerMove((*new_org), end); 
 
 		if (trace.initsolid || trace.allsolid)
 		{//stuck in a solid
 			printf("%s is stuck\n", pm.ent->classname);
-			pm.vel = zerovec;
+			*new_vel = zerovec;
 			return;
 		}
 
 		if (trace.fraction > 0)
 		{//covered some distance
-			pm.org = trace.end;
+			*new_org = trace.end;
 			numplanes = 0;
 		}
 
@@ -316,7 +312,7 @@ static void PFlyMove()
 		if (trace.fraction == 1)
 			break; //moved the WHOLE distance
 
-		//save entity touched here
+		//TODO: save entity touched here
 
 		if (trace.plane.normal[1] > 0.7) { blocked |= 1; } //floor
 		if (!trace.plane.normal[1]) { blocked |= 2; } //stairstep
@@ -325,7 +321,7 @@ static void PFlyMove()
 
 		if (numplanes >= CLIP_PLANES_MAX)
 		{	// sanity check, shouldn't ever happen
-			pm.vel = zerovec;
+			*new_vel = zerovec; 
 			break;
 		}
 
@@ -336,13 +332,12 @@ static void PFlyMove()
 		//Modify velocity to parallel all of the clip planes
 		for (i = 0; i < numplanes; i++)
 		{
-			PClip(original_vel, pnorms[i], pm.vel);
+			PClip(og_vel, pnorms[i], new_vel);
 			for (j = 0; j < numplanes; j++)
 			{
 				if (j != i)
 				{
-					//if (DotProduct(pm.vel, pnorms[j]) < 0)
-					if (pm.vel.dot(pnorms[j]) < 0)
+					if(new_vel->dot(pnorms[j]) < 0) 
 					{
 						//printf("Flymove: 'not ok'...\n");
 						//printf("%s || %s || %i,%i\n", pm.vel->str(), pnorms[j].str(), i, j);
@@ -361,28 +356,23 @@ static void PFlyMove()
 		{
 			if (numplanes != 2)
 			{//more than two collisions, just zero velocity
-				//printf("clip velocity, numplanes == %i\n", numplanes);
-				pm.vel = zerovec;
+				*new_vel = zerovec;
 				break;
 			}
 
 			//2 collisions, slide parallel to the intersection line between the planes
 			dir = pnorms[0].crs(pnorms[1]);
-			dot = dir.dot(pm.vel);
-			pm.vel = dir * dot;
+			dot = dir.dot(*new_vel);
+			*new_vel = dir * dot;
 		}
 
-		//
 		// if original velocity is against the original velocity, stop dead
 		// to avoid tiny occilations in sloping corners
-		//
-		if (DotProduct(pm.vel, original_vel) <= 0)
+		if(DotProduct(*new_vel, og_vel) <= 0) 
 		{
-			//VectorCopy(vec3_origin, pmove.velocity);
-			pm.vel = zerovec;
+			*new_vel = zerovec;
 			break;
 		}
-
 	}
 }
 
@@ -413,17 +403,9 @@ static void PGroundMove()
 
 	// try sliding forward both on ground and up 16 units
 	// take the move that goes farthest
-	original = pm.org;
-	originalvel = pm.vel;
-
+	
 	// slide move
-	PFlyMove();
-
-	down = pm.org; //save the slide move
-	downvel = pm.vel;
-
-	pm.org = original; //don't actually make the move
-	pm.vel = originalvel;
+	PFlyMove(pm.org, pm.vel, &down, &downvel);
 
 	// move up a stair height
 	dest = pm.org;
@@ -435,8 +417,8 @@ static void PGroundMove()
 		pm.org = trace.end; //didn't get caught in a solid
 	}
 
-	// slide move
-	PFlyMove();
+	// slide move - actually make the move this time
+	PFlyMove(pm.org, pm.vel, &pm.org, &pm.vel);
 
 	// press down the stepheight
 	dest = pm.org;
@@ -455,10 +437,10 @@ static void PGroundMove()
 
 	// decide which one went farther
 	downdist = (down[0] - original[0]) * (down[0] - original[0])
-		+ (down[2] - original[2]) * (down[2] - original[2]);
+			+ (down[2] - original[2]) * (down[2] - original[2]);
 
 	updist = (up[0] - original[0]) * (up[0] - original[0])
-		+ (up[2] - original[2]) * (up[2] - original[2]);
+			+ (up[2] - original[2]) * (up[2] - original[2]);
 
 
 	if (downdist > updist)
@@ -596,7 +578,7 @@ static void ClipMove()
 		// add gravity
 		pm.vel[1] -= GRAVITY * (float)game.tickdelta;
 		//pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
-		PFlyMove();
+		PFlyMove(pm.org, pm.vel, &pm.org, &pm.vel);
 	}
 }
 

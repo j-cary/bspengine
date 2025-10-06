@@ -47,10 +47,10 @@ public:
 	inline vec3_c(const vec3_t& vec) { v[0] = vec[0];  v[1] = vec[1]; v[2] = vec[2];}
 
 	inline vec3_c operator- (void) const { return vec3_c(-v[0], -v[1], -v[2]); }
-	inline int operator== (const vec3_c& vec) { return (v[0] == vec.v[0] && v[1] == vec.v[1] && v[2] == vec.v[2]); }
-	inline int operator!= (const vec3_c& vec) { return (v[0] != vec.v[0] || v[1] != vec.v[1] || v[2] != vec.v[2]); }
-	inline vec3_c operator+ (const vec3_c& vec) { return vec3_c(v[0] + vec.v[0], v[1] + vec.v[1], v[2] + vec.v[2]); }
-	inline vec3_c operator- (const vec3_c& vec) { return vec3_c(v[0] - vec.v[0], v[1] - vec.v[1], v[2] - vec.v[2]); }
+	inline int operator== (const vec3_c& vec) const { return (v[0] == vec.v[0] && v[1] == vec.v[1] && v[2] == vec.v[2]); }
+	inline int operator!= (const vec3_c& vec) const { return (v[0] != vec.v[0] || v[1] != vec.v[1] || v[2] != vec.v[2]); }
+	inline vec3_c operator+ (const vec3_c& vec) const { return vec3_c(v[0] + vec.v[0], v[1] + vec.v[1], v[2] + vec.v[2]); }
+	inline vec3_c operator- (const vec3_c& vec) const { return vec3_c(v[0] - vec.v[0], v[1] - vec.v[1], v[2] - vec.v[2]); }
 
 	inline vec3_c operator* (float f) const { return vec3_c(v[0] * f, v[1] * f, v[2] * f); }
 
@@ -63,6 +63,7 @@ public:
 	inline void operator= (vec3_t& typevec) { v[0] = typevec[0]; v[1] = typevec[1]; v[2] = typevec[2]; }
 	
 	operator float* () { return v; } //cast to float
+	operator const float* () const { return v; } //cast to float
 	operator vec3_t* () { return (vec3_t*)v; } //cast to vec3_t*
 	operator const float* () { return v; } 
 	operator const vec3_t* () { return (vec3_t*)v; }
