@@ -378,62 +378,60 @@ static void PFlyMove(const vec3_c& og_org, const vec3_c& og_vel, vec3_c* new_org
 
 //Player is already on the ground and is not jumping
 //NOT THOROUGHLY TESTED! - stairs
-static void PGroundMove()
+static void PGroundMove(vec3_c* org, vec3_c* vel)
 {
 	vec3_c start, dest;
 	trace_c trace;
 	vec3_c original, originalvel, down, up, downvel;
 	float downdist, updist;
 
-	pm.vel[1] = 0;
-	if (pm.vel[0] == 0 && pm.vel[2] == 0)
+	(*vel)[1] = 0;
+	if ((*vel)[0] == 0 && (*vel)[2] == 0)
 		return; //stationary
 
-	dest = pm.org;
-	dest[0] += pm.vel[0] * (float)game.tickdelta;
-	dest[2] += pm.vel[2] * (float)game.tickdelta; //warning C4244 is moronic and I loathe it
+	dest = (*org);
+	dest[0] += (*vel)[0] * (float)game.tickdelta;
+	dest[2] += (*vel)[2] * (float)game.tickdelta; //warning C4244 is moronic and I loathe it
 
 	// first try moving directly to the next spot
-	trace.PlayerMove(pm.org, dest);
+	trace.PlayerMove(*org, dest);
 	if (trace.fraction == 1)
 	{//no obstruction
-		pm.org = trace.end;
+		*org = trace.end;
 		return;
 	}
 
 	// try sliding forward both on ground and up 16 units
 	// take the move that goes farthest
 	
-	// slide move
-	PFlyMove(pm.org, pm.vel, &down, &downvel);
+	// slide move at the current y
+	PFlyMove(*org, *vel, &down, &downvel);
+
 
 	// move up a stair height
-	dest = pm.org;
+	dest = *org;
 	dest[1] += STAIRSTEP_SIZE;
 
-	trace.PlayerMove(pm.org, dest);
+	trace.PlayerMove(*org, dest);
 	if (!trace.initsolid && !trace.allsolid)
-	{
-		pm.org = trace.end; //didn't get caught in a solid
-	}
+		*org = trace.end; //didn't get caught in a solid
 
 	// slide move - actually make the move this time
-	PFlyMove(pm.org, pm.vel, &pm.org, &pm.vel);
+	PFlyMove(*org, *vel, org, vel);
 
-	// press down the stepheight
-	dest = pm.org;
+
+	// move down a stair height
+	dest = *org;
 	dest[1] -= STAIRSTEP_SIZE;
 
-	trace.PlayerMove(pm.org, dest);
+	trace.PlayerMove(*org, dest);
 	if (trace.plane.normal[1] < 0.7)
 		goto usedown;
 
 	if (!trace.initsolid && !trace.allsolid)
-	{
-		pm.org = trace.end;//didn't get caught in a solid
-	}
+		*org = trace.end;//didn't get caught in a solid
 
-	up = pm.org;
+	up = *org;
 
 	// decide which one went farther
 	downdist = (down[0] - original[0]) * (down[0] - original[0])
@@ -446,11 +444,11 @@ static void PGroundMove()
 	if (downdist > updist)
 	{
 	usedown:
-		pm.org = down;
-		pm.vel = downvel;
+		*org = down;
+		*vel = downvel;
 	}
 	else // copy y value from slide move
-		(pm.vel)[1] = downvel[1];
+		(*vel)[1] = downvel[1];
 
 }
 
@@ -568,7 +566,7 @@ static void ClipMove()
 		PAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
 
 		pm.vel[1] -= SPEED_STOP * (float)game.tickdelta;
-		PGroundMove();
+		PGroundMove(&pm.org, &pm.vel);
 	}
 	else
 	{
