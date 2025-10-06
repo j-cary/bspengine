@@ -536,7 +536,7 @@ static void NoClipMove()
 	
 }
 
-static void ClipMove()
+static void ClipMove(vec3_c* org, vec3_c* vel)
 {
 	vec3_c wishvel, wishdir;
 	vec3_c vel_upt; //in units/tick
@@ -562,21 +562,21 @@ static void ClipMove()
 
 	if (pm.onground != GROUNDED_NOT)
 	{
-		pm.vel[1] = 0;
-		PAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
+		(*vel)[1] = 0;
+		PAccelerate(vel, wishdir, wishspd, ACCEL_RATE);
 
-		pm.vel[1] -= SPEED_STOP * (float)game.tickdelta;
-		PGroundMove(&pm.org, &pm.vel);
+		(*vel)[1] -= SPEED_STOP * (float)game.tickdelta;
+		PGroundMove(org, vel);
 	}
 	else
 	{
 		// not on ground, so little effect on velocity
-		PAirAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
+		PAirAccelerate(vel, wishdir, wishspd, ACCEL_RATE);
 
 		// add gravity
-		pm.vel[1] -= GRAVITY * (float)game.tickdelta;
+		(*vel)[1] -= GRAVITY * (float)game.tickdelta;
 		//pmove.velocity[2] -= movevars.entgravity * movevars.gravity * frametime;
-		PFlyMove(pm.org, pm.vel, &pm.org, &pm.vel);
+		PFlyMove(*org, *vel, org, vel);
 	}
 }
 
@@ -641,7 +641,7 @@ void PMove()
 	//if (waterlevel >= 2)
 	//	WaterMove();
 	//else
-	ClipMove();
+	ClipMove(&pm.org, &pm.vel);
 
 
 	PCategorizePosition();
