@@ -454,11 +454,11 @@ static void PGroundMove()
 
 }
 
-static void PAccelerate(vec3_c wishdir, float wishspd, float accel)
+static void PAccelerate(vec3_c* vel, const vec3_c& wishdir, float wishspd, float accel)
 {
 	float addspd, accelspd, curspd;
 	//printf("%.3f | %.3f, %.3f, %.3f\n", wishspd, wishdir[0], wishdir[1], wishdir[2]);
-	curspd = DotProduct(pm.vel, wishdir);
+	curspd = DotProduct(*vel, wishdir);
 	addspd = wishspd - curspd;
 	if (addspd <= 0)
 		return;
@@ -467,10 +467,10 @@ static void PAccelerate(vec3_c wishdir, float wishspd, float accel)
 		accelspd = addspd;
 
 	for (int i = 0; i < 3; i++)
-		pm.vel[i] += accelspd * wishdir[i];
+		(*vel)[i] += accelspd * wishdir[i];
 }
 
-static void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
+static void PAirAccelerate(vec3_c* vel, const vec3_c& wishdir, float wishspeed, float accel)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed, wishspd = wishspeed;
@@ -485,7 +485,7 @@ static void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
 	if (wishspd > 30)
 		wishspd = 30;
 
-	currentspeed = pm.vel.dot(wishdir);
+	currentspeed = vel->dot(wishdir);
 	addspeed = wishspd - currentspeed;
 	if (addspeed <= 0)
 		return;
@@ -495,7 +495,7 @@ static void PAirAccelerate(vec3_c wishdir, float wishspeed, float accel)
 		accelspeed = addspeed;
 
 	for (i = 0; i < 3; i++)
-		pm.vel[i] += accelspeed * wishdir[i];
+		(*vel)[i] += accelspeed * wishdir[i];
 }
 
 static void NoClipMove()
@@ -523,7 +523,7 @@ static void NoClipMove()
 		wishspd = SPEED_MAX;
 	}
 
-	PAccelerate(wishdir, wishspd, ACCEL_RATE);
+	PAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
 
 	//change the velocity from units/second to units/tick
 	vel_upt = pm.vel * (float)game.tickdelta;
@@ -565,7 +565,7 @@ static void ClipMove()
 	if (pm.onground != GROUNDED_NOT)
 	{
 		pm.vel[1] = 0;
-		PAccelerate(wishdir, wishspd, ACCEL_RATE);
+		PAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
 
 		pm.vel[1] -= SPEED_STOP * (float)game.tickdelta;
 		PGroundMove();
@@ -573,7 +573,7 @@ static void ClipMove()
 	else
 	{
 		// not on ground, so little effect on velocity
-		PAirAccelerate(wishdir, wishspd, ACCEL_RATE);
+		PAirAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
 
 		// add gravity
 		pm.vel[1] -= GRAVITY * (float)game.tickdelta;
