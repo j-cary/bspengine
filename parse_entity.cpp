@@ -3,17 +3,18 @@
 #include "pmove.h" //droptofloor
 
 
-
-//entlist stuff
-//entities added after worldspawn will be done manually
-
 #define KT_INT	0
 #define KT_VEC	1
 #define KT_FLT	2
 #define KT_STR	3
 #define KT_LGT	4 //four wide vector
 
-
+typedef struct keytranslate_s
+{
+	char name[16];
+	void (*translatefunc)(baseent_c* ent, char* val, int ofs); //type of value. int, vec, float, string
+	int ofs; //passed into translatefunc
+} keytranslate_t;
 
 void IntTranslate(baseent_c* ent, char* val, int ofs)
 {

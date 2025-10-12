@@ -313,7 +313,7 @@ static void PCmdShoot(input_c* in, int key)
 		return; //stop the player from spamming this button
 
 	// Manually handle the delay; TODO: this should be handled in the weapon module
-	wait = FireWeapon(in, GetPlayer());
+	wait = FireWeapon(GetPlayer());
 	nextfire = in->keys[key].time = game.time + wait;
 }
 

@@ -1,3 +1,6 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Operation:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #include "weapons.h"
 #include "clip.h"
 #include "md2.h" //animating
@@ -31,7 +34,7 @@ void WeaponTick(baseent_c* p)
 	}
 }
 
-double FireWeapon(input_c* in, baseent_c* p)
+double FireWeapon(baseent_c* p)
 {
 	trace_c tr;
 	baseent_c* ent;
@@ -40,7 +43,7 @@ double FireWeapon(input_c* in, baseent_c* p)
 
 	//need to check out model rotates...
 	//NOTE - hammer sets the origin of monsters to be basically 0. Need to shift the bbox up some amount. Just gonna hack it for now.
-	if ((ent = tr.TraceBullet(p->eyes, in->forward.nml(), 1024, 0, 0)))
+	if ((ent = tr.TraceBullet(p->eyes, p->forward.nml(), 1024, 0, 0)))
 	{//hit the world or another (studio) model
 		//printf("hit a %s - %s\n", ent->classname, ent->origin.str());
 		ParticleSpawnOil(tr.end, 100);

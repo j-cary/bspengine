@@ -1,12 +1,11 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Purpose:
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #pragma once
 #include "common.h"
 #include "bsp.h" //bmodel
-
 #include <vector> //for hammer k/v parsing
 
-#define ENTITIES_MAX 4096
-
-//aiflags
 #define AI_CLUELESS			0x0
 #define AI_SEEPLAYER		0x1 
 #define AI_PLAYER_INRANGE	0x2 //close enough to attack
@@ -18,6 +17,8 @@
 #define AI_INRANGE_DIST		256
 
 typedef flag_t aiflags_t;
+
+#define ENTITIES_MAX 4096
 
 //render flags
 #define RF_NONE			0
@@ -111,13 +112,6 @@ public:
 	baseent_c();
 	~baseent_c();
 };
-
-typedef struct keytranslate_s
-{
-	char name[16];
-	void (*translatefunc)(baseent_c* ent, char* val, int ofs); //type of value. int, vec, float, string
-	int ofs; //passed into translatefunc
-} keytranslate_t;
 
 namespace ent
 {
@@ -256,7 +250,6 @@ private:
 	int highest_used = 0; //highest index currently used in the entlist
 	//TODO: implement this - used for quicker searching
 
-	//baseent_c l[ENTITIES_MAX];
 	baseent_c* list[ENTITIES_MAX];
 public:
 
