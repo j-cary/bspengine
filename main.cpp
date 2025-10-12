@@ -158,7 +158,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			EntTick(&game);
 			PlayerTick(&in);
 			ParticleTick();
-			SoundTick(&in.forward, &in.up, &in.vel, &in.org);
+			SoundTick(&in.forward, &in.up, &in.vel, &in.org, game.tickdelta);
 
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;

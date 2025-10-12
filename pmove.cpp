@@ -641,7 +641,7 @@ void PMove()
 
 void SetMoveVars(baseent_c* e)
 {
-	pm.movetype = MOVETYPE::WALK;
+	pm.movetype = e->movetype;
 	pm.moveforward = (int)e->run_speed;
 	pm.moveright = (int)e->sidestep_speed;
 	pm.moveup = e->up_speed;

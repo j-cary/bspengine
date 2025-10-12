@@ -1,18 +1,49 @@
 #include "sound.h"
 #include "file.h"
 
-extern gamestate_c game;
+typedef enum class SNDSTATE
+{
+	STOP = 0, PLAY, PLAYLOOP, PAUSE, RESUME, RESUMELOOP
+} sndstate_e;
 
-//alid snd1, src;
-ALCdevice* dev;
-ALCcontext* context;
+#define SND_MAX_AMBS	32
+#define SND_MAX_DYNS	64
+#define SND_MAX (SND_MAX_AMBS + SND_MAX_DYNS)
 
-alsound_t sounds;
+typedef struct alsound_s
+{
+	alid buf[SND_MAX];
+	alid src[SND_MAX];
+	sndstate_e state[SND_MAX] = {};
+} alsound_t;
+
+static ALCdevice* dev;
+static ALCcontext* context;
+
+static alsound_t sounds;
+
+static void ListAudioDevices(const ALCchar* devname)
+{
+	const ALCchar* dev = devname, * nextdev = devname + 1;
+	int len = 0;
+
+	printf("\nSound device List\n=================\n");
+	while (dev && *dev && nextdev && *nextdev)
+	{
+		printf("%s\n", dev);
+		len = (int)strlen(dev);
+		dev += (len + 1);
+		nextdev += (len + 2);
+	}
+	printf("=================\n");
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void SetupSound()
 {
-	//wavinfo_t wi;
-
 	dev = alcOpenDevice(NULL);
 	context = alcCreateContext(dev, NULL);
 
@@ -39,37 +70,19 @@ void SetupSound()
 	printf("Successfully initialized openAL sound\n");
 }
 
-void ListAudioDevices(const ALCchar* devname)
+void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const vec3_c* org, 
+	const double tick_delta)
 {
-	const ALCchar* dev = devname, * nextdev = devname + 1;
-	int len = 0;
-
-	printf("\nSound device List\n=================\n");
-	while (dev && *dev && nextdev && *nextdev)
-	{
-		printf("%s\n", dev);
-		len = (int)strlen(dev);
-		dev += (len + 1);
-		nextdev += (len + 2);
-	}
-	printf("=================\n");
-}
-
-void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const vec3_c* org)
-{
-	ALfloat orientation[6];
-	vec3_c	fixedvel;
-
+	ALfloat orientation[6] = {
+		-(*forward)[0], //sigh...
+		(*forward)[1],
+		-(*forward)[2], //sigh...
+		(*up)[0],
+		(*up)[1],
+		(*up)[2],
+	};
+	const vec3_c fixedvel = (*vel) * (float)tick_delta; //change u/s to u/t
 	int		srcstate;
-
-	orientation[0] = -(*forward)[0]; //sigh...
-	orientation[1] = (*forward)[1];
-	orientation[2] = -(*forward)[2]; //sigh...
-	orientation[3] = (*up)[0];
-	orientation[4] = (*up)[1];
-	orientation[5] = (*up)[2];
-
-	fixedvel = (*vel) * (float)game.tickdelta; //change u/s to u/t
 	
 	alListenerfv(AL_POSITION, (*org).v);
 	alListenerfv(AL_VELOCITY, fixedvel);
@@ -79,14 +92,14 @@ void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const
 	//if not, switch the state
 	for (int i = 0; i < SND_MAX; i++)
 	{
-		if (sounds.state[i] == SND_STOP)
+		if (sounds.state[i] == SNDSTATE::STOP)
 			continue;
 
 		alGetSourcei(sounds.src[i], AL_SOURCE_STATE, &srcstate);
 		if (srcstate == AL_STOPPED)
 		{
 			//printf("stopping %i\n", i);
-			sounds.state[i] = SND_STOP;
+			sounds.state[i] = SNDSTATE::STOP;
 		}
 	}
 
@@ -106,7 +119,7 @@ void PlaySound(const char* name, const vec3_c org, float gain, int pitch, bool l
 	int first = 0;
 	wavinfo_t wi;
 
-	for (; sounds.state[first] != SND_STOP; first++)
+	for (; sounds.state[first] != SNDSTATE::STOP; first++)
 	{
 		if (first == SND_MAX)
 		{
@@ -129,17 +142,11 @@ void PlaySound(const char* name, const vec3_c org, float gain, int pitch, bool l
 
 	alSourcePlay(sounds.src[first]);
 
-	if (!loop)
-		sounds.state[first] = SND_PLAY;
-	else
-		sounds.state[first] = SND_PLAYLOOP;
-
+	sounds.state[first] = loop ? SNDSTATE::PLAYLOOP : SNDSTATE::PLAY;
 }
 
 void CleanupSound()
 {
-	//alDeleteSources(1, &src);
-	//alDeleteBuffers(1, &snd1);
 	alDeleteSources(SND_MAX, sounds.src);
 	alDeleteBuffers(SND_MAX, sounds.buf);
 	alcDestroyContext(context);
