@@ -139,6 +139,7 @@ void baseent_c::Clear()
 	flags = 0;
 
 	onground = -1;
+	movetype = MOVETYPE::WALK;
 
 	//inuse = false;
 }
