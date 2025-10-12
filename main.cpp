@@ -6,7 +6,6 @@
 #include "common.h"
 #include "console.h"
 #include "pcmd.h" //keys
-#include "pmove.h" //pmove
 #include "clip.h"
 #include "input.h"
 #include "file.h"
@@ -155,13 +154,12 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 			PKeys(&in);
 			game.tickdelta = (game.time - game.lasttick);
 			game.lasttick = game.time;
-			//printf("%f\n", game.tickdelta);
+
 			EntTick(&game);
 			PlayerTick(&in);
-			SetMoveVars(&in);
-			PMove();
 			ParticleTick();
 			SoundTick(&in.forward, &in.up, &in.vel, &in.org);
+
 			game.nexttick = game.time + (1.0 / game.maxtps);
 			game.tick++;
 		}

@@ -29,7 +29,6 @@ typedef struct
 	int onground;
 	vec3_c org,  vel;
 	baseent_c* ent;
-	input_c* in;
 } pmove_t;
 
 extern gamestate_c game;
@@ -49,7 +48,8 @@ extern gamestate_c game;
 
 #define GROUNDED_NOT	(-1)
 
-static int jumpheld = 0; //FIXME: jump is actually triggering twice somehow - getting a little too much height
+//FIXME: jump is actually triggering twice somehow - getting a little too much height
+static int jumpheld = 0; 
 
 static pmove_t pm;
 
@@ -581,18 +581,9 @@ static void ClipMove(vec3_c* org, vec3_c* vel)
 // Update the origin, vel, and onground of the calling object
 static void UpdateMoveVars()
 {
-	if (pm.in)
-	{
-		pm.in->onground = pm.onground;
-		pm.in->org = pm.org;
-		pm.in->vel = pm.vel;
-	}
-	else
-	{
-		pm.ent->onground = pm.onground;
-		pm.ent->origin = pm.org;
-		pm.ent->velocity = pm.vel;
-	}
+	pm.ent->onground = pm.onground;
+	pm.ent->origin = pm.org;
+	pm.ent->velocity = pm.vel;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -648,33 +639,16 @@ void PMove()
 	UpdateMoveVars();
 }
 
-void SetMoveVars(input_c* i)
-{
-	pm.movetype = i->movetype;
-	pm.moveforward = i->moveforward;
-	pm.moveright = i->movesideways;
-	pm.moveup = i->moveup;
-	pm.yaw = i->yaw;
-	pm.pitch = i->pitch;
-	pm.onground = i->onground;
-	pm.org = i->org;
-	pm.vel = i->vel;
-	pm.ent = FindEntByClassName("player");
-	pm.in = i;
-}
-
 void SetMoveVars(baseent_c* e)
 {
 	pm.movetype = MOVETYPE::WALK;
 	pm.moveforward = (int)e->run_speed;
 	pm.moveright = (int)e->sidestep_speed;
-	pm.moveup = 0;
-	//pm.yaw = e->angles.v[ANGLE_YAW];
+	pm.moveup = e->up_speed;
 	pm.yaw = e->chase_angle;
-	pm.pitch = 0; //e->angles.v[ANGLE_PITCH];
+	pm.pitch = e->angles.v[ANGLE_PITCH];
 	pm.onground = e->onground;
 	pm.org = e->origin;
 	pm.vel = e->velocity;
 	pm.ent = e;
-	pm.in = NULL;
 }

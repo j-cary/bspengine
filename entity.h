@@ -76,13 +76,14 @@ public:
 	vec3_c	eyes;
 	vec3_c	angles;
 	float	chase_angle; //moronic 90 degree offset
-	float	run_speed, sidestep_speed;
+	float	run_speed, sidestep_speed, up_speed;
 	flag_t	flags;
 	char	modelname[64];
 	char	noise[64]; //for constant sounds
 	bool	playing; //keep track of status
 
 	int		onground;
+	movetype_e movetype;
 	
 	model_t models[3]; //3 models can belong to an ent. 0th is used as the collision model
 	struct bmodel_s* bmodel;

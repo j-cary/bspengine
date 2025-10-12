@@ -4,6 +4,8 @@ Operation:
 #include "player.h"
 #include "weapons.h"
 #include "input.h"
+#include "pmove.h"
+#include "vec_math.h"
 
 extern gamestate_c game;
 
@@ -18,6 +20,43 @@ static const vec3_c viewmodel_offset = { -11, 1, 22 };
 
 
 //need a separate place to call stuff upon reloading of BSP
+
+static void ReconcileInput(baseent_c* player, const input_c* in)
+{
+	player->eyes = player->origin = in->org;
+	player->eyes[1] += playerspawn_vertical_offset; //this kind of isn't the right name for the offset here...
+
+	player->chase_angle = in->yaw;
+	player->angles[ANGLE_YAW] = in->yaw; //90 degree yaw/forward bug - checkme
+	player->angles[ANGLE_PITCH] = in->pitch;
+	player->angles[ANGLE_ROLL] = 0;
+
+	vec3_c tmp;
+	GetAngleVectors(in->pitch, in->yaw, player->forward, tmp);
+
+	player->movetype = in->movetype;
+	player->run_speed = (float)in->moveforward;
+	player->sidestep_speed = (float)in->movesideways;
+	player->up_speed = (float)in->moveup;
+	player->onground = in->onground;
+	player->origin = in->org;
+	player->velocity = in->vel;
+}
+
+static void ReconcileInput(input_c* in, const baseent_c* player)
+{
+	in->movetype = player->movetype;
+	in->moveforward = (int)player->run_speed;
+	in->movesideways = (int)player->sidestep_speed;
+	in->moveup = (int)player->up_speed;
+	in->onground = player->onground;
+	in->org = player->origin;
+	in->vel = player->velocity;
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                        Module Interface                                          *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 void SetupPlayer(input_c* in)
 {
@@ -60,20 +99,19 @@ baseent_c* GetPlayer()
 	return player;
 }
 
-void PlayerTick(const input_c* in)
+void PlayerTick(input_c* in)
 {
 	const int model_skiptick = game.maxtps / 16; //how many ticks to skip inbetween model frame updates
 	const bool model_updatetick = (game.tick % model_skiptick) == 0;
 
-	//update player ent with in stuff etc.
-	player->eyes = player->origin = in->org;
-	player->eyes[1] += playerspawn_vertical_offset; //this kind of isn't the right name for the offset here...
+	ReconcileInput(player, in);
 
-	player->angles[ANGLE_YAW] = in->yaw + 90; //90 degree yaw/forward bug - checkme
-	player->angles[ANGLE_PITCH] = in->pitch;
-	player->angles[ANGLE_ROLL] = 0;
 
-	player->forward = in->forward;
+	// Update position
+	SetMoveVars(player);
+	PMove();
+
+	ReconcileInput(in, player);
 
 	//weapon sway
 	//player->models[0].offset = viewmodel_offset;

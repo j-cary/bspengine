@@ -7,7 +7,6 @@ Purpose:
 #include "bsp.h"
 #include "entity.h"
 
-void SetMoveVars(input_c* in);
 void SetMoveVars(baseent_c* e);
 void PMove();
 
