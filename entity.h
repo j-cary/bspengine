@@ -6,23 +6,25 @@ Purpose:
 #include "bsp.h" //bmodel
 #include <vector> //for hammer k/v parsing
 
-#define AI_CLUELESS			0x0
-#define AI_SEEPLAYER		0x1 
-#define AI_PLAYER_INRANGE	0x2 //close enough to attack
-#define AI_PLAYER_TOOCLOSE	0x4 
-#define AI_HAVEPATH			0x8
-
-
-#define AI_TOOCLOSE_DIST	80
-#define AI_INRANGE_DIST		256
-
-typedef flag_t aiflags_t;
+typedef enum class AIFLAGS : unsigned
+{
+	CLUELESS = 0,
+	SEEPLAYER = 1 << 0,
+	PLAYER_INRANGE = 1 << 1,
+	PLAYER_TOOCLOSE = 1 << 2,
+	HAVEPATH = 1 << 3,
+} aiflags_e;
+DEF_BITWISE_ENUM_FUNCS(aiflags_e, unsigned)
 
 #define ENTITIES_MAX 4096
 
-//render flags
-#define RF_NONE			0
-#define RF_VIEWMODEL	1
+// Render Flags
+typedef enum class RF : unsigned
+{
+	NONE = 0,
+	VIEWMODEL = (1<<0),
+} rflags_e;
+DEF_BITWISE_ENUM_FUNCS(rflags_e, unsigned)
 
 typedef struct model_s
 {
@@ -31,7 +33,7 @@ typedef struct model_s
 	unsigned	frame;
 	unsigned	frame_max;
 	vec3_c		offset;
-	flag_t		rflags;
+	rflags_e	rflags;
 
 	//convenience wrappers around model list
 	void SetFrameGroup(const char* group, int offset);
@@ -46,18 +48,25 @@ typedef struct hammerkv_s
 
 struct keytranslate_s;
 
+namespace ANGLE
+{
+	enum ANGLE
+	{
+		PITCH = 0,	//up/down
+		YAW = 2,	//left/right
+		ROLL = 1,	//head tilt
+	};
+};
 
-#define ANGLE_PITCH	0 //left/right
-#define ANGLE_YAW	2 //up/down
-#define ANGLE_ROLL	1 //head tilt
-
-//entity callback function flags
-#define CFF_TOUCH1	((flag_t)(1 << 0))
-#define CFF_TOUCH2	((flag_t)(1 << 1))
-#define CFF_USE1	((flag_t)(1 << 2))
-#define CFF_USE2	((flag_t)(1 << 3))
-#define CFF_THINK1	((flag_t)(1 << 4))
-#define CFF_THINK2	((flag_t)(1 << 5))
+// Callback Function Flags
+typedef enum class CFF : unsigned
+{
+	NONE = 0,
+	TOUCH1 = 1<<0,	TOUCH2 = 1<<1,
+	USE1 = 1<<2,	USE2 = 1<<3,
+	THINK1 = 1<<4,	THINK2 = 1<<5
+} cfflags_e;
+DEF_BITWISE_ENUM_FUNCS(cfflags_e, unsigned)
 
 class baseent_c
 {
@@ -67,7 +76,7 @@ public:
 	float	health;
 	vec3_c	velocity, accel;
 	baseent_c* enemy;
-	aiflags_t aiflags;//state machine for ai
+	aiflags_e aiflags;//state machine for ai
 
 	//Set in WorldEdit
 	char	classname[64];
@@ -89,8 +98,8 @@ public:
 	model_t models[3]; //3 models can belong to an ent. 0th is used as the collision model
 	struct bmodel_s* bmodel;
 
-	flag_t	callbackflags; //these flags control which (if any) of the callback (touch, think, use, etc.) functions get called by the system
-	double	nextthink;
+	cfflags_e callbackflags; //these flags control which (if any) of the callback (touch, think, use, etc.) functions get called by the system
+	double nextthink;
 
 	//this can start, stop, pause, or resume a sound. Used for looping and standard sounds
 	void MakeNoise(const char* name, const vec3_c ofs, float gain, int pitch, bool looped);

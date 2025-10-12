@@ -389,7 +389,7 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 	//todo: calculate forward vector for ents somewhere
 	//fixme: rotation appears to not be occuring at the origin of the model
 
-	if (midx->rflags & RF_VIEWMODEL)
+	if ((midx->rflags & RF::VIEWMODEL) != RF::NONE)
 	{
 		rotate = glm::rotate(rotate, glm::radians(-90.0f), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
 
@@ -399,8 +399,8 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 		vec3_c right = ent->forward.crs(upvec);
 
 		//FIXME: actually use roll - swap out upvec
-		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_YAW]), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
-		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE_PITCH]), glm::vec3(right.v[0], right.v[1], right.v[2])); //pitch
+		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE::YAW]), glm::vec3(upvec.v[0], upvec.v[1], upvec.v[2])); //yaw
+		rotate = glm::rotate(rotate, glm::radians(ent->angles.v[ANGLE::PITCH]), glm::vec3(right.v[0], right.v[1], right.v[2])); //pitch
 
 	}
 
@@ -435,7 +435,7 @@ void md2list_c::AddMDLtoList(baseent_c* ent, model_t* midx)
 					rotated[row] += vi.v[vertices][j] * rotate[row][j];
 
 			//scale & translate
-			if (midx->rflags & RF_VIEWMODEL)
+			if ((midx->rflags & RF::VIEWMODEL) != RF::NONE)
 			{
 				vi.u[vertices] |= 0x80000000; //set the highest bit. (sanity check: Is MDL_MAX::MODELS_SKINS less than this?)
 

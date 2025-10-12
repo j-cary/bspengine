@@ -646,7 +646,7 @@ void SetMoveVars(baseent_c* e)
 	pm.moveright = (int)e->sidestep_speed;
 	pm.moveup = e->up_speed;
 	pm.yaw = e->chase_angle;
-	pm.pitch = e->angles.v[ANGLE_PITCH];
+	pm.pitch = e->angles.v[ANGLE::PITCH];
 	pm.onground = e->onground;
 	pm.org = e->origin;
 	pm.vel = e->velocity;

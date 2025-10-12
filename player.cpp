@@ -27,9 +27,9 @@ static void ReconcileInput(baseent_c* player, const input_c* in)
 	player->eyes[1] += playerspawn_vertical_offset; //this kind of isn't the right name for the offset here...
 
 	player->chase_angle = in->yaw;
-	player->angles[ANGLE_YAW] = in->yaw; //90 degree yaw/forward bug - checkme
-	player->angles[ANGLE_PITCH] = in->pitch;
-	player->angles[ANGLE_ROLL] = 0;
+	player->angles[ANGLE::YAW] = in->yaw; //90 degree yaw/forward bug - checkme
+	player->angles[ANGLE::PITCH] = in->pitch;
+	player->angles[ANGLE::ROLL] = 0;
 
 	vec3_c tmp;
 	GetAngleVectors(in->pitch, in->yaw, player->forward, tmp);
@@ -91,7 +91,7 @@ void SpawnPlayer(input_c* in)
 	player->AllocModel("models/weapons/v/shotg/tris.md2", &player->models[0]);
 	player->models[0].frame = 3;
 	player->models[0].offset = viewmodel_offset;
-	player->models[0].rflags |= RF_VIEWMODEL;
+	player->models[0].rflags |= RF::VIEWMODEL;
 }
 
 baseent_c* GetPlayer()

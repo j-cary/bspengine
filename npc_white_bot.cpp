@@ -13,13 +13,12 @@ void ent::npc_white_bot_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 	baseent_c::HammerSpawn(keyvals);
 
 	strcpy(modelname, "models/npcs/white_bot/tris.md2"); //this will get alloc-ed in a second
-	//models[0].mid = md2list.Alloc(modelname, this, &models[0]);
 	AllocModel(modelname, &models[0]);
 
 
 	DropToFloor(HULL::CLIP);
 
-	callbackflags = CFF_THINK1;
+	callbackflags = CFF::THINK1;
 	nextthink = game.time + 0.5;
 }
 
@@ -44,7 +43,7 @@ void FollowPath(baseent_c* e, aipath_t* path)
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = FRADSTODEG(beeline_yaw);
 
-		e->angles[ANGLE_YAW] = beeline_yaw + 90.0f;
+		e->angles[ANGLE::YAW] = beeline_yaw + 90.0f;
 		e->chase_angle = beeline_yaw;
 
 		e->run_speed = 200;
@@ -72,23 +71,23 @@ void ent::npc_white_bot_c::Think1()
 	//if the player can't be seen, and we have no path, go to the nearest node
 #if 1
 	p = FindEntByClassName("player");
-	aiflags = AI_CLUELESS;
+	aiflags = AIFLAGS::CLUELESS;
 
 	if (CanSee(this, p, 60, 768))
 	{
-		aiflags |= AI_SEEPLAYER;
+		aiflags |= AIFLAGS::SEEPLAYER;
 		delta = origin - p->origin;
 
 		if (delta.len() < AI_TOOCLOSE_DIST)
-			aiflags |= AI_PLAYER_TOOCLOSE;
+			aiflags |= AIFLAGS::PLAYER_TOOCLOSE;
 		else if (delta.len() < AI_INRANGE_DIST)
-			aiflags |= AI_PLAYER_INRANGE;
+			aiflags |= AIFLAGS::PLAYER_INRANGE;
 
 		MakePath(this, p, &path);
 	}
 
 	if (path.cnt)
-		aiflags |= AI_HAVEPATH;
+		aiflags |= AIFLAGS::HAVEPATH;
 
 	/*
 	if (aiflags & AI_SEEPLAYER)
@@ -102,24 +101,24 @@ void ent::npc_white_bot_c::Think1()
 	printf("\n");
 	*/
 
-	if (aiflags & AI_SEEPLAYER)
+	if ((aiflags & AIFLAGS::SEEPLAYER) != AIFLAGS::CLUELESS)
 	{
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = FRADSTODEG(beeline_yaw);
 
-		angles[ANGLE_YAW] = beeline_yaw + 90.0f;
+		angles[ANGLE::YAW] = beeline_yaw + 90.0f;
 		chase_angle = beeline_yaw;
 
-		if (aiflags & AI_PLAYER_INRANGE)
+		if ((aiflags & AIFLAGS::PLAYER_INRANGE) != AIFLAGS::CLUELESS)
 			run_speed = 0;
-		else if (aiflags & AI_PLAYER_TOOCLOSE)
+		else if ((aiflags & AIFLAGS::PLAYER_TOOCLOSE) != AIFLAGS::CLUELESS)
 			run_speed = -200;
 		else
 		{//follow the path
 			//FollowPath(this, &path); //just buzzing around the initial node since this gets rebuilt ever time we see the player
 		}
 	}
-	else if (aiflags & AI_HAVEPATH)
+	else if ((aiflags & AIFLAGS::HAVEPATH) != AIFLAGS::CLUELESS)
 	{//can't see player, follow the path
 
 		FollowPath(this, &path);
@@ -167,7 +166,7 @@ void ent::npc_white_bot_c::Think1()
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = RADSTODEG(beeline_yaw);
 
-		angles[ANGLE_YAW] = beeline_yaw + 90.0f;
+		angles[ANGLE::YAW] = beeline_yaw + 90.0f;
 		chase_angle = beeline_yaw;
 	}
 
@@ -199,7 +198,7 @@ void ent::npc_white_bot_c::Think1()
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = RADSTODEG(beeline_yaw);
 
-		angles[ANGLE_YAW] = beeline_yaw + 90.0f;
+		angles[ANGLE::YAW] = beeline_yaw + 90.0f;
 		chase_angle = beeline_yaw;
 		run_speed = newrunspeed;
 	}
@@ -215,7 +214,7 @@ void ent::npc_white_bot_c::Think1()
 		beeline_yaw = atan2(delta[0], -delta[2]);
 		beeline_yaw = RADSTODEG(beeline_yaw);
 
-		angles[ANGLE_YAW] = beeline_yaw + 90.0f;
+		angles[ANGLE::YAW] = beeline_yaw + 90.0f;
 		chase_angle = beeline_yaw;
 		run_speed = newrunspeed;
 

@@ -26,6 +26,18 @@ Purpose: Define macros, types, and classes common to all modules
 //random between x and y. x should be less than y
 #define frand(x,y) (((float)((y)-(x)) * ((rand () & RAND_MAX) / ((float)RAND_MAX))) + (float)(x))
 
+#define DEF_BITWISE_ENUM_FUNCS(enum_type, underlying_type) \
+	inline enum_type operator|(enum_type a, enum_type b) { \
+		return (enum_type)((underlying_type)a | (underlying_type)b); } \
+	inline enum_type operator&(enum_type a, enum_type b) { \
+		return (enum_type)((underlying_type)a & (underlying_type)b); } \
+	inline enum_type operator^(enum_type a, enum_type b) { \
+		return (enum_type)((underlying_type)a ^ (underlying_type)b); } \
+	inline enum_type operator|=(enum_type& a, enum_type b) { return a = a | b; } \
+	inline enum_type operator&=(enum_type& a, enum_type b) { return a = a & b; } \
+	inline enum_type operator^=(enum_type& a, enum_type b) { return a = a ^ b; }
+
+
 typedef float vec3_t[3];
 typedef float vec4_t[4];
 typedef unsigned int flag_t;

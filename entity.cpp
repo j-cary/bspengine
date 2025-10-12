@@ -46,18 +46,18 @@ void EntTick(gamestate_c* gs)
 		if (ent->nextthink < game.time)
 		{
 			vec3_c tmp;
-			if (ent->callbackflags & CFF_THINK1)
+			if ((ent->callbackflags & CFF::THINK1) != CFF::NONE)
 			{
-				GetAngleVectors(ent->angles[ANGLE_PITCH], ent->angles[ANGLE_YAW], ent->forward, tmp);
+				GetAngleVectors(ent->angles[ANGLE::PITCH], ent->angles[ANGLE::YAW], ent->forward, tmp);
 				ent->Think1();
-				GetAngleVectors(ent->angles[ANGLE_PITCH], ent->angles[ANGLE_YAW], ent->forward, tmp);
+				GetAngleVectors(ent->angles[ANGLE::PITCH], ent->angles[ANGLE::YAW], ent->forward, tmp);
 
 			}
-			else if (ent->callbackflags & CFF_THINK2)
+			else if ((ent->callbackflags & CFF::THINK2) != CFF::NONE)
 			{
-				GetAngleVectors(ent->angles[ANGLE_PITCH], ent->angles[ANGLE_YAW], ent->forward, tmp);
+				GetAngleVectors(ent->angles[ANGLE::PITCH], ent->angles[ANGLE::YAW], ent->forward, tmp);
 				ent->Think2();
-				GetAngleVectors(ent->angles[ANGLE_PITCH], ent->angles[ANGLE_YAW], ent->forward, tmp);
+				GetAngleVectors(ent->angles[ANGLE::PITCH], ent->angles[ANGLE::YAW], ent->forward, tmp);
 			}
 		}
 
@@ -97,7 +97,7 @@ void baseent_c::DropToFloor(int hull)
 
 void baseent_c::Clear()
 {
-	callbackflags = 0;
+	callbackflags = CFF::NONE;
 
 
 	velocity = accel = zerovec;
@@ -105,7 +105,7 @@ void baseent_c::Clear()
 
 	enemy = NULL;
 
-	aiflags = AI_CLUELESS;
+	aiflags = AIFLAGS::CLUELESS;
 
 	memset(classname, 0, 64);
 	memset(name, 0, 64);
@@ -120,7 +120,7 @@ void baseent_c::Clear()
 		models[i].frame = models[i].frame_max = models[i].skin = 0;
 		models[i].mid = 0xFFFFFFFF;
 		models[i].offset = zerovec;
-		models[i].rflags = 0x0;
+		models[i].rflags = RF::NONE;
 	}
 
 	bmodel = NULL;

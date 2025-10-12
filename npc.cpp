@@ -253,7 +253,7 @@ bool StepDirection(ent_c* ent, float yaw, float dist)
 	if (MoveStep(ent, move))
 	{
 		//delta = ent->v.angles[YAW] - ent->v.ideal_yaw;
-		delta = ent->angles.v[ANGLE_YAW] - ideal_yaw;
+		delta = ent->angles.v[ANGLE::YAW] - ideal_yaw;
 		if (delta > 45 && delta < 315)
 		{		// not turned far enough, so don't take the step
 			ent->origin - oldorigin; //VectorCopy(oldorigin, ent->v.origin);
@@ -271,7 +271,7 @@ void NewChaseDir(ent_c* ent, ent_c* goal, float dist)
 	float	d[3];
 	float	tdir, olddir, turnaround;
 
-	olddir = anglemod(ent->angles.v[ANGLE_YAW]); //olddir = anglemod((int)(actor->v.ideal_yaw / 45) * 45);
+	olddir = anglemod(ent->angles.v[ANGLE::YAW]); //olddir = anglemod((int)(actor->v.ideal_yaw / 45) * 45);
 	turnaround = anglemod(olddir - 180);
 
 	deltax = goal->origin.v[0] - ent->origin.v[0];
@@ -381,7 +381,7 @@ void MoveToGoal(ent_c* me, ent_c* goal, float dist)
 		return;
 
 	// bump around...
-	if(!StepDirection(me, me->angles.v[ANGLE_YAW], dist)) //if ((rand() & 3) == 1 || !SV_StepDirection(ent, ent->v.ideal_yaw, dist))
+	if(!StepDirection(me, me->angles.v[ANGLE::YAW], dist)) //if ((rand() & 3) == 1 || !SV_StepDirection(ent, ent->v.ideal_yaw, dist))
 	{
 		NewChaseDir(me, goal, dist);
 	}
