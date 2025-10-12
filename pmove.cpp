@@ -76,7 +76,7 @@ static void WaterMove()
 #endif
 }
 
-static void PFriction()
+static void PFriction(vec3_c* vel)
 {
 	float		speed, newspeed, control;
 	float		friction;
@@ -88,12 +88,10 @@ static void PFriction()
 	//	return;
 
 
-	speed = pm.vel.len();
+	speed = vel->len();
 	if (speed < 1)
 	{
-		//vel[0] = 0;
-		//vel[1] = 0;
-		pm.vel[0] = pm.vel[2] = 0;
+		(*vel)[0] = (*vel)[2] = 0;
 		return;
 	}
 
@@ -132,38 +130,38 @@ static void PFriction()
 		newspeed = 0;
 	newspeed /= speed;
 
-	pm.vel = pm.vel * newspeed;
+	(*vel) = (*vel) * newspeed;
 }
 
-static void PCategorizePosition()
+static void PCategorizePosition(vec3_c* org, int* onground)
 {
 	vec3_c point;
 	//int cont;
 	trace_c tr;
 
 	// if the player hull point one unit down is solid, the player is grounded
-	point = pm.org;
+	point = *org;
 	point[1]--;
 
 	if (pm.vel[1] > 180)
 	{ //falling very fast, must not be grounded
-		pm.onground = GROUNDED_NOT;
+		*onground = GROUNDED_NOT;
 	}
 	else
 	{
-		tr.PlayerMove(pm.org, point);
+		tr.PlayerMove(*org, point);
 		//printf("norm %.2f\n", tr.plane.normal[1]);
 		if (tr.plane.normal[1] < 0.7)
-			pm.onground = GROUNDED_NOT;	// sliding down a ramp, falling (surfing)
+			*onground = GROUNDED_NOT;	// sliding down a ramp, falling (surfing)
 		else
-			pm.onground = tr.physent;
+			*onground = tr.physent;
 		//else
 		//	onground = tr.ent;
-		if (pm.onground != GROUNDED_NOT)
+		if (*onground != GROUNDED_NOT)
 		{
 			//pmove.waterjumptime = 0;
 			if (!tr.initsolid && !tr.allsolid)
-				pm.org = tr.end;
+				*org = tr.end;
 		}
 
 		// standing on an entity other than the world
@@ -203,7 +201,7 @@ static void PCategorizePosition()
 #endif
 }
 
-static void PJump()
+static void PJump(vec3_c* vel)
 {
 	/*
 	if (pmove.dead)
@@ -246,7 +244,7 @@ static void PJump()
 	//	return;		// don't pogo stick
 
 	pm.onground = -1;
-	pm.vel[1] += JUMP_SPEED;//pmove.velocity[2] += 270;
+	(*vel)[1] += JUMP_SPEED;//pmove.velocity[2] += 270;
 
 	//PlaySound("sound/plyr/step2.wav", pm.org, 0.2, 1, 0);
 	jumpheld++;
@@ -496,7 +494,7 @@ static void PAirAccelerate(vec3_c* vel, const vec3_c& wishdir, float wishspeed, 
 		(*vel)[i] += accelspeed * wishdir[i];
 }
 
-static void NoClipMove()
+static void NoClipMove(vec3_c* org, vec3_c* vel)
 {
 	vec3_c fwd, right;
 	float newpitch;
@@ -521,18 +519,18 @@ static void NoClipMove()
 		wishspd = SPEED_MAX;
 	}
 
-	PAccelerate(&pm.vel, wishdir, wishspd, ACCEL_RATE);
+	PAccelerate(vel, wishdir, wishspd, ACCEL_RATE);
 
 	//change the velocity from units/second to units/tick
-	vel_upt = pm.vel * (float)game.tickdelta;
-	pm.org = pm.org +  vel_upt;
-	PFriction();
+	vel_upt = (*vel) * (float)game.tickdelta;
+	(*org) = (*org) + vel_upt;
+	PFriction(vel);
 
 	//don't want to apply any friction to up/down movement
 	if (pm.moveup == 1)
 		pm.org[1] += 300 * (float)game.tickdelta;
 	else if (pm.moveup == -1)
-		pm.org[1] -= 300 * (float)game.tickdelta;
+		(*org)[1] -= 300 * (float)game.tickdelta;
 	
 }
 
@@ -606,7 +604,8 @@ void PMove()
 {
 	if (pm.movetype == MOVETYPE::NOCLIP)
 	{//FIXME: moving while walking carries over speed to noclipping
-		NoClipMove();
+		NoClipMove(&pm.org, &pm.vel);
+		UpdateMoveVars();
 		return;
 	}
 
@@ -614,7 +613,7 @@ void PMove()
 
 	//NudgePosition();
 
-	PCategorizePosition();
+	PCategorizePosition(&pm.org, &pm.onground);
 
 	//printf("%i\n", onground);
 
@@ -632,11 +631,11 @@ void PMove()
 	*/
 
 	if (pm.moveup == 1)
-		PJump();
+		PJump(&pm.vel);
 	else if (jumpheld)
 		jumpheld = 0;
 
-	PFriction();
+	PFriction(&pm.vel);
 
 	//if (waterlevel >= 2)
 	//	WaterMove();
@@ -644,7 +643,7 @@ void PMove()
 	ClipMove(&pm.org, &pm.vel);
 
 
-	PCategorizePosition();
+	PCategorizePosition(&pm.org, &pm.onground);
 
 	UpdateMoveVars();
 }
