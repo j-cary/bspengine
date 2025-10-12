@@ -12,7 +12,6 @@ private:
 public:
 	unsigned id;
 
-	//!!!WARNING: this assumes the shader files are 1024 bytes or smaller
 	shader_c();
 	shader_c(const char* vname, const char* fname);
 	shader_c(const char* vname, const char* fname, const char* gname);
