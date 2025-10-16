@@ -20,6 +20,7 @@ Flow Chart -
 #include "pmove.h"
 #include "clip.h"
 #include "vec_math.h"
+#include "sound.h"
 
 typedef struct
 {
@@ -48,8 +49,13 @@ extern gamestate_c game;
 
 #define GROUNDED_NOT	(-1)
 
+#define JMP_BASE 0
+#define JMP_HELD 1
+#define JMP_REL 2
+#define JMP_REGRAB 3
+
 //FIXME: jump is actually triggering twice somehow - getting a little too much height
-static int jumpheld = 0; 
+static int jumpheld = JMP_BASE;
 
 static pmove_t pm;
 
@@ -203,6 +209,12 @@ static void PCategorizePosition(vec3_c* org, int* onground)
 
 static void PJump(vec3_c* vel)
 {
+	if (pm.moveup < 1)
+	{ // Jump key not pressed
+		jumpheld = JMP_REGRAB;
+		return;
+	}
+
 	/*
 	if (pmove.dead)
 	{
@@ -231,24 +243,38 @@ static void PJump(vec3_c* vel)
 		return;
 	}
 	*/
-
 	
 
 	if (pm.onground == -1)
 		return;		// in air, so no effect
-
-	if (jumpheld  > 1)
+	else if (jumpheld == JMP_HELD)
 		return;
+#if 0
+	if (pm.onground == GROUNDED_NOT)
+	{
+		if (jumpheld == JMP_REL)
+			jumpheld = JMP_REGRAB;
+		return;
+	}
+	else if (jumpheld == JMP_HELD)
+	{
+		return;
+	}
+#endif
 	
-	//if (pmove.oldbuttons & BUTTON_JUMP)
-	//	return;		// don't pogo stick
+	printf("======JUMP====== %i\n", jumpheld);
 
-	pm.onground = -1;
-	(*vel)[1] += JUMP_SPEED;//pmove.velocity[2] += 270;
+	pm.onground = GROUNDED_NOT;
+	
+	if (jumpheld == JMP_REGRAB)
+		(*vel)[1] = JUMP_SPEED;
+	else
+		(*vel)[1] += JUMP_SPEED;
 
-	//PlaySound("sound/plyr/step2.wav", pm.org, 0.2, 1, 0);
-	jumpheld++;
-	//pmove.oldbuttons |= BUTTON_JUMP;	// don't jump again until released
+
+	PlaySound("sound/plyr/step1.wav", pm.org, 0.25f, 1, 0);
+
+	jumpheld = JMP_HELD; // don't jump again until released
 }
 
 static void NudgePosition()
@@ -621,10 +647,7 @@ void PMove()
 		pmove.oldbuttons &= ~BUTTON_JUMP;
 	*/
 
-	if (pm.moveup == 1)
-		PJump(&pm.vel);
-	else if (jumpheld)
-		jumpheld = 0;
+	PJump(&pm.vel);
 
 	PFriction(&pm.vel);
 

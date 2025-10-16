@@ -21,6 +21,7 @@ static ALCdevice* dev;
 static ALCcontext* context;
 
 static alsound_t sounds;
+static const constexpr alid NULL_ID = 0u;
 
 static void ListAudioDevices(const ALCchar* devname)
 {
@@ -73,7 +74,7 @@ void SetupSound()
 void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const vec3_c* org, 
 	const double tick_delta)
 {
-	ALfloat orientation[6] = {
+	const ALfloat orientation[6] = {
 		-(*forward)[0], //sigh...
 		(*forward)[1],
 		-(*forward)[2], //sigh...
@@ -98,7 +99,7 @@ void SoundTick(const vec3_c* forward, const vec3_c* up, const vec3_c* vel, const
 		alGetSourcei(sounds.src[i], AL_SOURCE_STATE, &srcstate);
 		if (srcstate == AL_STOPPED)
 		{
-			//printf("stopping %i\n", i);
+			alSourcei(sounds.src[i], AL_BUFFER, NULL_ID); // Unbind the buffer from this source
 			sounds.state[i] = SNDSTATE::STOP;
 		}
 	}

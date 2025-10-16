@@ -63,8 +63,8 @@ void EntTick(gamestate_c* gs)
 
 		if (ent->run_speed)
 		{//run PMove every single tick
-			SetMoveVars(ent);
-			PMove();
+			//SetMoveVars(ent);
+			//PMove(); // TODO: Handle this for the player
 		}
 		
 	}
