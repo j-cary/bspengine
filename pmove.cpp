@@ -49,13 +49,10 @@ extern gamestate_c game;
 
 #define GROUNDED_NOT	(-1)
 
-#define JMP_BASE 0
-#define JMP_HELD 1
-#define JMP_REL 2
-#define JMP_REGRAB 3
+#define JMP_HELD 0
+#define JMP_REGRAB 1
 
-//FIXME: jump is actually triggering twice somehow - getting a little too much height
-static int jumpheld = JMP_BASE;
+static bool jump_rel = false;
 
 static pmove_t pm;
 
@@ -211,7 +208,7 @@ static void PJump(vec3_c* vel)
 {
 	if (pm.moveup < 1)
 	{ // Jump key not pressed
-		jumpheld = JMP_REGRAB;
+		jump_rel = true;
 		return;
 	}
 
@@ -244,29 +241,15 @@ static void PJump(vec3_c* vel)
 	}
 	*/
 	
-
-	if (pm.onground == -1)
-		return;		// in air, so no effect
-	else if (jumpheld == JMP_HELD)
-		return;
-#if 0
+	/* This block lets the player release the jump button mid-air and regrab it to pogo stick */
 	if (pm.onground == GROUNDED_NOT)
-	{
-		if (jumpheld == JMP_REL)
-			jumpheld = JMP_REGRAB;
 		return;
-	}
-	else if (jumpheld == JMP_HELD)
-	{
-		return;
-	}
-#endif
-	
-	printf("======JUMP====== %i\n", jumpheld);
+	else if (!jump_rel)
+		return; // Only check this if we're on the ground
 
 	pm.onground = GROUNDED_NOT;
 	
-	if (jumpheld == JMP_REGRAB)
+	if (jump_rel) // Only here if re-grabbing and falling; plain set the velocity
 		(*vel)[1] = JUMP_SPEED;
 	else
 		(*vel)[1] += JUMP_SPEED;
@@ -274,7 +257,7 @@ static void PJump(vec3_c* vel)
 
 	PlaySound("sound/plyr/step1.wav", pm.org, 0.25f, 1, 0);
 
-	jumpheld = JMP_HELD; // don't jump again until released
+	jump_rel = false; // don't jump again until released
 }
 
 static void NudgePosition()
