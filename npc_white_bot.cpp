@@ -3,6 +3,9 @@
 #include "ainode.h"
 #include "pmove.h"
 
+/* Thoughts for HammerSpawn: Have a basent func that can be overloaded to accept additional params;
+also might be nice to have some sort of flags that can disable certain entries in the default 
+basent list. */
 
 extern gamestate_c game;
 #include "md2.h" //tmp
@@ -12,7 +15,7 @@ void ent::npc_white_bot_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 {
 	baseent_c::HammerSpawn(keyvals);
 
-	strcpy(modelname, "models/npcs/white_bot/tris.md2"); //this will get alloc-ed in a second
+	strcpy(modelname, "models/npcs/white_bot/tris.md2");
 	AllocModel(modelname, &models[0]);
 
 
