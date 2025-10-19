@@ -25,7 +25,8 @@
 
 enum VI_ARRAY_MEMBERS
 {//VI_SIZE is ALWAYS at the end!
-	VI_X = 0, VI_Y, VI_Z, VI_S, VI_T, VI_TI /*int*/, VI_LS, VI_LT, VI_LI /*int*/, VI_SIZE /*non member*/
+	VI_X = 0, VI_Y, VI_Z, VI_S, VI_T, VI_TI /*int*/, VI_LS, VI_LT, VI_LI /*int*/, 
+	VI_SIZE /*non member*/
 };
 
 class vertexinfo_c

@@ -255,7 +255,7 @@ static void PJump(vec3_c* vel)
 		(*vel)[1] += JUMP_SPEED;
 
 
-	PlaySound("sound/plyr/step1.wav", pm.org, 0.25f, 1, 0);
+	PlaySound("sound/plyr/step1.wav", pm.org, 0.75f, 1, 0);
 
 	jump_rel = false; // don't jump again until released
 }

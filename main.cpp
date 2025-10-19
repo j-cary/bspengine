@@ -54,22 +54,6 @@ extern input_c in;
 * 
 */
 
-//PRIORITY LIST FOR FINAL
-//Check changemap stuff out - this was? crashing.
-//weapons
-//	Bullet clipping - Check
-//	multiple weapon models
-//Monsters
-//	movement
-//	ai - nodes
-//	models
-//Mouse speed/accel
-//Game logic
-//	respawning
-//	pickups
-//	powerups
-//	map reloading 
-//HUD
 
 //TODO list:
 //TEXTURES:
@@ -101,6 +85,9 @@ extern input_c in;
 //	start caching stuff
 //	gl error checking
 //	bsp leaf/bsp model/regular model mins/maxs frustum culling
+/*MODELS:
+*	Script that generates header files for all the models' frames
+*/
 
 
 
