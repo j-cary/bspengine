@@ -3,6 +3,11 @@
 #include "ainode.h"
 #include "pmove.h"
 
+enum class FRAMES
+{
+#include "npcs_white_bot_def.h"
+};
+
 /* Thoughts for HammerSpawn: Have a basent func that can be overloaded to accept additional params;
 also might be nice to have some sort of flags that can disable certain entries in the default 
 basent list. */

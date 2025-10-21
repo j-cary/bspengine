@@ -38,9 +38,6 @@ Put MD2 in this file once everything is dynamic
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define MD2_ID				"IDP2" //ID Polygon 2
-#define MD2_VERSION			8
-
 //Anything above this value is treated as a viewmodel by GL. 
 #define VIEWMODEL_GL_VAL	(0x80000000) 
 

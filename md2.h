@@ -2,6 +2,7 @@
 Purpose:
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 #pragma once
+#ifndef FRAMEGEN_BUILD
 #include "common.h"
 #include "entity.h" //for the model list
 
@@ -31,6 +32,11 @@ namespace MDL_MAX
 	constexpr int SKINS = MODELS * MD2_MAX::SKINS;
 };
 
+#endif // FRAMEGEN_BUILD
+
+#define MD2_ID				"IDP2" //ID Polygon 2
+#define MD2_VERSION			8
+
 typedef struct
 {
 	char id[4]; //IDP2
@@ -52,6 +58,8 @@ typedef struct
 	int length;
 } md2header_t;
 
+
+
 typedef struct
 {
 	byte v[3];
@@ -65,6 +73,8 @@ typedef struct
 	char name[16];
 	md2vec3_t* vertices; //all frames for a given model will have vertex_cnt number of these
 } md2frame_t;
+
+#ifndef FRAMEGEN_BUILD
 
 typedef struct
 {
@@ -283,3 +293,7 @@ public:
 };
 
 void MD2Dump();
+
+#else
+
+#endif // FRAMEGEN_BUILD

@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>.\3rdparty\inc;$(IncludePath)</IncludePath>
+    <IncludePath>.\3rdparty\inc;C:\Users\jackb\source\repos\bspengine\framedef;$(IncludePath)</IncludePath>
     <LibraryPath>.\3rdparty\lib;$(LibraryPath)</LibraryPath>
     <OutDir>c:/t045t/overlord/</OutDir>
   </PropertyGroup>

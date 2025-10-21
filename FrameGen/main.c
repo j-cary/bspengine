@@ -1,6 +1,8 @@
 #include <stdio.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "common.h"
+#include "parse.h"
 
 /* PLAN:
 * Specify dir in cmd line
@@ -15,6 +17,9 @@ static struct
 	int last;
 } cur_dir;
 
+// TODO: this needs to get created on init
+const char* out_dir = "C:\\Users\\jackb\\source\\repos\\bspengine\\framedef\\";
+
 static void HandleFile(const WIN32_FIND_DATAA* wfd)
 {
 	int start = 0, len;
@@ -27,9 +32,12 @@ static void HandleFile(const WIN32_FIND_DATAA* wfd)
 
 	if (_strnicmp(".md2", wfd->cFileName + start, len - start) == 0)
 	{
-		printf("%s\n", wfd->cFileName);
-	}
+		char cur[FILENAME_MAX];
 
+		GetCurrentDirectoryA(FILENAME_MAX, cur);
+		ParseMD2(cur_dir.dir + cur_dir.name_start + 1, wfd->cFileName);
+		SetCurrentDirectoryA(cur);
+	}
 }
 
 static void DirSearch_r(void)
@@ -49,22 +57,26 @@ static void DirSearch_r(void)
 	{
 		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			char dir[MAX_PATH + 1];
+			int len;
 
 			if (!strcmp(".", wfd.cFileName) || !strcmp("..", wfd.cFileName))
-				continue; 
+				continue;
 
-			if (GetCurrentDirectoryA(MAX_PATH, dir) == 0)
-			{
-				printf("Failed to change directory");
-				return;
-			}
+			// Add this folder to the path
+			len = strlen(wfd.cFileName);
+			strcat_s(cur_dir.dir + cur_dir.last, MAX_PATH - cur_dir.last, "\\");
+			cur_dir.last++;
+			strcat_s(cur_dir.dir + cur_dir.last, MAX_PATH - cur_dir.last, wfd.cFileName);
+			cur_dir.last += len;
 
-			//printf("Checking out %s\n", wfd.cFileName);
 			SetCurrentDirectoryA(wfd.cFileName);
 			DirSearch_r();
 
-			if (!SetCurrentDirectoryA(dir))
+			// Remove this folder from the path
+			cur_dir.last -= len + 1;
+			cur_dir.dir[cur_dir.last] = '\0';
+
+			if (!SetCurrentDirectoryA(cur_dir.dir))
 			{
 				printf("Failed to change directory");
 				return;
@@ -76,10 +88,18 @@ static void DirSearch_r(void)
 		}
 
 	} while (FindNextFileA(file, &wfd));
+
+	FindClose(file);
 }
 
 static void DirSearch(const char* const dir)
 {
+	int len = strlen(dir);
+
+	strncpy_s(cur_dir.dir, MAX_PATH, dir, len);
+	cur_dir.last = len;
+	cur_dir.name_start = len;
+
 	if (!SetCurrentDirectoryA(dir))
 	{
 		printf("Failed to set current directory\n");
