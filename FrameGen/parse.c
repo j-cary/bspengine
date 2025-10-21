@@ -148,7 +148,7 @@ void ParseMD2(const char* dir, const char* file)
 		fread(names[i], sizeof(char), 16, f);
 
 		_strupr_s(names[i], 16);
-		printf("%s\n", names[i]);
+		//printf("%s\n", names[i]);
 
 		fseek(f, sizeof(md2vec3_t) * hdr.vertex_cnt, SEEK_CUR); /* Skip past irrelevant data */
 	}

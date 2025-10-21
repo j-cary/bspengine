@@ -23,7 +23,6 @@ void ent::npc_white_bot_c::HammerSpawn(std::vector<hammerkv_t*>& keyvals)
 	strcpy(modelname, "models/npcs/white_bot/tris.md2");
 	AllocModel(modelname, &models[0]);
 
-
 	DropToFloor(HULL::CLIP);
 
 	callbackflags = CFF::THINK1;
