@@ -21,12 +21,18 @@
     <ClCompile Include="parse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="metadata.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="parse.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="metadata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

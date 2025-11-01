@@ -1,3 +1,5 @@
+/* THIS FILE GENERATED AUTOMATICALLY. DO NOT MODIFY */
+/* objects\banner */
 FRAME1 =	  0,
 FRAME2 =	  1,
 FRAME3 =	  2,

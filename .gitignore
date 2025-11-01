@@ -2,3 +2,6 @@
 /.vs/Engine/v17
 /.vs/Engine/FileContentIndex
 engine/x64
+/Framegen/x64
+/Framegen/x64/Debug
+/Framegen/x64/Framegen.tlog

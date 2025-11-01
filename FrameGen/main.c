@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include "common.h"
 #include "parse.h"
+#include "metadata.h"
 
 /* PLAN:
 * Specify dir in cmd line
@@ -16,6 +17,9 @@ static struct
 	int name_start;
 	int last;
 } cur_dir;
+
+static int meta_cnt;
+static meta_t* const meta;
 
 // TODO: this needs to get created on init
 const char* out_dir = "C:\\Users\\jackb\\source\\repos\\bspengine\\framedef\\";
@@ -33,7 +37,6 @@ static void HandleFile(const WIN32_FIND_DATAA* wfd)
 	if (_strnicmp(".md2", wfd->cFileName + start, len - start) == 0)
 	{
 		char cur[FILENAME_MAX];
-
 		GetCurrentDirectoryA(FILENAME_MAX, cur);
 		ParseMD2(cur_dir.dir + cur_dir.name_start + 1, wfd->cFileName);
 		SetCurrentDirectoryA(cur);
@@ -111,6 +114,7 @@ static void DirSearch(const char* const dir)
 
 int main(int argc, const char* const argv[])
 {
+	meta_cnt = LoadMetadata(meta);
 	DirSearch("C:\\T045t\\overlord\\models");
 	return 0;
 }

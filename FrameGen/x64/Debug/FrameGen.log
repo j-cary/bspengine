@@ -1,2 +1,7 @@
-﻿  parse.c
+﻿  main.c
+C:\Users\jackb\source\repos\bspengine\FrameGen\main.c(69,10): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jackb\source\repos\bspengine\FrameGen\main.c(100,12): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  metadata.c
+  Generating Code...
+C:\Users\jackb\source\repos\bspengine\FrameGen\metadata.c(9,1): warning C4716: 'LoadMetadata': must return a value
   FrameGen.vcxproj -> C:\Users\jackb\source\repos\bspengine\x64\Debug\FrameGen.exe

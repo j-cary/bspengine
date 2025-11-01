@@ -8,12 +8,13 @@ Operation:
 #include "parse.h"
 #include "common.h"
 
+// Redefs. Easier than messing around with engine's common.h
 typedef float vec3_t[3];
-typedef unsigned char byte; // Easier than messing around with engine's common.h
+typedef unsigned char byte; 
 #include "md2.h"
 
-/*
-Def file format
+/* Def file format
+// THIS FILE GENERATED AUTOMATICALLY. DO NOT MODIFY
 IDENT01 = 0,
 IDENT02 = 1,
 IDENT_LAST = IDENT2,
@@ -71,6 +72,9 @@ static void WriteDefFile(const char* dir, const char* file, const char** names, 
 	Faster 
 	*/
 
+	fprintf(f, "/* THIS FILE GENERATED AUTOMATICALLY. DO NOT MODIFY */\n");
+	fprintf(f, "/* %s */\n", dir);
+
 	for (int i = 0; i < cnt; ++i)
 	{
 		char buf[32];
@@ -118,11 +122,7 @@ void ParseMD2(const char* dir, const char* file)
 
 	fopen_s(&f, file, "rb");
 
-	if (!f)
-	{
-		printf("Unable to open %s\\%s\n", dir, file);
-		return;
-	}
+	ASSERT(f, "Unable to open %s\\%s\n", dir, file);
 
 	printf("===== %s\\%s =====\n", dir, file);
 
@@ -139,16 +139,15 @@ void ParseMD2(const char* dir, const char* file)
 
 	fseek(f, hdr.frame_ofs, SEEK_SET);
 
+	// Read all the frame names
 	for (int i = 0; i < hdr.frame_cnt; i++)
 	{
 		fseek(f, sizeof(vec3_t) * 2, SEEK_CUR); /* Skip past irrelevant data */
-
 
 		ASSERT(names[i] = malloc(16), "memory error");
 		fread(names[i], sizeof(char), 16, f);
 
 		_strupr_s(names[i], 16);
-		//printf("%s\n", names[i]);
 
 		fseek(f, sizeof(md2vec3_t) * hdr.vertex_cnt, SEEK_CUR); /* Skip past irrelevant data */
 	}

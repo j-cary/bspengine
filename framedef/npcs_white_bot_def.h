@@ -1,3 +1,5 @@
+/* THIS FILE GENERATED AUTOMATICALLY. DO NOT MODIFY */
+/* npcs\white_bot */
 DRAW01 =	  0,
 DRAW02 =	  1,
 DRAW03 =	  2,

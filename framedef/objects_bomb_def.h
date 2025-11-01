@@ -1,1 +1,3 @@
+/* THIS FILE GENERATED AUTOMATICALLY. DO NOT MODIFY */
+/* objects\bomb */
 MISSILE =	  0,
